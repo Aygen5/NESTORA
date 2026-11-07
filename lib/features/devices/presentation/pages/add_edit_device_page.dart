@@ -172,11 +172,14 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
 
   void _startSmartPairingScan() {
     if (_isScanning) return;
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     setState(() {
       _isScanning = true;
       _hasScanned = false;
     });
-    _radarController.repeat();
+    if (!disableAnimations) {
+      _radarController.repeat();
+    }
 
     _scanTimer?.cancel();
     _scanTimer = Timer(const Duration(milliseconds: 900), () {

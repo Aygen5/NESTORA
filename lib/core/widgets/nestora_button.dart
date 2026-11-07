@@ -76,10 +76,12 @@ class _NestoraButtonState extends State<NestoraButton>
     }
 
     final isEnabled = widget.onPressed != null && !widget.isLoading;
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final scaleDuration = disableAnimations ? Duration.zero : const Duration(milliseconds: 150);
 
     return AnimatedScale(
-      scale: _isPressed ? 0.98 : 1.0,
-      duration: const Duration(milliseconds: 150),
+      scale: (_isPressed && !disableAnimations) ? 0.98 : 1.0,
+      duration: scaleDuration,
       child: SizedBox(
         width: widget.width,
         height: widget.height,

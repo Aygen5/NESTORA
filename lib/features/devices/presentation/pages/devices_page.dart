@@ -593,7 +593,9 @@ class _DevicesPageState extends State<DevicesPage> {
                             setState(() => _selectedCategory = category);
                           },
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
+                            duration: (MediaQuery.maybeOf(context)?.disableAnimations ?? false)
+                                ? Duration.zero
+                                : const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                             decoration: BoxDecoration(
                               color: isSelected

@@ -684,10 +684,13 @@ class _DashboardPageState extends State<DashboardPage> {
     required bool isDark,
     required VoidCallback onTap,
   }) {
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final animDuration = disableAnimations ? Duration.zero : const Duration(milliseconds: 200);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: animDuration,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected

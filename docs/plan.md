@@ -258,7 +258,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Geniş ekranlarda içeriklerin kontrolsüz yayılmasını önlemek için `maxWidth: 820` / `maxWidth: 480` sınırlayıcılarının doğrulanması.
 - Klavye açıldığında formların erişilebilir kalması (`resizeToAvoidBottomInset` ve kaydırma kontrolleri).
 
-### Adım 7.4: Mikro Etkileşimler ve Reduced-Motion Desteği
+### Adım 7.4: [x] Mikro Etkileşimler ve Reduced-Motion Desteği
 - Slider, toggle ve kart animasyonlarının 200–300ms arasında akıcı tutulması.
 - Erişilebilirlik ayarlarında reduced-motion tercih eden kullanıcılar için animasyonların sadeleştirilmesi.
 

@@ -200,6 +200,8 @@ class _LampControlPageState extends State<LampControlPage> {
     );
     final bulbColor = activeSwatch['color'] as Color;
     final glowColor = activeSwatch['glow'] as Color;
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final glowDuration = disableAnimations ? Duration.zero : const Duration(milliseconds: 250);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
@@ -355,7 +357,7 @@ class _LampControlPageState extends State<LampControlPage> {
                           children: [
                             // Dynamic Glow Halo (Turns off completely when unpowered)
                             AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
+                              duration: glowDuration,
                               curve: Curves.easeOutCubic,
                               width: isPowered ? (90 + brightness * 1.1) : 0,
                               height: isPowered ? (90 + brightness * 1.1) : 0,
@@ -737,7 +739,7 @@ class _LampControlPageState extends State<LampControlPage> {
                           return GestureDetector(
                             onTap: () => _applyAtmosphereMode(lamp, mode),
                             child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
+                              duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 200),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: isActive

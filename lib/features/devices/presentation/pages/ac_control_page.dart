@@ -38,11 +38,12 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
   }
 
   void _syncAnimation(bool isPowered, FanSpeed speed) {
-    if (!isPowered) {
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (disableAnimations || !isPowered) {
       if (_waveController.isAnimating) {
         _waveController.stop();
       }
-      _lastPowered = false;
+      _lastPowered = isPowered;
       return;
     }
 

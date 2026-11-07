@@ -108,6 +108,8 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isSelected ? activeColor : inactiveColor;
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final animDuration = disableAnimations ? Duration.zero : const Duration(milliseconds: 200);
 
     return Expanded(
       child: InkWell(
@@ -118,7 +120,7 @@ class _NavItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: animDuration,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               decoration: BoxDecoration(
                 color: isSelected

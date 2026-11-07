@@ -14,6 +14,8 @@ class NestoraSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final animDuration = disableAnimations ? Duration.zero : const Duration(milliseconds: 240);
 
     final activeTrackColor =
         isDark ? AppColors.darkPrimaryContainer : AppColors.primaryContainer;
@@ -24,7 +26,7 @@ class NestoraSwitch extends StatelessWidget {
       onTap: onChanged != null ? () => onChanged!(!value) : null,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 240),
+        duration: animDuration,
         curve: Curves.easeInOut,
         width: 52,
         height: 30,
@@ -34,7 +36,7 @@ class NestoraSwitch extends StatelessWidget {
           color: value ? activeTrackColor : inactiveTrackColor,
         ),
         child: AnimatedAlign(
-          duration: const Duration(milliseconds: 240),
+          duration: animDuration,
           curve: Curves.easeInOut,
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
