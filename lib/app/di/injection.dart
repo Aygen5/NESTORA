@@ -13,6 +13,7 @@ import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/devices/data/datasources/devices_remote_data_source.dart';
 import '../../features/devices/data/repositories/devices_repository_impl.dart';
 import '../../features/devices/domain/repositories/devices_repository.dart';
+import '../../features/devices/presentation/cubit/devices_cubit.dart';
 import '../../features/notifications/data/datasources/notifications_remote_data_source.dart';
 import '../../features/notifications/data/repositories/notifications_repository_impl.dart';
 import '../../features/notifications/domain/repositories/notifications_repository.dart';
@@ -358,6 +359,15 @@ Future<void> initDependencies({
     sl.registerFactory<RoomsCubit>(
       () => RoomsCubit(
         roomsRepository: sl<RoomsRepository>(),
+        devicesRepository: sl<DevicesRepository>(),
+      ),
+    );
+  }
+
+  // 11. Devices Cubit
+  if (!sl.isRegistered<DevicesCubit>()) {
+    sl.registerFactory<DevicesCubit>(
+      () => DevicesCubit(
         devicesRepository: sl<DevicesRepository>(),
       ),
     );

@@ -164,7 +164,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `RoomsCubit`: Oda listesini getirme, yeni oda ekleme, oda düzenleme, oda silme.
 - Oda silindiğinde odaya bağlı cihazların sahipsiz kalmaması için kullanıcıya seçim sunulması (cihazları başka odaya taşı veya sil).
 
-### Adım 5.3: `DevicesCubit` — Ortak Sanal Cihaz State'i (Single Source of Truth)
+### Adım 5.3: [x] `DevicesCubit` — Ortak Sanal Cihaz State'i (Single Source of Truth)
 - Uygulama genelinde tüm cihazların tek bir merkezden yönetilmesi.
 - Lamba parlaklığı (%72 -> %50) veya klima derecesi (22°C -> 24°C) değiştiğinde; **Dashboard**, **Cihazlar Listesi**, **Oda Detayı** ve **Lamba/Klima Kontrol** ekranlarının aynı state'i gecikmesiz yansıtması.
 - Slider ve renk değişimlerinde kullanıcı arayüzünün anında tepki vermesi; Firestore yazmalarının ise kota tasarrufu için **debounce (örneğin 300ms)** ile yapılması.
