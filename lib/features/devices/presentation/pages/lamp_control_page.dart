@@ -1,23 +1,88 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/constants/seed_data.dart';
-import '../cubit/devices_cubit.dart';
-import '../cubit/devices_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/constants/seed_data.dart';
 import '../../../../core/widgets/nestora_button.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
 import '../../../../core/widgets/nestora_switch.dart';
+import '../../domain/device_model.dart';
+import '../cubit/devices_cubit.dart';
+import '../cubit/devices_state.dart';
 import 'add_edit_device_page.dart';
 
+/// Predefined atmosphere lighting modes for quick ambient switching.
+class LampAtmosphereMode {
+  final String key;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final int brightness;
+  final String colorHex;
+  final String colorName;
+
+  const LampAtmosphereMode({
+    required this.key,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.brightness,
+    required this.colorHex,
+    required this.colorName,
+  });
+}
+
 class LampControlPage extends StatefulWidget {
-  const LampControlPage({super.key});
+  final String? deviceId;
+
+  const LampControlPage({super.key, this.deviceId});
 
   @override
   State<LampControlPage> createState() => _LampControlPageState();
 }
 
 class _LampControlPageState extends State<LampControlPage> {
+  int _selectedTimerMinutes = 0; // 0 = off
+
+  static const List<LampAtmosphereMode> _atmosphereModes = [
+    LampAtmosphereMode(
+      key: 'reading',
+      title: 'Okuma',
+      subtitle: 'Dengeli odak ışığı',
+      icon: Icons.menu_book_rounded,
+      brightness: 80,
+      colorHex: '#EAF0E6',
+      colorName: 'Doğal Beyaz (4000K)',
+    ),
+    LampAtmosphereMode(
+      key: 'relaxing',
+      title: 'Dinlenme',
+      subtitle: 'Sıcak akşam tonu',
+      icon: Icons.self_improvement_rounded,
+      brightness: 40,
+      colorHex: '#E1C1A0',
+      colorName: 'Sıcak Günışığı (2700K)',
+    ),
+    LampAtmosphereMode(
+      key: 'focus',
+      title: 'Konsantrasyon',
+      subtitle: 'Net çalışma ışığı',
+      icon: Icons.psychology_rounded,
+      brightness: 100,
+      colorHex: '#D3E8D5',
+      colorName: 'Soğuk Beyaz (6500K)',
+    ),
+    LampAtmosphereMode(
+      key: 'night',
+      title: 'Gece Lambası',
+      subtitle: 'Göz almayan loş ışık',
+      icon: Icons.nightlight_round,
+      brightness: 15,
+      colorHex: '#533E25',
+      colorName: 'Gece Modu (Köz)',
+    ),
+  ];
+
   final List<Map<String, dynamic>> _colorSwatches = [
     {
       'name': 'Sıcak Günışığı (2700K)',
@@ -51,6 +116,62 @@ class _LampControlPageState extends State<LampControlPage> {
     },
   ];
 
+  void _applyAtmosphereMode(DeviceModel lamp, LampAtmosphereMode mode) {
+    final cubit = context.read<DevicesCubit>();
+    if (!lamp.isPoweredOn) {
+      cubit.toggleDevicePower(lamp.id);
+    }
+    cubit.setLampBrightness(lamp.id, mode.brightness);
+    cubit.setLampColor(
+      lamp.id,
+      name: mode.colorName,
+      hex: mode.colorHex,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${mode.title} modu uygulandı (%${mode.brightness})'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: AppColors.primaryContainer,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  void _selectTimer(int minutes) {
+    setState(() => _selectedTimerMinutes = minutes);
+    final message = minutes > 0
+        ? 'Lamba $minutes dakika sonra otomatik olarak kapatılacak.'
+        : 'Zamanlayıcı iptal edildi.';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        backgroundColor: AppColors.primaryContainer,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, DeviceModel lamp) {
+    showNestoraDeleteDialog(
+      context: context,
+      variation: DeleteDialogVariation.deviceDelete,
+      title: '"${lamp.name}" Silinecek',
+      message:
+          'Bu aydınlatma cihazı silindiğinde mevcut tüm senaryo ve rutinlerden kaldırılacaktır. Onaylıyor musunuz?',
+      deleteButtonText: 'Cihazı Sil',
+    ).then((confirmed) {
+      if (confirmed == true && context.mounted) {
+        context.read<DevicesCubit>().deleteDeviceById(lamp.id);
+        Navigator.pop(context);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final devicesCubit = context.watch<DevicesCubit>();
@@ -60,12 +181,19 @@ class _LampControlPageState extends State<LampControlPage> {
     final devices = (devicesState is DevicesLoaded)
         ? devicesState.devices.map(SeedData.deviceToModel).toList()
         : SeedData.defaultDeviceModels;
-    final lamp = devices.firstWhere((d) => d.id == 'dev-1', orElse: () => devices.first);
+
+    final lamp = devices.firstWhere(
+      (d) => d.id == widget.deviceId || d.id == 'dev-1',
+      orElse: () => devices.firstWhere(
+        (d) => d.type == DeviceType.bulb,
+        orElse: () => devices.first,
+      ),
+    );
 
     final brightness = lamp.brightness;
     final isPowered = lamp.isPoweredOn;
 
-    // Active color
+    // Active color swatch
     final activeSwatch = _colorSwatches.firstWhere(
       (swatch) => swatch['hex'] == lamp.colorHex,
       orElse: () => _colorSwatches.first,
@@ -76,14 +204,14 @@ class _LampControlPageState extends State<LampControlPage> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
       appBar: AppBar(
-        backgroundColor: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.9),
+        backgroundColor: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.92),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Aydınlatma Kontrolü',
+          lamp.name,
           style: AppTypography.headlineSmall.copyWith(
             color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
             fontWeight: FontWeight.bold,
@@ -109,7 +237,7 @@ class _LampControlPageState extends State<LampControlPage> {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded, size: 22, color: AppColors.error),
-            onPressed: () => _showDeleteDialog(context),
+            onPressed: () => _showDeleteDialog(context, lamp),
           ),
         ],
       ),
@@ -118,191 +246,335 @@ class _LampControlPageState extends State<LampControlPage> {
           constraints: const BoxConstraints(maxWidth: 600),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             child: Column(
               children: [
-            // Room & Status Metadata Banner
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+                // 1. Room & Power Metadata Banner
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.darkCard : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.chair_rounded,
+                                  size: 14,
+                                  color: AppColors.primaryContainer,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  lamp.room,
+                                  style: AppTypography.labelSmall.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Akıllı Ampul',
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.secondary),
+                          ),
+                        ],
+                      ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCard : Colors.white,
+                          color: isPowered
+                              ? AppColors.secondaryContainer
+                              : (isDark ? AppColors.darkCard : Colors.white),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.chair_rounded, size: 14, color: AppColors.primaryContainer),
-                            const SizedBox(width: 4),
+                            if (isPowered) ...[
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.primaryContainer,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
                             Text(
-                              lamp.room,
-                              style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold),
+                              isPowered ? 'Açık • %$brightness' : 'Kapalı',
+                              style: AppTypography.labelSmall.copyWith(
+                                color: isPowered ? AppColors.primaryContainer : AppColors.secondary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Akıllı Ampul',
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.secondary),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 2. Radiant Bulb Centerpiece & Dynamic Glow
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: Column(
+                    children: [
+                      // Ambient Glow and Bulb Canvas
+                      SizedBox(
+                        height: 220,
+                        width: 220,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Dynamic Glow Halo (Turns off completely when unpowered)
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeOutCubic,
+                              width: isPowered ? (90 + brightness * 1.1) : 0,
+                              height: isPowered ? (90 + brightness * 1.1) : 0,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: glowColor.withValues(
+                                  alpha: isPowered ? (0.15 + (brightness / 100) * 0.45) : 0,
+                                ),
+                                boxShadow: isPowered && brightness > 0
+                                    ? [
+                                        BoxShadow(
+                                          color: bulbColor.withValues(
+                                            alpha: (brightness / 100) * 0.6,
+                                          ),
+                                          blurRadius: 30 + (brightness * 0.5),
+                                          spreadRadius: 8 + (brightness * 0.25),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                            ),
+
+                            // Modern Bulb Custom Painter
+                            CustomPaint(
+                              size: const Size(120, 160),
+                              painter: ModernBulbPainter(
+                                isPowered: isPowered && brightness > 0,
+                                brightness: brightness,
+                                bulbColor: bulbColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Master Power Switch Pill
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.lightbulb_rounded,
+                              size: 20,
+                              color: isPowered ? AppColors.primaryContainer : AppColors.secondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isPowered ? 'Açık' : 'Kapalı',
+                              style: AppTypography.headlineSmall.copyWith(
+                                color: isPowered ? AppColors.primaryContainer : AppColors.secondary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            NestoraSwitch(
+                              value: isPowered,
+                              onChanged: (_) {
+                                context.read<DevicesCubit>().toggleDevicePower(lamp.id);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isPowered
-                          ? AppColors.secondaryContainer
-                          : (isDark ? AppColors.darkCard : Colors.white),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        if (isPowered) ...[
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primaryContainer,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                        Text(
-                          isPowered ? 'Açık • %$brightness' : 'Kapalı',
-                          style: AppTypography.labelSmall.copyWith(
-                            color: isPowered ? AppColors.primaryContainer : AppColors.secondary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Radiant Bulb Hero Centerpiece
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 ),
-                boxShadow: AppColors.cardShadow,
-              ),
-              child: Column(
-                children: [
-                  // Ambient Glow and Bulb
-                  SizedBox(
-                    height: 220,
-                    width: 220,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Animated Glow Halo
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: isPowered ? (100 + brightness * 1.1) : 0,
-                          height: isPowered ? (100 + brightness * 1.1) : 0,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: glowColor.withValues(
-                              alpha: isPowered ? (0.2 + (brightness / 100) * 0.5) : 0,
-                            ),
-                            boxShadow: isPowered
-                                ? [
-                                    BoxShadow(
-                                      color: bulbColor.withValues(alpha: (brightness / 100) * 0.6),
-                                      blurRadius: 40 + (brightness * 0.4),
-                                      spreadRadius: 10 + (brightness * 0.2),
-                                    ),
-                                  ]
-                                : [],
-                          ),
-                        ),
+                const SizedBox(height: 20),
 
-                        // Custom Painted Modern Bulb
-                        CustomPaint(
-                          size: const Size(120, 160),
-                          painter: ModernBulbPainter(
-                            isPowered: isPowered,
-                            brightness: brightness,
-                            bulbColor: bulbColor,
-                          ),
-                        ),
-                      ],
+                // 3. Brightness Slider Control Card (%0 - %100)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     ),
+                    boxShadow: AppColors.cardShadow,
                   ),
-                  const SizedBox(height: 16),
-
-                  // Integrated Primary Master Switch
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.lightbulb_rounded,
-                          size: 20,
-                          color: isPowered ? AppColors.primaryContainer : AppColors.secondary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isPowered ? 'Açık' : 'Kapalı',
-                          style: AppTypography.headlineSmall.copyWith(
-                            color: isPowered ? AppColors.primaryContainer : AppColors.secondary,
-                            fontWeight: FontWeight.bold,
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.brightness_medium_rounded,
+                                    size: 20,
+                                    color: AppColors.primaryContainer,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Parlaklık',
+                                        style: AppTypography.headlineSmall.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        'Aydınlatma şiddeti (%0 - %100)',
+                                        style: AppTypography.caption.copyWith(color: AppColors.secondary),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '%$brightness',
+                            style: AppTypography.headlineMedium.copyWith(
+                              color: AppColors.primaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Interactive Slider
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: AppColors.primaryContainer,
+                          inactiveTrackColor: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                          thumbColor: AppColors.primaryContainer,
+                          overlayColor: AppColors.primaryContainer.withValues(alpha: 0.2),
+                          trackHeight: 10,
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
                         ),
-                        const SizedBox(width: 16),
-                        NestoraSwitch(
-                          value: isPowered,
-                          onChanged: (_) {
-                            context.read<DevicesCubit>().toggleDevicePower(lamp.id);
+                        child: Slider(
+                          value: brightness.clamp(0, 100).toDouble(),
+                          min: 0,
+                          max: 100,
+                          divisions: 100,
+                          onChanged: (val) {
+                            context.read<DevicesCubit>().setLampBrightness(lamp.id, val.round());
                           },
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+                      ),
+                      const SizedBox(height: 12),
 
-            // Brightness Slider Control Card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      // Quick Preset Pills (%25, %50, %75, %100)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [25, 50, 75, 100].map((preset) {
+                          final isSelected = brightness == preset;
+                          return Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: GestureDetector(
+                                onTap: () {
+                                  context.read<DevicesCubit>().setLampBrightness(lamp.id, preset);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.primaryContainer
+                                        : (isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '%$preset',
+                                      style: AppTypography.labelMedium.copyWith(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
-                boxShadow: AppColors.cardShadow,
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                const SizedBox(height: 20),
+
+                // 4. Color Temperature & Tone Palette Swatches
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
@@ -313,234 +585,360 @@ class _LampControlPageState extends State<LampControlPage> {
                               color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.brightness_medium_rounded, size: 20, color: AppColors.primaryContainer),
+                            child: const Icon(
+                              Icons.palette_rounded,
+                              size: 20,
+                              color: AppColors.primaryContainer,
+                            ),
                           ),
                           const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Parlaklık',
-                                style: AppTypography.headlineSmall.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Renk Sıcaklığı & Ton',
+                                  style: AppTypography.headlineSmall.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                'Aydınlatma şiddeti',
-                                style: AppTypography.caption.copyWith(color: AppColors.secondary),
-                              ),
-                            ],
+                                Text(
+                                  activeSwatch['name'] as String,
+                                  style: AppTypography.caption.copyWith(color: AppColors.secondary),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                      Text(
-                        '%$brightness',
-                        style: AppTypography.headlineMedium.copyWith(
-                          color: AppColors.primaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      const SizedBox(height: 18),
+
+                      // Swatches Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: _colorSwatches.map((swatch) {
+                          final isSelected = swatch['hex'] == lamp.colorHex;
+                          final col = swatch['color'] as Color;
+
+                          return GestureDetector(
+                            onTap: () {
+                              context.read<DevicesCubit>().setLampColor(
+                                lamp.id,
+                                name: swatch['name'] as String,
+                                hex: swatch['hex'] as String,
+                              );
+                            },
+                            child: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: col,
+                                border: Border.all(
+                                  color: isSelected ? AppColors.primaryContainer : Colors.transparent,
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: isSelected
+                                  ? Icon(
+                                      Icons.check_rounded,
+                                      size: 20,
+                                      color: col.computeLuminance() > 0.5 ? Colors.black87 : Colors.white,
+                                    )
+                                  : null,
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                ),
+                const SizedBox(height: 20),
 
-                  // Interactive Slider
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: AppColors.primaryContainer,
-                      inactiveTrackColor: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
-                      thumbColor: AppColors.primaryContainer,
-                      overlayColor: AppColors.primaryContainer.withValues(alpha: 0.2),
-                      trackHeight: 10,
-                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+                // 5. Hazır Atmosfer Modları (Okuma, Dinlenme, Konsantrasyon, Gece Lambası)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     ),
-                    child: Slider(
-                      value: brightness.toDouble(),
-                      min: 1,
-                      max: 100,
-                      onChanged: (val) {
-                        context.read<DevicesCubit>().setLampBrightness(lamp.id, val.round());
-                      },
-                    ),
+                    boxShadow: AppColors.cardShadow,
                   ),
-                  const SizedBox(height: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 20,
+                              color: AppColors.primaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Hazır Atmosfer Modları',
+                                  style: AppTypography.headlineSmall.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Tek dokunuşla ışık ve renk ambiyansı',
+                                  style: AppTypography.caption.copyWith(color: AppColors.secondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
 
-                  // Quick Preset Pills
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [25, 50, 75, 100].map((preset) {
-                      final isSelected = brightness == preset;
-                      return Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: GestureDetector(
-                            onTap: () {
-                              context.read<DevicesCubit>().setLampBrightness(lamp.id, preset);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
+                      // 2x2 Grid of Preset Atmosphere Modes
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1.6,
+                        ),
+                        itemCount: _atmosphereModes.length,
+                        itemBuilder: (context, index) {
+                          final mode = _atmosphereModes[index];
+                          final isActive = lamp.colorHex == mode.colorHex && lamp.brightness == mode.brightness;
+
+                          return GestureDetector(
+                            onTap: () => _applyAtmosphereMode(lamp, mode),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.primaryContainer
+                                color: isActive
+                                    ? AppColors.secondaryContainer.withValues(alpha: 0.5)
                                     : (isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary),
                                 borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isActive
+                                      ? AppColors.primaryContainer
+                                      : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                  width: isActive ? 2 : 1,
+                                ),
                               ),
-                              child: Center(
-                                child: Text(
-                                  '%$preset',
-                                  style: AppTypography.labelMedium.copyWith(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: isActive
+                                          ? AppColors.primaryContainer
+                                          : (isDark ? AppColors.darkCard : Colors.white),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      mode.icon,
+                                      size: 18,
+                                      color: isActive ? Colors.white : AppColors.primaryContainer,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          mode.title,
+                                          style: AppTypography.labelMedium.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          '%${mode.brightness}',
+                                          style: AppTypography.caption.copyWith(
+                                            color: AppColors.secondary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 6. Otomatik Kapanma Zamanlayıcısı (Timer Interface)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.timer_outlined,
+                              size: 20,
+                              color: AppColors.primaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Kapanma Zamanlayıcısı',
+                                  style: AppTypography.headlineSmall.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  _selectedTimerMinutes > 0
+                                      ? '$_selectedTimerMinutes dk sonra kapanacak'
+                                      : 'Zamanlayıcı aktif değil',
+                                  style: AppTypography.caption.copyWith(
+                                    color: _selectedTimerMinutes > 0
+                                        ? AppColors.primaryContainer
+                                        : AppColors.secondary,
+                                    fontWeight: _selectedTimerMinutes > 0 ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Timer quick selection chips
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          {'label': 'Kapalı', 'val': 0},
+                          {'label': '15 dk', 'val': 15},
+                          {'label': '30 dk', 'val': 30},
+                          {'label': '45 dk', 'val': 45},
+                          {'label': '60 dk', 'val': 60},
+                        ].map((item) {
+                          final val = item['val'] as int;
+                          final label = item['label'] as String;
+                          final isSelected = _selectedTimerMinutes == val;
+
+                          return Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 3),
+                              child: GestureDetector(
+                                onTap: () => _selectTimer(val),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
                                     color: isSelected
-                                        ? Colors.white
-                                        : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                        ? AppColors.primaryContainer
+                                        : (isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.primaryContainer
+                                          : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      label,
+                                      style: AppTypography.caption.copyWith(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Color Temperature & Tone Swatches
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                ),
-                boxShadow: AppColors.cardShadow,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.palette_rounded, size: 20, color: AppColors.primaryContainer),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Renk Sıcaklığı & Ton',
-                            style: AppTypography.headlineSmall.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                            ),
-                          ),
-                          Text(
-                            activeSwatch['name'] as String,
-                            style: AppTypography.caption.copyWith(color: AppColors.secondary),
-                          ),
-                        ],
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
+                ),
+                const SizedBox(height: 24),
 
-                  // Swatches Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: _colorSwatches.map((swatch) {
-                      final isSelected = swatch['hex'] == lamp.colorHex;
-                      final col = swatch['color'] as Color;
-
-                      return GestureDetector(
-                        onTap: () {
-                          context.read<DevicesCubit>().setLampColor(
-                            lamp.id,
-                            name: swatch['name'] as String,
-                            hex: swatch['hex'] as String,
-                          );
-                        },
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: col,
-                            border: Border.all(
-                              color: isSelected ? AppColors.primaryContainer : Colors.transparent,
-                              width: 3,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: isSelected
-                              ? Icon(
-                                  Icons.check_rounded,
-                                  size: 20,
-                                  color: col.computeLuminance() > 0.5 ? Colors.black87 : Colors.white,
-                                )
-                              : null,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
+                // 7. Management Action Buttons
+                NestoraButton(
+                  text: 'Cihazı Yapılandır',
+                  icon: Icons.tune_rounded,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AddEditDevicePage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                NestoraButton(
+                  text: 'Cihazı Kaldır',
+                  variant: ButtonVariant.ghost,
+                  icon: Icons.delete_outline_rounded,
+                  onPressed: () => _showDeleteDialog(context, lamp),
+                ),
+                const SizedBox(height: 32),
+              ],
             ),
-            const SizedBox(height: 24),
-
-            // Management Action Buttons
-            NestoraButton(
-              text: 'Cihazı Yapılandır',
-              icon: Icons.tune_rounded,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AddEditDevicePage()),
-                );
-              },
-            ),
-            const SizedBox(height: 10),
-            NestoraButton(
-              text: 'Cihazı Kaldır',
-              variant: ButtonVariant.ghost,
-              icon: Icons.delete_outline_rounded,
-              onPressed: () => _showDeleteDialog(context),
-            ),
-            const SizedBox(height: 32),
-          ],
+          ),
         ),
       ),
-    ),
-  ),
-);
-}
-
-  void _showDeleteDialog(BuildContext context) {
-    showNestoraDialog(
-      context: context,
-      variation: DialogVariation.variationA,
-      title: 'Cihazı Sil',
-      description:
-          'Bu cihazı silmek istediğine emin misin? Bu işlem geri alınamaz ve cihazın bağlı olduğu tüm rutinler devre dışı bırakılır.',
-      onConfirm: () {
-        context.read<DevicesCubit>().deleteDeviceById('dev-1');
-        Navigator.pop(context);
-      },
     );
   }
 }
@@ -577,9 +975,7 @@ class ModernBulbPainter extends CustomPainter {
 
     // 3. Bulb Outer Glass Shape
     final glassPath = Path();
-    // Start at socket base right
     glassPath.moveTo(cx + 12, 28);
-    // Expand to bulb sphere
     glassPath.cubicTo(cx + 45, 45, cx + 55, 80, cx + 45, 110);
     glassPath.cubicTo(cx + 35, 135, cx + 18, 145, cx, 145);
     glassPath.cubicTo(cx - 18, 145, cx - 35, 135, cx - 45, 110);

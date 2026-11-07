@@ -317,7 +317,9 @@ GoRouter createAppRouter({
         path: AppRoutePaths.lampControl,
         name: AppRouteNames.lampControl,
         parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const LampControlPage(),
+        builder: (context, state) => LampControlPage(
+          deviceId: state.pathParameters['deviceId'],
+        ),
       ),
 
       // 12. Climate Control (/devices/climate/:deviceId)

@@ -203,7 +203,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Kategori sekmeleri (*Tümü, Aydınlatma, İklimlendirme, Güvenlik, Prizler*).
 - Anlık açık/kapalı toggle'ı, güç tüketimi göstergesi, detay kumandalarına yönlendirme.
 
-### Adım 6.5: Salon Lambası Kontrol Ekranı (`lamp_control_page.dart`)
+### Adım 6.5: [x] Salon Lambası Kontrol Ekranı (`lamp_control_page.dart`)
 - Büyük aydınlatma görseli ve seçilen parlaklık/renge göre dinamik değişen glow ışığı.
 - Hassas parlaklık slider'ı (%0 - %100).
 - Renk sıcaklığı çarkı / renk paleti seçimi.
