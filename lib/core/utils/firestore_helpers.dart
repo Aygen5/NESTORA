@@ -60,3 +60,4 @@ class FirestoreHelpers {
     return fallback;
   }
 }
+

@@ -137,11 +137,11 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `UserProfileModel.fromFirestore` / `toFirestore` / `fromMap` / `toMap` (`lib/features/profile/data/models/user_profile_model.dart`).
 - `FirestoreHelpers` (`lib/core/utils/firestore_helpers.dart`): Merkezi Timestamp <-> DateTime ve tip-güvenli (num/int/double/bool/String) parse mantığı.
 
-### Adım 4.3: Firestore Remote Data Sources
-- `RoomsRemoteDataSource`: `users/{uid}/rooms` CRUD sorguları.
-- `DevicesRemoteDataSource`: `users/{uid}/devices` CRUD sorguları ve state güncellemeleri.
-- `NotificationsRemoteDataSource`: `users/{uid}/notifications` sorguları ve okundu işaretleme.
-- `ProfileRemoteDataSource`: `users/{uid}` profil dokümanı okuma ve güncelleme.
+### Adım 4.3: [x] Firestore Remote Data Sources
+- `RoomsRemoteDataSource` & `RoomsRemoteDataSourceImpl` (`lib/features/rooms/data/datasources/rooms_remote_data_source.dart`): `users/{uid}/rooms` CRUD sorguları ve gerçek zamanlı stream dinleyicisi.
+- `DevicesRemoteDataSource` & `DevicesRemoteDataSourceImpl` (`lib/features/devices/data/datasources/devices_remote_data_source.dart`): `users/{uid}/devices` CRUD, anlık state güncellemeleri, oda bazlı filtreleme/toplu taşıma/silme batch sorguları.
+- `NotificationsRemoteDataSource` & `NotificationsRemoteDataSourceImpl` (`lib/features/notifications/data/datasources/notifications_remote_data_source.dart`): `users/{uid}/notifications` sorguları, tekil ve tümünü okundu işaretleme batch işlemleri.
+- `ProfileRemoteDataSource` & `ProfileRemoteDataSourceImpl` (`lib/features/profile/data/datasources/profile_remote_data_source.dart`): `users/{uid}` profil dokümanı okuma, gerçek zamanlı stream, ev adı, görünen ad ve tercihler güncelleme.
 
 ### Adım 4.4: Repository Implementasyonları
 - `RoomsRepositoryImpl`, `DevicesRepositoryImpl`, `NotificationsRepositoryImpl`, `ProfileRepositoryImpl`.

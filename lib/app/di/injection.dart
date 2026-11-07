@@ -10,6 +10,10 @@ import '../../features/auth/data/datasources/firestore_seed_service.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
+import '../../features/devices/data/datasources/devices_remote_data_source.dart';
+import '../../features/notifications/data/datasources/notifications_remote_data_source.dart';
+import '../../features/profile/data/datasources/profile_remote_data_source.dart';
+import '../../features/rooms/data/datasources/rooms_remote_data_source.dart';
 import '../router/auth_guard.dart';
 
 typedef FactoryFunc<T> = T Function();
@@ -239,10 +243,51 @@ Future<void> initDependencies({
     );
   }
 
-  // 5. Auth Cubit
+  // 6. Auth Cubit
   if (!sl.isRegistered<AuthCubit>()) {
     sl.registerFactory<AuthCubit>(
       () => AuthCubit(authRepository: sl<AuthRepository>()),
+    );
+  }
+
+  // 7. Feature Remote Data Sources
+  if (!sl.isRegistered<RoomsRemoteDataSource>()) {
+    sl.registerLazySingleton<RoomsRemoteDataSource>(
+      () => RoomsRemoteDataSourceImpl(
+        firestore: sl.isRegistered<FirebaseFirestore>()
+            ? sl<FirebaseFirestore>()
+            : null,
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<DevicesRemoteDataSource>()) {
+    sl.registerLazySingleton<DevicesRemoteDataSource>(
+      () => DevicesRemoteDataSourceImpl(
+        firestore: sl.isRegistered<FirebaseFirestore>()
+            ? sl<FirebaseFirestore>()
+            : null,
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<NotificationsRemoteDataSource>()) {
+    sl.registerLazySingleton<NotificationsRemoteDataSource>(
+      () => NotificationsRemoteDataSourceImpl(
+        firestore: sl.isRegistered<FirebaseFirestore>()
+            ? sl<FirebaseFirestore>()
+            : null,
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<ProfileRemoteDataSource>()) {
+    sl.registerLazySingleton<ProfileRemoteDataSource>(
+      () => ProfileRemoteDataSourceImpl(
+        firestore: sl.isRegistered<FirebaseFirestore>()
+            ? sl<FirebaseFirestore>()
+            : null,
+      ),
     );
   }
 }
