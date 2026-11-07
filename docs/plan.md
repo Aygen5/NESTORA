@@ -68,7 +68,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
   - `/notifications` (Ayrı tam sayfa bildirim rotası)
   - `/components-preview` (Yalnızca geliştirme modunda erişilebilen yardımcı rota)
 
-### Adım 2.2: Auth Durum Dinleyicisi ve Korumalı Rota Yönlendirmeleri (Redirect Guards)
+### Adım 2.2: [x] Auth Durum Dinleyicisi ve Korumalı Rota Yönlendirmeleri (Redirect Guards)
 - Oturum açmamış kullanıcının doğrudan `/dashboard` veya detay sayfalarına gitmesini engelleyip `/welcome` ya da `/login`'e yönlendirme.
 - Oturum açmış kullanıcının Splash/Welcome/Login ekranlarına tekrar düşmesini engelleyip doğrudan `/dashboard`'a yönlendirme.
 - GoRouter `refreshListenable` ile auth state değişimlerini dinleme.

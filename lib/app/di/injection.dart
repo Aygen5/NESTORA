@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../router/auth_guard.dart';
 
 typedef FactoryFunc<T> = T Function();
 
@@ -174,5 +175,14 @@ Future<void> initDependencies({
     } catch (e) {
       debugPrint('ServiceLocator: FirebaseRemoteConfig could not be initialized ($e)');
     }
+  }
+
+  // 3. Auth Redirect Listenable for GoRouter
+  if (!sl.isRegistered<AppAuthListenable>()) {
+    FirebaseAuth? auth;
+    if (sl.isRegistered<FirebaseAuth>()) {
+      auth = sl<FirebaseAuth>();
+    }
+    sl.registerSingleton<AppAuthListenable>(AppAuthListenable(firebaseAuth: auth));
   }
 }

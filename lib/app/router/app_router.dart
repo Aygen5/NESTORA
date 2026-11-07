@@ -2,6 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../di/injection.dart';
+import 'auth_guard.dart';
+
+export 'auth_guard.dart';
+
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/onboarding_page.dart';
@@ -86,16 +91,31 @@ final GlobalKey<NavigatorState> shellNavigatorKey =
 /// Central GoRouter factory function.
 GoRouter createAppRouter({
   String initialLocation = AppRoutePaths.splash,
+  AppAuthListenable? authListenable,
   Listenable? refreshListenable,
   GoRouterRedirect? redirect,
   List<NavigatorObserver>? observers,
 }) {
+  final effectiveAuthListenable = authListenable ??
+      (sl.isRegistered<AppAuthListenable>() ? sl<AppAuthListenable>() : null);
+
+  final effectiveRefreshListenable =
+      refreshListenable ?? effectiveAuthListenable;
+
+  final effectiveRedirect = redirect ??
+      (effectiveAuthListenable != null
+          ? (context, state) => defaultRedirectGuard(
+                location: state.matchedLocation,
+                isAuthenticated: effectiveAuthListenable.isAuthenticated,
+              )
+          : null);
+
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: initialLocation,
     debugLogDiagnostics: kDebugMode,
-    refreshListenable: refreshListenable,
-    redirect: redirect,
+    refreshListenable: effectiveRefreshListenable,
+    redirect: effectiveRedirect,
     observers: observers,
     routes: [
       // 1. Splash
@@ -104,7 +124,13 @@ GoRouter createAppRouter({
         name: AppRouteNames.splash,
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => SplashPage(
-          onFinish: () => context.go(AppRoutePaths.onboarding),
+          onFinish: () {
+            if (effectiveAuthListenable?.isAuthenticated ?? false) {
+              context.go(AppRoutePaths.dashboard);
+            } else {
+              context.go(AppRoutePaths.onboarding);
+            }
+          },
         ),
       ),
 
@@ -136,7 +162,10 @@ GoRouter createAppRouter({
         name: AppRouteNames.login,
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => LoginPage(
-          onLoginSuccess: () => context.go(AppRoutePaths.dashboard),
+          onLoginSuccess: () {
+            effectiveAuthListenable?.setAuthenticated(true);
+            context.go(AppRoutePaths.dashboard);
+          },
           onNavigateToRegister: () => context.go(AppRoutePaths.register),
           onNavigateToForgotPassword: () =>
               context.go(AppRoutePaths.forgotPassword),
@@ -149,7 +178,10 @@ GoRouter createAppRouter({
         name: AppRouteNames.register,
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => RegisterPage(
-          onRegisterSuccess: () => context.go(AppRoutePaths.dashboard),
+          onRegisterSuccess: () {
+            effectiveAuthListenable?.setAuthenticated(true);
+            context.go(AppRoutePaths.dashboard);
+          },
           onNavigateToLogin: () => context.go(AppRoutePaths.login),
         ),
       ),
@@ -190,7 +222,10 @@ GoRouter createAppRouter({
             path: AppRoutePaths.profile,
             name: AppRouteNames.profile,
             builder: (context, state) => ProfilePage(
-              onLogout: () => context.go(AppRoutePaths.welcome),
+              onLogout: () {
+                effectiveAuthListenable?.setAuthenticated(false);
+                context.go(AppRoutePaths.welcome);
+              },
             ),
           ),
         ],
