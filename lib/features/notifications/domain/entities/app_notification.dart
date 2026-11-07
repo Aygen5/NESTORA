@@ -83,7 +83,6 @@ class AppNotification {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is AppNotification &&
-          runtimeType == other.runtimeType &&
           id == other.id &&
           title == other.title &&
           message == other.message &&
@@ -108,3 +107,4 @@ class AppNotification {
   String toString() =>
       'AppNotification(id: $id, title: $title, isRead: $isRead, type: $type, time: $timeAgoFormatted)';
 }
+

@@ -106,7 +106,6 @@ class UserProfile {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is UserProfile &&
-          runtimeType == other.runtimeType &&
           uid == other.uid &&
           email == other.email &&
           displayName == other.displayName &&
@@ -131,3 +130,4 @@ class UserProfile {
   String toString() =>
       'UserProfile(uid: $uid, email: $email, name: $displayName, home: $homeName)';
 }
+

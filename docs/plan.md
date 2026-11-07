@@ -130,13 +130,12 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `lib/features/notifications/domain/entities/app_notification.dart`: `id`, `title`, `message`, `type`, `isRead`, `createdAt`, `relatedRoomId`, `relatedDeviceId`, `timeAgoFormatted`.
 - `lib/features/profile/domain/entities/user_profile.dart`: `uid`, `email`, `displayName`, `homeName`, `photoPath`, `preferences` (`UserPreferences`), `initials`, `createdAt`, `updatedAt`.
 
-### Adım 4.2: Data Modelleri / DTOs & Güvenli Firestore Parsing
-- `RoomModel.fromFirestore` / `toFirestore`
-- `DeviceModel.fromFirestore` / `toFirestore`
-- `NotificationModel.fromFirestore` / `toFirestore`
-- `UserProfileModel.fromFirestore` / `toFirestore`
-- Eksik veya null alanlarda uygulamanın çökmesini engelleyen güvenli varsayılan değer mantığı.
-- Timestamp <-> DateTime dönüşümlerinin tutarlı hâle getirilmesi.
+### Adım 4.2: [x] Data Modelleri / DTOs & Güvenli Firestore Parsing
+- `RoomModel.fromFirestore` / `toFirestore` / `fromMap` / `toMap` (`lib/features/rooms/data/models/room_model.dart`).
+- `DeviceModel.fromFirestore` / `toFirestore` / `fromMap` / `toMap` (`lib/features/devices/data/models/device_model.dart`).
+- `NotificationModel.fromFirestore` / `toFirestore` / `fromMap` / `toMap` (`lib/features/notifications/data/models/notification_model.dart`).
+- `UserProfileModel.fromFirestore` / `toFirestore` / `fromMap` / `toMap` (`lib/features/profile/data/models/user_profile_model.dart`).
+- `FirestoreHelpers` (`lib/core/utils/firestore_helpers.dart`): Merkezi Timestamp <-> DateTime ve tip-güvenli (num/int/double/bool/String) parse mantığı.
 
 ### Adım 4.3: Firestore Remote Data Sources
 - `RoomsRemoteDataSource`: `users/{uid}/rooms` CRUD sorguları.

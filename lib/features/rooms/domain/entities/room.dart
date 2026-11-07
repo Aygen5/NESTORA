@@ -55,7 +55,6 @@ class Room {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is Room &&
-          runtimeType == other.runtimeType &&
           id == other.id &&
           name == other.name &&
           iconName == other.iconName &&
@@ -84,3 +83,4 @@ class Room {
   String toString() =>
       'Room(id: $id, name: $name, iconName: $iconName, targetTemp: $targetTemperature°C, devices: $deviceCount, active: $activeDeviceCount)';
 }
+

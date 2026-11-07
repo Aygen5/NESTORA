@@ -137,7 +137,6 @@ class Device {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is Device &&
-          runtimeType == other.runtimeType &&
           id == other.id &&
           name == other.name &&
           roomId == other.roomId &&
@@ -176,3 +175,4 @@ class Device {
   String toString() =>
       'Device(id: $id, name: $name, type: $type, roomId: $roomId, isPoweredOn: $isPoweredOn, power: ${currentPowerWatts}W)';
 }
+
