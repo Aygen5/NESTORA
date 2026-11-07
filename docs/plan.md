@@ -210,7 +210,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Hazır modlar (*Okuma, Dinlenme, Konsantrasyon, Gece Lambası*).
 - Lamba kapatıldığında ışık ve glow efektinin sönmesi, son ayarların hafızada korunması.
 
-### Adım 6.6: Yatak Odası Klima Kontrol Ekranı (`ac_control_page.dart`)
+### Adım 6.6: [x] Yatak Odası Klima Kontrol Ekranı (`ac_control_page.dart`)
 - Dairesel termostat kadranı (Thermostat Dial).
 - 0.5°C adımlarla `+` ve `-` hedef sıcaklık ayarı.
 - Çalışma modları (*Soğutma, Isıtma, Otomatik, Fan*).

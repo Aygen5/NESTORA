@@ -327,7 +327,9 @@ GoRouter createAppRouter({
         path: AppRoutePaths.climateControl,
         name: AppRouteNames.climateControl,
         parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const AcControlPage(),
+        builder: (context, state) => AcControlPage(
+          deviceId: state.pathParameters['deviceId'],
+        ),
       ),
 
       // 13. Add / Edit Device (/devices/add-edit)

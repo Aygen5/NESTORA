@@ -254,7 +254,7 @@ abstract class SeedData {
       brightness: device.brightness,
       colorName: device.colorName,
       colorHex: device.colorHex,
-      targetTemp: device.targetTemp.round(),
+      targetTemp: device.targetTemp,
       acMode: device.acMode,
       fanSpeed: device.fanSpeed,
       isFavorite: device.isFavorite,

@@ -13,7 +13,7 @@ class DeviceModel {
   int brightness; // 0 - 100
   String colorName;
   String colorHex;
-  int targetTemp; // 16 - 30
+  double targetTemp; // 16.0 - 30.0
   AcMode acMode;
   FanSpeed fanSpeed;
   bool isFavorite;
@@ -28,7 +28,7 @@ class DeviceModel {
     this.brightness = 72,
     this.colorName = 'Sıcak Günışığı (2700K)',
     this.colorHex = '#E1C1A0',
-    this.targetTemp = 24,
+    this.targetTemp = 24.0,
     this.acMode = AcMode.auto,
     this.fanSpeed = FanSpeed.mid,
     this.isFavorite = false,
@@ -43,7 +43,7 @@ class DeviceModel {
     int? brightness,
     String? colorName,
     String? colorHex,
-    int? targetTemp,
+    double? targetTemp,
     AcMode? acMode,
     FanSpeed? fanSpeed,
     bool? isFavorite,
