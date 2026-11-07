@@ -143,7 +143,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `NotificationsRemoteDataSource` & `NotificationsRemoteDataSourceImpl` (`lib/features/notifications/data/datasources/notifications_remote_data_source.dart`): `users/{uid}/notifications` sorguları, tekil ve tümünü okundu işaretleme batch işlemleri.
 - `ProfileRemoteDataSource` & `ProfileRemoteDataSourceImpl` (`lib/features/profile/data/datasources/profile_remote_data_source.dart`): `users/{uid}` profil dokümanı okuma, gerçek zamanlı stream, ev adı, görünen ad ve tercihler güncelleme.
 
-### Adım 4.4: Repository Implementasyonları
+### Adım 4.4: [x] Repository Implementasyonları
 - `RoomsRepositoryImpl`, `DevicesRepositoryImpl`, `NotificationsRepositoryImpl`, `ProfileRepositoryImpl`.
 - Firestore hatalarının yakalanıp `Failure` olarak Cubit katmanına aktarılması.
 

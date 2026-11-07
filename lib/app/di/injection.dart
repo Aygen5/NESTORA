@@ -11,9 +11,17 @@ import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/devices/data/datasources/devices_remote_data_source.dart';
+import '../../features/devices/data/repositories/devices_repository_impl.dart';
+import '../../features/devices/domain/repositories/devices_repository.dart';
 import '../../features/notifications/data/datasources/notifications_remote_data_source.dart';
+import '../../features/notifications/data/repositories/notifications_repository_impl.dart';
+import '../../features/notifications/domain/repositories/notifications_repository.dart';
 import '../../features/profile/data/datasources/profile_remote_data_source.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/rooms/data/datasources/rooms_remote_data_source.dart';
+import '../../features/rooms/data/repositories/rooms_repository_impl.dart';
+import '../../features/rooms/domain/repositories/rooms_repository.dart';
 import '../router/auth_guard.dart';
 
 typedef FactoryFunc<T> = T Function();
@@ -287,6 +295,39 @@ Future<void> initDependencies({
         firestore: sl.isRegistered<FirebaseFirestore>()
             ? sl<FirebaseFirestore>()
             : null,
+      ),
+    );
+  }
+
+  // 8. Feature Repositories
+  if (!sl.isRegistered<RoomsRepository>()) {
+    sl.registerLazySingleton<RoomsRepository>(
+      () => RoomsRepositoryImpl(
+        remoteDataSource: sl<RoomsRemoteDataSource>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<DevicesRepository>()) {
+    sl.registerLazySingleton<DevicesRepository>(
+      () => DevicesRepositoryImpl(
+        remoteDataSource: sl<DevicesRemoteDataSource>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<NotificationsRepository>()) {
+    sl.registerLazySingleton<NotificationsRepository>(
+      () => NotificationsRepositoryImpl(
+        remoteDataSource: sl<NotificationsRemoteDataSource>(),
+      ),
+    );
+  }
+
+  if (!sl.isRegistered<ProfileRepository>()) {
+    sl.registerLazySingleton<ProfileRepository>(
+      () => ProfileRepositoryImpl(
+        remoteDataSource: sl<ProfileRemoteDataSource>(),
       ),
     );
   }
