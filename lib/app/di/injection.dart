@@ -16,9 +16,11 @@ import '../../features/devices/domain/repositories/devices_repository.dart';
 import '../../features/notifications/data/datasources/notifications_remote_data_source.dart';
 import '../../features/notifications/data/repositories/notifications_repository_impl.dart';
 import '../../features/notifications/domain/repositories/notifications_repository.dart';
+import '../../features/profile/data/datasources/profile_photo_service.dart';
 import '../../features/profile/data/datasources/profile_remote_data_source.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/presentation/cubit/profile_cubit.dart';
 import '../../features/rooms/data/datasources/rooms_remote_data_source.dart';
 import '../../features/rooms/data/repositories/rooms_repository_impl.dart';
 import '../../features/rooms/domain/repositories/rooms_repository.dart';
@@ -328,6 +330,24 @@ Future<void> initDependencies({
     sl.registerLazySingleton<ProfileRepository>(
       () => ProfileRepositoryImpl(
         remoteDataSource: sl<ProfileRemoteDataSource>(),
+      ),
+    );
+  }
+
+  // 9. Profile Photo Service & Profile Cubit
+  if (!sl.isRegistered<ProfilePhotoService>()) {
+    sl.registerLazySingleton<ProfilePhotoService>(
+      () => ProfilePhotoServiceImpl(),
+    );
+  }
+
+  if (!sl.isRegistered<ProfileCubit>()) {
+    sl.registerFactory<ProfileCubit>(
+      () => ProfileCubit(
+        profileRepository: sl<ProfileRepository>(),
+        photoService: sl<ProfilePhotoService>(),
+        sharedPreferences:
+            sl.isRegistered<SharedPreferences>() ? sl<SharedPreferences>() : null,
       ),
     );
   }

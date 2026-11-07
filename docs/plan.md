@@ -156,7 +156,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 
 > **Amaç:** Geçici merkezi `app_state.dart` dosyasındaki karmaşık sorumlulukları ilgili feature Cubit'lerine dağıtarak ortadan kaldırmak; sanal cihazlarda "Tek Doğruluk Kaynağı" kurmak.
 
-### Adım 5.1: `ProfileCubit` ve Yerel Tercihler
+### Adım 5.1: [x] `ProfileCubit` ve Yerel Tercihler
 - `ProfileCubit` oluşturulması: Kullanıcı adı, ev adı güncelleme, bildirim tercihleri toggle'ları.
 - Profil fotoğrafının `image_picker` ile seçilip `path_provider` üzerinden yerel uygulama klasörüne kaydedilmesi ve dosya yolunun SharedPreferences'ta tutulması.
 
