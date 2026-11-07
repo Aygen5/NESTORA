@@ -4,7 +4,8 @@ enum DeviceType {
   ac,
   plug,
   tv,
-  fan;
+  fan,
+  security;
 
   String toShortString() => name;
 
@@ -96,6 +97,7 @@ class Device {
   bool get isLamp => type == DeviceType.bulb;
   bool get isClimate => type == DeviceType.ac;
   bool get isPlug => type == DeviceType.plug;
+  bool get isSecurity => type == DeviceType.security;
 
   Device copyWith({
     String? id,

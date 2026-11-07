@@ -77,6 +77,8 @@ class DeviceModel {
         return Icons.air_rounded;
       case DeviceType.tv:
         return Icons.tv_rounded;
+      case DeviceType.security:
+        return Icons.videocam_rounded;
     }
   }
 }

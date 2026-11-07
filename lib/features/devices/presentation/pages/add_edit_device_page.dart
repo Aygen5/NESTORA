@@ -533,36 +533,45 @@ class _AddEditDevicePageState extends State<AddEditDevicePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCard : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkCard : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.star_rounded, size: 20, color: AppColors.warmAmber),
                         ),
-                        child: Icon(Icons.star_rounded, size: 20, color: AppColors.warmAmber),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Favorilere Ekle',
-                            style: AppTypography.labelMedium.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                            ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Favorilere Ekle',
+                                style: AppTypography.labelMedium.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'Ana sayfada ve hızlı erişimde göster',
+                                style: AppTypography.caption.copyWith(color: AppColors.secondary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                          Text(
-                            'Ana sayfada ve hızlı erişimde göster',
-                            style: AppTypography.caption.copyWith(color: AppColors.secondary),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   NestoraSwitch(
                     value: _isFavorite,
                     onChanged: (val) => setState(() => _isFavorite = val),

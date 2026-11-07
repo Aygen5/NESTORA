@@ -181,6 +181,8 @@ class DevicesCubit extends Cubit<DevicesState> {
         newWatts = 240.0;
       } else if (device.type == DeviceType.tv) {
         newWatts = 95.0;
+      } else if (device.type == DeviceType.security) {
+        newWatts = 4.5;
       } else {
         newWatts = 45.0;
       }

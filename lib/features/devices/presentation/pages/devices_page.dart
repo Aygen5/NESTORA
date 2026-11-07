@@ -1,18 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/constants/seed_data.dart';
-import '../cubit/devices_cubit.dart';
-import '../cubit/devices_state.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/constants/seed_data.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 import '../../../../core/widgets/nestora_switch.dart';
+import '../../../rooms/presentation/cubit/rooms_cubit.dart';
+import '../../../rooms/presentation/cubit/rooms_state.dart';
 import '../../domain/device_model.dart';
+import '../cubit/devices_cubit.dart';
+import '../cubit/devices_state.dart';
 import 'ac_control_page.dart';
 import 'add_edit_device_page.dart';
 import 'lamp_control_page.dart';
 
-enum DeviceFilter { all, active, inactive, favorites }
+/// The 5 main device category tabs required by Nestora smart home specs:
+/// Tümü, Aydınlatma, İklimlendirme, Güvenlik, Prizler
+enum DeviceCategoryTab {
+  all('Tümü', Icons.apps_rounded),
+  lighting('Aydınlatma', Icons.lightbulb_rounded),
+  climate('İklimlendirme', Icons.thermostat_rounded),
+  security('Güvenlik', Icons.videocam_rounded),
+  plugs('Prizler', Icons.power_rounded);
+
+  final String label;
+  final IconData icon;
+  const DeviceCategoryTab(this.label, this.icon);
+}
+
+/// Secondary quick status filters for power & favorites
+enum DeviceStatusFilter {
+  all('Hepsi'),
+  active('Açık'),
+  inactive('Kapalı'),
+  favorites('Favoriler');
+
+  final String label;
+  const DeviceStatusFilter(this.label);
+}
 
 class DevicesPage extends StatefulWidget {
   final VoidCallback? onNavigateToProfile;
@@ -24,7 +50,8 @@ class DevicesPage extends StatefulWidget {
 }
 
 class _DevicesPageState extends State<DevicesPage> {
-  DeviceFilter _currentFilter = DeviceFilter.all;
+  DeviceCategoryTab _selectedCategory = DeviceCategoryTab.all;
+  DeviceStatusFilter _selectedStatus = DeviceStatusFilter.all;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -34,40 +61,216 @@ class _DevicesPageState extends State<DevicesPage> {
     super.dispose();
   }
 
+  void _resetFilters() {
+    setState(() {
+      _selectedCategory = DeviceCategoryTab.all;
+      _selectedStatus = DeviceStatusFilter.all;
+      _searchQuery = '';
+      _searchController.clear();
+    });
+  }
+
+  bool _matchesCategory(DeviceModel device, DeviceCategoryTab category) {
+    switch (category) {
+      case DeviceCategoryTab.all:
+        return true;
+      case DeviceCategoryTab.lighting:
+        return device.type == DeviceType.bulb;
+      case DeviceCategoryTab.climate:
+        return device.type == DeviceType.ac || device.type == DeviceType.fan;
+      case DeviceCategoryTab.security:
+        return device.type == DeviceType.security ||
+            device.name.toLowerCase().contains('güvenlik') ||
+            device.name.toLowerCase().contains('kamera') ||
+            device.name.toLowerCase().contains('alarm');
+      case DeviceCategoryTab.plugs:
+        return device.type == DeviceType.plug;
+    }
+  }
+
+  bool _matchesStatus(DeviceModel device, DeviceStatusFilter status) {
+    switch (status) {
+      case DeviceStatusFilter.all:
+        return true;
+      case DeviceStatusFilter.active:
+        return device.isPoweredOn;
+      case DeviceStatusFilter.inactive:
+        return !device.isPoweredOn;
+      case DeviceStatusFilter.favorites:
+        return device.isFavorite;
+    }
+  }
+
+  double _getDeviceWatts(DeviceModel device) {
+    if (!device.isPoweredOn) return 0.0;
+    switch (device.type) {
+      case DeviceType.bulb:
+        return (device.brightness / 100.0) * 15.0;
+      case DeviceType.ac:
+        return 850.0;
+      case DeviceType.fan:
+        return 45.0;
+      case DeviceType.plug:
+        return 140.0;
+      case DeviceType.tv:
+        return 95.0;
+      case DeviceType.security:
+        return 4.5;
+    }
+  }
+
+  String _formatPower(double watts) {
+    if (watts >= 1000) {
+      return '${(watts / 1000).toStringAsFixed(1).replaceAll('.', ',')} kW';
+    }
+    return '${watts.round()} W';
+  }
+
+  String _formatDevicePower(DeviceModel device) {
+    if (!device.isPoweredOn) return '0 W';
+    final watts = _getDeviceWatts(device);
+    return '${watts.round()} W';
+  }
+
+  String _getDeviceTypeLabel(DeviceType type) {
+    switch (type) {
+      case DeviceType.bulb:
+        return 'Aydınlatma';
+      case DeviceType.ac:
+        return 'İklimlendirme';
+      case DeviceType.fan:
+        return 'Vantilatör';
+      case DeviceType.plug:
+        return 'Akıllı Priz';
+      case DeviceType.tv:
+        return 'Medya / TV';
+      case DeviceType.security:
+        return 'Güvenlik';
+    }
+  }
+
+  String _resolveRoomName(BuildContext context, String? roomId, String fallbackRoom) {
+    if (roomId == null || roomId.isEmpty) return fallbackRoom;
+    try {
+      final roomsState = context.read<RoomsCubit>().state;
+      if (roomsState is RoomsLoaded) {
+        final found = roomsState.rooms.where((r) => r.id == roomId).firstOrNull;
+        if (found != null && found.name.isNotEmpty) {
+          return found.name;
+        }
+      }
+    } catch (_) {}
+
+    switch (roomId) {
+      case 'room-1':
+        return 'Salon';
+      case 'room-2':
+        return 'Yatak Odası';
+      case 'room-3':
+        return 'Mutfak';
+      case 'room-4':
+        return 'Çalışma Odası';
+      case 'room-5':
+        return 'Giriş & Dış';
+      default:
+        return fallbackRoom.isNotEmpty ? fallbackRoom : 'Genel';
+    }
+  }
+
+  void _navigateToDeviceDetail(BuildContext context, DeviceModel device) {
+    final isBulb = device.type == DeviceType.bulb || device.name.toLowerCase().contains('lamba');
+    final isAc = device.type == DeviceType.ac || device.name.toLowerCase().contains('klima');
+
+    if (isBulb) {
+      try {
+        context.push('/devices/lamp/${device.id}');
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LampControlPage()),
+        );
+      }
+    } else if (isAc) {
+      try {
+        context.push('/devices/climate/${device.id}');
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AcControlPage()),
+        );
+      }
+    } else {
+      try {
+        context.push('/devices/add-edit');
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddEditDevicePage()),
+        );
+      }
+    }
+  }
+
+  void _navigateToAddDevice(BuildContext context) {
+    try {
+      context.push('/devices/add-edit');
+    } catch (_) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AddEditDevicePage()),
+      );
+    }
+  }
+
+  void _navigateToProfile(BuildContext context) {
+    if (widget.onNavigateToProfile != null) {
+      widget.onNavigateToProfile!();
+    } else {
+      try {
+        context.go('/profile');
+      } catch (_) {
+        // noop
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final devicesCubit = context.watch<DevicesCubit>();
     final devicesState = devicesCubit.state;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final devices = (devicesState is DevicesLoaded)
+    final List<DeviceModel> allDevices = (devicesState is DevicesLoaded)
         ? devicesState.devices.map(SeedData.deviceToModel).toList()
         : SeedData.defaultDeviceModels;
 
-    final totalCount = devices.length;
-    final activeCount = devices.where((d) => d.isPoweredOn).length;
+    final totalCount = allDevices.length;
+    final activeCount = allDevices.where((d) => d.isPoweredOn).length;
     final inactiveCount = totalCount - activeCount;
-    final favCount = devices.where((d) => d.isFavorite).length;
 
-    // Filter devices
-    List<DeviceModel> filteredDevices = devices.where((d) {
+    // Filter devices based on Category, Status, and Search Query
+    final filteredDevices = allDevices.where((d) {
+      final matchesCat = _matchesCategory(d, _selectedCategory);
+      if (!matchesCat) return false;
+
+      final matchesStat = _matchesStatus(d, _selectedStatus);
+      if (!matchesStat) return false;
+
       if (_searchQuery.isNotEmpty) {
-        final matchesQuery = d.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            d.room.toLowerCase().contains(_searchQuery.toLowerCase());
-        if (!matchesQuery) return false;
+        final roomName = _resolveRoomName(context, d.roomId, d.room).toLowerCase();
+        final nameMatch = d.name.toLowerCase().contains(_searchQuery.toLowerCase());
+        final roomMatch = roomName.contains(_searchQuery.toLowerCase());
+        final typeMatch = _getDeviceTypeLabel(d.type).toLowerCase().contains(_searchQuery.toLowerCase());
+        if (!nameMatch && !roomMatch && !typeMatch) return false;
       }
 
-      switch (_currentFilter) {
-        case DeviceFilter.all:
-          return true;
-        case DeviceFilter.active:
-          return d.isPoweredOn;
-        case DeviceFilter.inactive:
-          return !d.isPoweredOn;
-        case DeviceFilter.favorites:
-          return d.isFavorite;
-      }
+      return true;
     }).toList();
+
+    // Total power consumption across all active devices
+    final totalPowerWatts = allDevices
+        .where((d) => d.isPoweredOn)
+        .fold<double>(0.0, (sum, d) => sum + _getDeviceWatts(d));
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
@@ -75,7 +278,7 @@ class _DevicesPageState extends State<DevicesPage> {
         preferredSize: const Size.fromHeight(64),
         child: Container(
           decoration: BoxDecoration(
-            color: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.9),
+            color: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.92),
             border: Border(
               bottom: BorderSide(
                 color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
@@ -102,16 +305,25 @@ class _DevicesPageState extends State<DevicesPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'Cihazlar',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.secondary,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryContainer,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'Cihazlar',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primaryContainer,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
                         ),
                       ),
                     ],
                   ),
                   GestureDetector(
-                    onTap: widget.onNavigateToProfile,
+                    onTap: () => _navigateToProfile(context),
                     child: Container(
                       width: 36,
                       height: 36,
@@ -139,313 +351,430 @@ class _DevicesPageState extends State<DevicesPage> {
           constraints: const BoxConstraints(maxWidth: 820),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            // Title & Live Sync Tag
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Header & Live Sync Badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Cihazlarım',
-                      style: AppTypography.headlineLarge.copyWith(
-                        color: AppColors.primaryContainer,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Cihazlarım',
+                            style: AppTypography.headlineLarge.copyWith(
+                              color: AppColors.primaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Evindeki tüm akıllı cihazları tek merkezden yönet.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.secondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Evindeki cihazları kolayca yönet.',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.secondary,
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryContainer,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Canlı Senkron',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.primaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+
+                // Power & Status Overview Banner
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: AppColors.secondaryContainer,
-                    borderRadius: BorderRadius.circular(16),
+                    color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.primaryContainer,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Canlı Senkron',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.primaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Search Bar & Add Device Button
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.search_rounded, size: 20, color: AppColors.secondary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (val) {
-                              setState(() => _searchQuery = val);
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'Cihaz ara...',
-                              hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.secondary),
-                              border: InputBorder.none,
-                              isDense: true,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkCard : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.tune_rounded,
+                                size: 22,
+                                color: AppColors.primaryContainer,
+                              ),
                             ),
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Durum Özeti',
+                                    style: AppTypography.labelMedium.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '$totalCount cihaz • $activeCount açık • $inactiveCount kapalı',
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.secondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                        if (_searchQuery.isNotEmpty)
-                          GestureDetector(
-                            onTap: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                            child: const Icon(Icons.cancel_rounded, size: 18, color: AppColors.secondary),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AddEditDevicePage(),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Cihaz Ekle'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryContainer,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    elevation: 0,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-
-            // Summary Status Insight Card
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
+                      const SizedBox(width: 8),
+                      // Energy Consumption Badge
                       Container(
-                        width: 36,
-                        height: 36,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: isDark ? AppColors.darkCard : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: AppColors.subtleShadow,
                         ),
-                        child: Icon(Icons.tune_rounded, size: 20, color: AppColors.primaryContainer),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Durum Özeti',
-                            style: AppTypography.labelMedium.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.bolt_rounded,
+                              size: 16,
+                              color: AppColors.warmAmber,
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Text('$totalCount cihaz', style: AppTypography.caption.copyWith(color: AppColors.secondary)),
-                              const SizedBox(width: 4),
-                              const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 10)),
-                              const SizedBox(width: 4),
-                              Text('$activeCount açık', style: AppTypography.caption.copyWith(color: AppColors.primaryContainer, fontWeight: FontWeight.bold)),
-                              const SizedBox(width: 4),
-                              const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 10)),
-                              const SizedBox(width: 4),
-                              Text('$inactiveCount kapalı', style: AppTypography.caption.copyWith(color: AppColors.secondary)),
-                            ],
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatPower(totalPowerWatts),
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.primaryContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCard : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.eco_rounded, size: 16, color: AppColors.warmAmber),
-                        const SizedBox(width: 4),
-                        Text(
-                          '%18 Tasarruf',
-                          style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.primaryContainer,
-                            fontWeight: FontWeight.bold,
+                ),
+                const SizedBox(height: 16),
+
+                // Search Bar + Add Device Button
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                           ),
                         ),
-                      ],
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.search_rounded,
+                              size: 20,
+                              color: AppColors.secondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (val) {
+                                  setState(() => _searchQuery = val);
+                                },
+                                decoration: InputDecoration(
+                                  hintText: 'Cihaz veya oda ara...',
+                                  hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.secondary),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                ),
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                ),
+                              ),
+                            ),
+                            if (_searchQuery.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                                child: const Icon(
+                                  Icons.cancel_rounded,
+                                  size: 18,
+                                  color: AppColors.secondary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      onPressed: () => _navigateToAddDevice(context),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Cihaz Ekle'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryContainer,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-            // Horizontal Filter Tabs
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: [
-                  _buildFilterTab(
-                    label: 'Tümü ($totalCount)',
-                    isSelected: _currentFilter == DeviceFilter.all,
-                    onTap: () => setState(() => _currentFilter = DeviceFilter.all),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFilterTab(
-                    label: 'Açık ($activeCount)',
-                    isSelected: _currentFilter == DeviceFilter.active,
-                    onTap: () => setState(() => _currentFilter = DeviceFilter.active),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFilterTab(
-                    label: 'Kapalı ($inactiveCount)',
-                    isSelected: _currentFilter == DeviceFilter.inactive,
-                    onTap: () => setState(() => _currentFilter = DeviceFilter.inactive),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFilterTab(
-                    label: 'Favoriler ($favCount)',
-                    icon: Icons.star_rounded,
-                    isSelected: _currentFilter == DeviceFilter.favorites,
-                    onTap: () => setState(() => _currentFilter = DeviceFilter.favorites),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+                // 1. Primary Category Tabs (Tümü, Aydınlatma, İklimlendirme, Güvenlik, Prizler)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: DeviceCategoryTab.values.map((category) {
+                      final isSelected = _selectedCategory == category;
+                      final count = allDevices.where((d) => _matchesCategory(d, category)).length;
 
-            // Devices Grid (Responsive Layout)
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final crossAxisCount = constraints.maxWidth > 580 ? 3 : 2;
-
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.15,
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() => _selectedCategory = category);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primaryContainer
+                                  : (isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primaryContainer
+                                    : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                              ),
+                              boxShadow: isSelected ? AppColors.subtleShadow : null,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  category.icon,
+                                  size: 16,
+                                  color: isSelected ? Colors.white : AppColors.secondary,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${category.label} ($count)',
+                                  style: AppTypography.labelMedium.copyWith(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                  itemCount: filteredDevices.length,
-                  itemBuilder: (context, index) {
-                    final device = filteredDevices[index];
-                    return _buildDeviceCard(context, device, isDark);
-                  },
-                );
-              },
+                ),
+                const SizedBox(height: 10),
+
+                // 2. Secondary Quick Status Filter (Hepsi, Açık, Kapalı, Favoriler)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: DeviceStatusFilter.values.map((status) {
+                      final isSelected = _selectedStatus == status;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text(status.label),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() => _selectedStatus = status);
+                            }
+                          },
+                          avatar: status == DeviceStatusFilter.favorites
+                              ? Icon(
+                                  Icons.star_rounded,
+                                  size: 14,
+                                  color: isSelected ? AppColors.primaryContainer : AppColors.warmAmber,
+                                )
+                              : null,
+                          labelStyle: AppTypography.caption.copyWith(
+                            color: isSelected
+                                ? (isDark ? Colors.white : AppColors.primaryContainer)
+                                : AppColors.secondary,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          selectedColor: AppColors.secondaryContainer,
+                          backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+                          side: BorderSide(
+                            color: isSelected
+                                ? AppColors.primaryContainer
+                                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                          ),
+                          visualDensity: VisualDensity.compact,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Devices Grid or Empty State
+                if (filteredDevices.isEmpty)
+                  _buildEmptyState(context, isDark)
+                else
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.15,
+                        ),
+                        itemCount: filteredDevices.length,
+                        itemBuilder: (context, index) {
+                          final device = filteredDevices[index];
+                          return _buildDeviceCard(context, device, isDark);
+                        },
+                      );
+                    },
+                  ),
+                const SizedBox(height: 32),
+              ],
             ),
-            const SizedBox(height: 32),
-          ],
+          ),
         ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 
-  Widget _buildFilterTab({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-    IconData? icon,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryContainer
-              : (isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary),
-          borderRadius: BorderRadius.circular(20),
+  Widget _buildEmptyState(BuildContext context, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
         ),
-        child: Row(
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 14,
-                color: isSelected ? Colors.white : AppColors.warmAmber,
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: AppTypography.labelMedium.copyWith(
-                color: isSelected
-                    ? Colors.white
-                    : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(
+              color: AppColors.secondaryContainer,
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
+            child: const Icon(
+              Icons.devices_other_rounded,
+              size: 32,
+              color: AppColors.primaryContainer,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Cihaz Bulunamadı',
+            style: AppTypography.headlineMedium.copyWith(
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Seçtiğiniz kategori veya arama kriterine uygun bir cihaz bulunmuyor.',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.secondary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: _resetFilters,
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text('Filtreleri Temizle'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryContainer,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              elevation: 0,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -455,27 +784,22 @@ class _DevicesPageState extends State<DevicesPage> {
     DeviceModel device,
     bool isDark,
   ) {
+    final roomName = _resolveRoomName(context, device.roomId, device.room);
+    final typeLabel = _getDeviceTypeLabel(device.type);
+    final deviceWatts = _formatDevicePower(device);
+
     return GestureDetector(
-      onTap: () {
-        if (device.name == 'Salon Lambası') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LampControlPage()),
-          );
-        } else if (device.type == DeviceType.ac) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AcControlPage()),
-          );
-        }
-      },
+      onTap: () => _navigateToDeviceDetail(context, device),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCard : AppColors.lightCard,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            color: device.isPoweredOn
+                ? AppColors.primaryContainer.withValues(alpha: 0.35)
+                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            width: device.isPoweredOn ? 1.5 : 1.0,
           ),
           boxShadow: AppColors.cardShadow,
         ),
@@ -483,7 +807,7 @@ class _DevicesPageState extends State<DevicesPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Top Row: Icon + Star + Switch
+            // Top Row: Category Icon + Favorite Star + Power Switch
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -492,7 +816,7 @@ class _DevicesPageState extends State<DevicesPage> {
                   height: 40,
                   decoration: BoxDecoration(
                     color: device.isPoweredOn
-                        ? AppColors.warmAmber.withValues(alpha: 0.3)
+                        ? AppColors.warmAmber.withValues(alpha: 0.28)
                         : (isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -506,13 +830,16 @@ class _DevicesPageState extends State<DevicesPage> {
                   children: [
                     GestureDetector(
                       onTap: () => context.read<DevicesCubit>().toggleDeviceFavorite(device.id),
-                      child: Icon(
-                        device.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
-                        size: 20,
-                        color: device.isFavorite ? AppColors.warmAmber : AppColors.secondary,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Icon(
+                          device.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+                          size: 20,
+                          color: device.isFavorite ? AppColors.warmAmber : AppColors.secondary,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     NestoraSwitch(
                       value: device.isPoweredOn,
                       onChanged: (_) => context.read<DevicesCubit>().toggleDevicePower(device.id),
@@ -522,16 +849,17 @@ class _DevicesPageState extends State<DevicesPage> {
               ],
             ),
 
-            // Bottom info
+            // Middle info: Room + Category name & Device Name
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${device.room.toUpperCase()} • ${device.type.name.toUpperCase()}',
+                  '${roomName.toUpperCase()} • ${typeLabel.toUpperCase()}',
                   style: AppTypography.caption.copyWith(
                     color: AppColors.secondary,
-                    letterSpacing: 0.8,
+                    letterSpacing: 0.6,
                     fontSize: 10,
+                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -547,39 +875,53 @@ class _DevicesPageState extends State<DevicesPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: device.isPoweredOn ? AppColors.primaryContainer : AppColors.secondary,
-                          ),
+              ],
+            ),
+
+            // Bottom row: Status dot + Power consumption in Watts
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: device.isPoweredOn ? AppColors.primaryContainer : AppColors.secondary,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
+                      ),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
                           device.isPoweredOn
-                              ? (device.type == DeviceType.bulb ? 'Açık (%${device.brightness})' : (device.type == DeviceType.ac ? 'Açık (${device.targetTemp}°C)' : 'Açık'))
+                              ? (device.type == DeviceType.bulb
+                                  ? 'Açık (%${device.brightness})'
+                                  : (device.type == DeviceType.ac
+                                      ? 'Açık (${device.targetTemp}°C)'
+                                      : 'Açık'))
                               : 'Kapalı',
                           style: AppTypography.caption.copyWith(
                             color: device.isPoweredOn ? AppColors.primaryContainer : AppColors.secondary,
                             fontWeight: FontWeight.bold,
+                            fontSize: 11,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                    Text(
-                      device.type == DeviceType.bulb
-                          ? '280 lm'
-                          : (device.type == DeviceType.plug ? '142 W' : ''),
-                      style: AppTypography.caption.copyWith(color: AppColors.secondary, fontSize: 10),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  deviceWatts,
+                  style: AppTypography.caption.copyWith(
+                    color: device.isPoweredOn ? AppColors.primaryContainer : AppColors.secondary,
+                    fontWeight: device.isPoweredOn ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),

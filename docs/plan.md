@@ -199,7 +199,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Oda adı, simge seçici grid, varsayılan sıcaklık ayarı.
 - Form doğrulama, Firestore kaydı ve onay diyaloğuyla oda silme.
 
-### Adım 6.4: Cihazlarım Ekranı (`devices_page.dart`)
+### Adım 6.4: [x] Cihazlarım Ekranı (`devices_page.dart`)
 - Kategori sekmeleri (*Tümü, Aydınlatma, İklimlendirme, Güvenlik, Prizler*).
 - Anlık açık/kapalı toggle'ı, güç tüketimi göstergesi, detay kumandalarına yönlendirme.
 

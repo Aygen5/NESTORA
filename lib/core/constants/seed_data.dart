@@ -143,6 +143,15 @@ abstract class SeedData {
       isFavorite: false,
       currentPowerWatts: 0.0,
     ),
+    const Device(
+      id: 'dev-8',
+      name: 'Giriş Güvenlik Kamerası',
+      roomId: 'room-5',
+      type: DeviceType.security,
+      isPoweredOn: true,
+      isFavorite: false,
+      currentPowerWatts: 4.5,
+    ),
   ];
 
   static final List<AppNotification> defaultNotifications = [
@@ -233,6 +242,7 @@ abstract class SeedData {
     if (device.roomId == 'room-2') roomName = 'Yatak Odası';
     if (device.roomId == 'room-3') roomName = 'Mutfak';
     if (device.roomId == 'room-4') roomName = 'Çalışma Odası';
+    if (device.roomId == 'room-5') roomName = 'Giriş / Dış';
 
     return DeviceModel(
       id: device.id,
