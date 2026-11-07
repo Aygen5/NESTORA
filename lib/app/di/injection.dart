@@ -17,6 +17,7 @@ import '../../features/devices/presentation/cubit/devices_cubit.dart';
 import '../../features/notifications/data/datasources/notifications_remote_data_source.dart';
 import '../../features/notifications/data/repositories/notifications_repository_impl.dart';
 import '../../features/notifications/domain/repositories/notifications_repository.dart';
+import '../../features/notifications/presentation/cubit/notifications_cubit.dart';
 import '../../features/profile/data/datasources/profile_photo_service.dart';
 import '../../features/profile/data/datasources/profile_remote_data_source.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
@@ -369,6 +370,15 @@ Future<void> initDependencies({
     sl.registerFactory<DevicesCubit>(
       () => DevicesCubit(
         devicesRepository: sl<DevicesRepository>(),
+      ),
+    );
+  }
+
+  // 12. Notifications Cubit
+  if (!sl.isRegistered<NotificationsCubit>()) {
+    sl.registerFactory<NotificationsCubit>(
+      () => NotificationsCubit(
+        notificationsRepository: sl<NotificationsRepository>(),
       ),
     );
   }

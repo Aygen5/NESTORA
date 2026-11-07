@@ -169,7 +169,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Lamba parlaklığı (%72 -> %50) veya klima derecesi (22°C -> 24°C) değiştiğinde; **Dashboard**, **Cihazlar Listesi**, **Oda Detayı** ve **Lamba/Klima Kontrol** ekranlarının aynı state'i gecikmesiz yansıtması.
 - Slider ve renk değişimlerinde kullanıcı arayüzünün anında tepki vermesi; Firestore yazmalarının ise kota tasarrufu için **debounce (örneğin 300ms)** ile yapılması.
 
-### Adım 5.4: `NotificationsCubit` (Bildirim Durumu)
+### Adım 5.4: [x] `NotificationsCubit` (Bildirim Durumu)
 - Bildirim listesini yükleme, tekil okundu işaretleme, tümünü okundu işaretleme, bildirim silme.
 - Okunmamış bildirim sayısının Dashboard bildirim zilinde anlık kırmızı rozet olarak gösterilmesi.
 
