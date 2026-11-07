@@ -231,7 +231,9 @@ class _LampControlPageState extends State<LampControlPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const AddEditDevicePage()),
+                MaterialPageRoute(
+                  builder: (_) => AddEditDevicePage(device: lamp, isEditing: true),
+                ),
               );
             },
           ),
@@ -922,7 +924,9 @@ class _LampControlPageState extends State<LampControlPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const AddEditDevicePage()),
+                      MaterialPageRoute(
+                        builder: (_) => AddEditDevicePage(device: lamp, isEditing: true),
+                      ),
                     );
                   },
                 ),

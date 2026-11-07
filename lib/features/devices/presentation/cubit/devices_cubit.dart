@@ -377,6 +377,10 @@ class DevicesCubit extends Cubit<DevicesState> {
     double? targetTemp,
     String? colorHex,
     String? colorName,
+    bool? isPoweredOn,
+    bool? isFavorite,
+    AcMode? acMode,
+    FanSpeed? fanSpeed,
   }) async {
     final cleanName = name.trim();
     if (cleanName.isEmpty) {
@@ -398,8 +402,12 @@ class DevicesCubit extends Cubit<DevicesState> {
       name: cleanName,
       roomId: cleanRoomId,
       type: type,
+      isPoweredOn: isPoweredOn ?? false,
+      isFavorite: isFavorite ?? false,
       brightness: brightness ?? (type == DeviceType.bulb ? 72 : 0),
       targetTemp: targetTemp ?? (type == DeviceType.ac ? 22.0 : 20.0),
+      acMode: acMode ?? AcMode.auto,
+      fanSpeed: fanSpeed ?? FanSpeed.mid,
       colorHex: colorHex ?? '#E1C1A0',
       colorName: colorName ?? 'Sıcak Günışığı (2700K)',
       createdAt: DateTime.now(),
@@ -619,6 +627,18 @@ class DevicesCubit extends Cubit<DevicesState> {
       targetTemp: device.targetTemp,
       colorHex: device.colorHex,
       colorName: device.colorName,
+      isPoweredOn: device.isPoweredOn,
+      isFavorite: device.isFavorite,
+      acMode: device.acMode,
+      fanSpeed: device.fanSpeed,
+    );
+  }
+
+  /// Convenience method for updating an existing Device entity.
+  Future<void> updateDeviceEntity(Device device, {String? userId}) {
+    return updateDevice(
+      userId: userId ?? _currentUserId ?? 'demo-user',
+      device: device,
     );
   }
 

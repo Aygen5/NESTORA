@@ -216,7 +216,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Çalışma modları (*Soğutma, Isıtma, Otomatik, Fan*).
 - Fan hızı kademeleri (Düşük, Orta, Yüksek, Otomatik) ve hız animasyonu.
 
-### Adım 6.7: Cihaz Ekle ve Düzenle Ekranı (`add_edit_device_page.dart`)
+### Adım 6.7: [x] Cihaz Ekle ve Düzenle Ekranı (`add_edit_device_page.dart`)
 - Cihaz türü seçimi, cihaz adı, oda atama seçicisi.
 - Sanal eşleştirme akışı ve kaydetme/silme işlemleri.
 

@@ -65,6 +65,23 @@ class DeviceModel {
     );
   }
 
+  Device toEntity() {
+    return Device(
+      id: id,
+      name: name,
+      roomId: roomId ?? (room.isNotEmpty ? room : 'unassigned'),
+      type: type,
+      isPoweredOn: isPoweredOn,
+      brightness: brightness,
+      colorName: colorName,
+      colorHex: colorHex,
+      targetTemp: targetTemp,
+      acMode: acMode,
+      fanSpeed: fanSpeed,
+      isFavorite: isFavorite,
+    );
+  }
+
   IconData get icon {
     switch (type) {
       case DeviceType.bulb:

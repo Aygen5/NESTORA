@@ -176,7 +176,9 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const AddEditDevicePage()),
+                MaterialPageRoute(
+                  builder: (_) => AddEditDevicePage(device: ac, isEditing: true),
+                ),
               );
             },
           ),
@@ -824,7 +826,9 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const AddEditDevicePage()),
+                      MaterialPageRoute(
+                        builder: (_) => AddEditDevicePage(device: ac, isEditing: true),
+                      ),
                     );
                   },
                 ),

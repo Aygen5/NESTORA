@@ -17,6 +17,7 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import '../../features/components_preview/presentation/pages/components_preview_page.dart';
+import '../../features/devices/domain/device_model.dart';
 import '../../features/devices/presentation/pages/ac_control_page.dart';
 import '../../features/devices/presentation/pages/add_edit_device_page.dart';
 import '../../features/devices/presentation/pages/devices_page.dart';
@@ -338,9 +339,25 @@ GoRouter createAppRouter({
         name: AppRouteNames.addEditDevice,
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) {
+          final extraMap = state.extra is Map<String, dynamic>
+              ? state.extra as Map<String, dynamic>
+              : (state.extra is Map ? (state.extra as Map).cast<String, dynamic>() : null);
           final initialRoom = state.uri.queryParameters['room'] ??
-              (state.extra is String ? state.extra as String : null);
-          return AddEditDevicePage(initialRoom: initialRoom);
+              (state.extra is String ? state.extra as String : null) ??
+              (extraMap?['initialRoom'] as String?);
+          final isEditing = state.uri.queryParameters['mode'] == 'edit' ||
+              extraMap?['isEditing'] == true;
+          final device = state.extra is DeviceModel
+              ? state.extra as DeviceModel
+              : (extraMap?['device'] as DeviceModel?);
+          final deviceId = state.uri.queryParameters['deviceId'] ??
+              (extraMap?['deviceId'] as String?);
+          return AddEditDevicePage(
+            initialRoom: initialRoom,
+            isEditing: isEditing || device != null || deviceId != null,
+            device: device,
+            deviceId: deviceId,
+          );
         },
       ),
 
@@ -383,8 +400,21 @@ extension NestoraNavigationExtension on BuildContext {
       push('/devices/lamp/$deviceId');
   void goToClimateControl(String deviceId) =>
       push('/devices/climate/$deviceId');
-  void goToAddEditDevice({String? initialRoom}) =>
-      push(AppRoutePaths.addEditDevice, extra: initialRoom);
+  void goToAddEditDevice({
+    String? initialRoom,
+    bool isEditing = false,
+    DeviceModel? device,
+    String? deviceId,
+  }) =>
+      push(
+        AppRoutePaths.addEditDevice,
+        extra: {
+          'initialRoom': initialRoom,
+          'isEditing': isEditing,
+          'device': device,
+          'deviceId': deviceId,
+        },
+      );
   void goToNotifications() => push(AppRoutePaths.notifications);
   void goToComponentsPreview() => push(AppRoutePaths.componentsPreview);
 }
