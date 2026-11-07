@@ -24,6 +24,7 @@ import '../../features/profile/presentation/cubit/profile_cubit.dart';
 import '../../features/rooms/data/datasources/rooms_remote_data_source.dart';
 import '../../features/rooms/data/repositories/rooms_repository_impl.dart';
 import '../../features/rooms/domain/repositories/rooms_repository.dart';
+import '../../features/rooms/presentation/cubit/rooms_cubit.dart';
 import '../router/auth_guard.dart';
 
 typedef FactoryFunc<T> = T Function();
@@ -348,6 +349,16 @@ Future<void> initDependencies({
         photoService: sl<ProfilePhotoService>(),
         sharedPreferences:
             sl.isRegistered<SharedPreferences>() ? sl<SharedPreferences>() : null,
+      ),
+    );
+  }
+
+  // 10. Rooms Cubit
+  if (!sl.isRegistered<RoomsCubit>()) {
+    sl.registerFactory<RoomsCubit>(
+      () => RoomsCubit(
+        roomsRepository: sl<RoomsRepository>(),
+        devicesRepository: sl<DevicesRepository>(),
       ),
     );
   }

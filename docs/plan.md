@@ -160,7 +160,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `ProfileCubit` oluşturulması: Kullanıcı adı, ev adı güncelleme, bildirim tercihleri toggle'ları.
 - Profil fotoğrafının `image_picker` ile seçilip `path_provider` üzerinden yerel uygulama klasörüne kaydedilmesi ve dosya yolunun SharedPreferences'ta tutulması.
 
-### Adım 5.2: `RoomsCubit` (Oda Yönetimi Durumu)
+### Adım 5.2: [x] `RoomsCubit` (Oda Yönetimi Durumu)
 - `RoomsCubit`: Oda listesini getirme, yeni oda ekleme, oda düzenleme, oda silme.
 - Oda silindiğinde odaya bağlı cihazların sahipsiz kalmaması için kullanıcıya seçim sunulması (cihazları başka odaya taşı veya sil).
 
