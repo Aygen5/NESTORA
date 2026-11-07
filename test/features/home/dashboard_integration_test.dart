@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:nestora/app/di/injection.dart';
 import 'package:nestora/app/theme/theme_cubit.dart';
+import 'package:nestora/core/constants/app_constants.dart';
 import 'package:nestora/core/constants/seed_data.dart';
+import 'package:nestora/core/services/remote_config_service.dart';
 import 'package:nestora/core/utils/result.dart';
+import 'package:nestora/core/widgets/nestora_announcement_banner.dart';
 import 'package:nestora/core/widgets/nestora_switch.dart';
 import 'package:nestora/features/devices/domain/entities/device.dart';
 import 'package:nestora/features/devices/domain/repositories/devices_repository.dart';
@@ -360,6 +364,41 @@ void main() {
       // The device power state in DevicesCubit toggled
       final loadedState = devicesCubit.state as DevicesLoaded;
       expect(loadedState.devices.first.isPoweredOn, isFalse);
+    });
+
+    testWidgets('renders remote broadcast announcement banner when active and dismisses upon tap', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final rcService = RemoteConfigService();
+      rcService.setOverride(AppConstants.remoteConfigAnnouncementEnabled, true);
+      rcService.setOverride(AppConstants.remoteConfigAnnouncementTitle, 'Sistem Güncellemesi');
+      rcService.setOverride(AppConstants.remoteConfigAnnouncementMessage, 'Nestora altyapısı başarıyla güncellendi.');
+      rcService.setOverride(AppConstants.remoteConfigAnnouncementType, 'update');
+
+      if (!sl.isRegistered<RemoteConfigService>()) {
+        sl.registerSingleton<RemoteConfigService>(rcService);
+      } else {
+        sl.unregister<RemoteConfigService>();
+        sl.registerSingleton<RemoteConfigService>(rcService);
+      }
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NestoraAnnouncementBanner), findsOneWidget);
+      expect(find.text('Sistem Güncellemesi'), findsOneWidget);
+      expect(find.text('Nestora altyapısı başarıyla güncellendi.'), findsOneWidget);
+
+      // Tap dismiss close button
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NestoraAnnouncementBanner), findsNothing);
     });
   });
 }

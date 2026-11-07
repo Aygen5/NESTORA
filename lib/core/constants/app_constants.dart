@@ -37,6 +37,16 @@ class AppConstants {
   static const String demoPassword = 'DemoUser2026!';
   static const String remoteConfigDemoEmail = 'demo_account_email';
   static const String remoteConfigDemoPassword = 'demo_account_password';
+  static const String remoteConfigAnnouncementEnabled = 'announcement_enabled';
+  static const String remoteConfigAnnouncementTitle = 'announcement_title';
+  static const String remoteConfigAnnouncementMessage = 'announcement_message';
+  static const String remoteConfigAnnouncementType = 'announcement_type';
+  static const String remoteConfigAnnouncementDismissible = 'announcement_dismissible';
+  static const String remoteConfigMinSupportedVersion = 'min_supported_version';
+  static const String remoteConfigMaintenanceMode = 'maintenance_mode';
+  static const String remoteConfigEnergyTipEnabled = 'energy_saving_tip_enabled';
+  static const String remoteConfigMaxRoomsPerUser = 'max_rooms_per_user';
+  static const String remoteConfigMaxDevicesPerRoom = 'max_devices_per_room';
 
   // Input Validation Constants
   static const int minPasswordLength = 8;

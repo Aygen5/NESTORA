@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'app/app.dart';
 import 'app/di/injection.dart';
 import 'core/services/crashlytics_service.dart';
+import 'core/services/performance_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -27,6 +28,11 @@ void main() async {
   // Initialize global Crashlytics error handlers
   if (sl.isRegistered<CrashlyticsService>()) {
     await sl<CrashlyticsService>().initialize();
+  }
+
+  // Initialize Performance Monitoring
+  if (sl.isRegistered<PerformanceService>()) {
+    await sl<PerformanceService>().initialize();
   }
 
   runApp(const NestoraApp());

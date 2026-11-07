@@ -276,7 +276,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Beklenmeyen uygulama çökmelerinin Crashlytics'e bildirilmesi.
 - Temel analitik olaylarının (giriş, oda oluşturma, senaryo seçimi) gizlilik kurallarına uygun olarak (şifre ve kişisel veri içermeden) kaydedilmesi.
 
-### Adım 8.2: Performance Monitoring & Remote Config
+### Adım 8.2: [x] Performance Monitoring & Remote Config
 - Sayfa yüklenme süreleri ve ağ gecikmelerinin izlenmesi.
 - Remote Config üzerinden uygulama duyurusu ve dinamik parametre desteği.
 

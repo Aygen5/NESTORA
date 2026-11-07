@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/services/performance_service.dart';
 import '../di/injection.dart';
 import 'auth_guard.dart';
 
@@ -121,6 +122,8 @@ GoRouter createAppRouter({
       [
         if (sl.isRegistered<AnalyticsService>())
           sl<AnalyticsService>().getAnalyticsObserver(),
+        if (sl.isRegistered<PerformanceService>())
+          sl<PerformanceService>().getRouteObserver(),
       ];
 
   return GoRouter(

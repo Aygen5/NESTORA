@@ -1,19 +1,27 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/remote_config_service.dart';
 
 /// Service responsible for securely retrieving Demo account credentials
 /// from Firebase Remote Config, build environment variables (`--dart-define`),
 /// or default configurations without exposing credentials in client logs.
 class DemoConfigService {
   final FirebaseRemoteConfig? remoteConfig;
+  final RemoteConfigService? remoteConfigService;
 
   const DemoConfigService({
     this.remoteConfig,
+    this.remoteConfigService,
   });
 
   /// Initializes default Remote Config key-value pairs and attempts an activation.
   Future<void> initializeDefaults() async {
+    if (remoteConfigService != null) {
+      await remoteConfigService!.initializeDefaults();
+      return;
+    }
+
     if (remoteConfig == null) return;
 
     try {
@@ -39,6 +47,10 @@ class DemoConfigService {
 
   /// Retrieves the active demo email from Remote Config, Dart environment, or defaults.
   Future<String> getDemoEmail() async {
+    if (remoteConfigService != null) {
+      return remoteConfigService!.demoEmail;
+    }
+
     if (remoteConfig != null) {
       try {
         final remoteEmail =
@@ -59,6 +71,10 @@ class DemoConfigService {
 
   /// Retrieves the active demo password from Remote Config, Dart environment, or defaults.
   Future<String> getDemoPassword() async {
+    if (remoteConfigService != null) {
+      return remoteConfigService!.demoPassword;
+    }
+
     if (remoteConfig != null) {
       try {
         final remotePassword =
@@ -77,4 +93,3 @@ class DemoConfigService {
     return AppConstants.demoPassword;
   }
 }
-

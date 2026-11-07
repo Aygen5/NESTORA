@@ -2,10 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
+import '../../../../core/services/remote_config_service.dart';
+import '../../../../core/widgets/nestora_announcement_banner.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 import '../../../../core/widgets/nestora_switch.dart';
 import '../../../devices/domain/device_model.dart';
@@ -43,6 +46,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   String _activeScenario = 'Evdeyim';
+  bool _isAnnouncementDismissed = false;
 
   /// Generates a contextual Turkish greeting based on the current hour.
   String _getTimeBasedGreeting() {
@@ -229,6 +233,18 @@ class _DashboardPageState extends State<DashboardPage> {
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       children: [
+                        // Remote Broadcast Announcement Banner
+                        if (!_isAnnouncementDismissed &&
+                            sl.isRegistered<RemoteConfigService>() &&
+                            sl<RemoteConfigService>().announcement.hasContent) ...[
+                          NestoraAnnouncementBanner(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            announcement: sl<RemoteConfigService>().announcement,
+                            onDismiss: () =>
+                                setState(() => _isAnnouncementDismissed = true),
+                          ),
+                        ],
+
                         // 1. NESTORA TYPOGRAPHY & HERO BANNER
                         _buildHeroBanner(
                           isDark: isDark,

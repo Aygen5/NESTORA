@@ -2,11 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Type;
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/crashlytics_service.dart';
+import '../../core/services/performance_service.dart';
+import '../../core/services/remote_config_service.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/datasources/demo_config_service.dart';
 import '../../features/auth/data/datasources/firestore_seed_service.dart';
@@ -134,6 +137,8 @@ final locator = ServiceLocator.instance;
 /// - [FirebaseRemoteConfig]
 /// - [CrashlyticsService]
 /// - [AnalyticsService]
+/// - [PerformanceService]
+/// - [RemoteConfigService]
 ///
 /// In subsequent phases, Data Sources and Repositories will be registered here.
 Future<void> initDependencies({
@@ -143,8 +148,11 @@ Future<void> initDependencies({
   FirebaseAnalytics? firebaseAnalytics,
   FirebaseRemoteConfig? firebaseRemoteConfig,
   FirebaseCrashlytics? firebaseCrashlytics,
+  FirebasePerformance? firebasePerformance,
   CrashlyticsService? crashlyticsService,
   AnalyticsService? analyticsService,
+  PerformanceService? performanceService,
+  RemoteConfigService? remoteConfigService,
 }) async {
   // 1. SharedPreferences (Local key-value storage)
   if (!sl.isRegistered<SharedPreferences>()) {
@@ -247,6 +255,46 @@ Future<void> initDependencies({
     );
   }
 
+  // 2.2 Performance Service
+  if (performanceService != null) {
+    if (!sl.isRegistered<PerformanceService>()) {
+      sl.registerSingleton<PerformanceService>(performanceService);
+    }
+  } else if (!sl.isRegistered<PerformanceService>()) {
+    FirebasePerformance? perf;
+    if (firebasePerformance != null) {
+      perf = firebasePerformance;
+    } else {
+      try {
+        if (!kIsWeb &&
+            (defaultTargetPlatform == TargetPlatform.android ||
+                defaultTargetPlatform == TargetPlatform.iOS)) {
+          perf = FirebasePerformance.instance;
+        }
+      } catch (e) {
+        debugPrint('ServiceLocator: FirebasePerformance could not be initialized ($e)');
+      }
+    }
+    sl.registerSingleton<PerformanceService>(
+      PerformanceService(performance: perf),
+    );
+  }
+
+  // 2.3 Remote Config Service
+  if (remoteConfigService != null) {
+    if (!sl.isRegistered<RemoteConfigService>()) {
+      sl.registerSingleton<RemoteConfigService>(remoteConfigService);
+    }
+  } else if (!sl.isRegistered<RemoteConfigService>()) {
+    final rcService = RemoteConfigService(
+      remoteConfig: sl.isRegistered<FirebaseRemoteConfig>()
+          ? sl<FirebaseRemoteConfig>()
+          : null,
+    );
+    rcService.initializeDefaults();
+    sl.registerSingleton<RemoteConfigService>(rcService);
+  }
+
   // 3. Auth Redirect Listenable for GoRouter
   if (!sl.isRegistered<AppAuthListenable>()) {
     FirebaseAuth? auth;
@@ -261,6 +309,9 @@ Future<void> initDependencies({
     final demoConfig = DemoConfigService(
       remoteConfig: sl.isRegistered<FirebaseRemoteConfig>()
           ? sl<FirebaseRemoteConfig>()
+          : null,
+      remoteConfigService: sl.isRegistered<RemoteConfigService>()
+          ? sl<RemoteConfigService>()
           : null,
     );
     demoConfig.initializeDefaults();
