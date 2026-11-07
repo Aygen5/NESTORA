@@ -950,7 +950,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
               subtitle,
               style: AppTypography.caption.copyWith(
                 color: isSelected ? Colors.white70 : AppColors.secondary,
-                fontSize: 10,
+                fontSize: 11,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

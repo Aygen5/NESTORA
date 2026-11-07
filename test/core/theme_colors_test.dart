@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:nestora/app/theme/app_colors.dart';
 import 'package:nestora/app/theme/app_theme.dart';
 import 'package:nestora/app/theme/app_typography.dart';
@@ -28,6 +29,7 @@ double _contrastRatio(Color c1, Color c2) {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   group('Faz 7.1: Tema Renkleri ve Kontrast Değerlendirme Testleri', () {
     test('Açık mod arka plan renk sabitleri ve değerleri doğrudur', () {
@@ -95,8 +97,8 @@ void main() {
       final light = AppTheme.lightTheme;
       final dark = AppTheme.darkTheme;
 
-      expect(light.textTheme.bodyMedium?.fontFamily, AppTypography.fontFamily);
-      expect(dark.textTheme.bodyMedium?.fontFamily, AppTypography.fontFamily);
+      expect(light.textTheme.bodyMedium?.fontFamily, startsWith('Manrope'));
+      expect(dark.textTheme.bodyMedium?.fontFamily, startsWith('Manrope'));
 
       expect(light.scaffoldBackgroundColor, AppColors.lightScaffoldBackground);
       expect(dark.scaffoldBackgroundColor, AppColors.darkScaffoldBackground);

@@ -858,7 +858,7 @@ class _DevicesPageState extends State<DevicesPage> {
                   style: AppTypography.caption.copyWith(
                     color: AppColors.secondary,
                     letterSpacing: 0.6,
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,

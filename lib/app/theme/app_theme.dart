@@ -10,6 +10,10 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: AppTypography.fontFamily,
+      textTheme: AppTypography.buildTextTheme(
+        textPrimary: AppColors.textPrimary,
+        textSecondary: AppColors.textSecondary,
+      ),
       scaffoldBackgroundColor: AppColors.lightScaffoldBackground, // #F4F3EC (Neutral Pearl)
       colorScheme: const ColorScheme(
         brightness: Brightness.light,
@@ -89,6 +93,10 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       fontFamily: AppTypography.fontFamily,
+      textTheme: AppTypography.buildTextTheme(
+        textPrimary: AppColors.darkTextPrimary,
+        textSecondary: AppColors.darkTextSecondary,
+      ),
       scaffoldBackgroundColor: AppColors.darkScaffoldBackground,
       colorScheme: const ColorScheme(
         brightness: Brightness.dark,

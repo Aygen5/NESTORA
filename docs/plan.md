@@ -244,7 +244,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Açık mod ana arka plan renginin değerlendirilmesi (`#F4F3EC` nötr inci tonu ile mevcut `#FDF5E6` karşılaştırması).
 - Koyu mod (`#131713`) ve kart yüzeylerinin (`#FFFFFF` / `#1C221D`) kontrast denetimi.
 
-### Adım 7.2: Manrope Tipografi Skalası Kontrolü
+### Adım 7.2: [x] Manrope Tipografi Skalası Kontrolü
 - Sayfa başlığı: 24–28 px (Bold 700)
 - Bölüm başlığı: 18–20 px (SemiBold 600)
 - Kart başlığı: 15–16 px (SemiBold 600)

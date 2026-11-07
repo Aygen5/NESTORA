@@ -122,4 +122,38 @@ class AppTypography {
   static TextStyle get labelMedium => labelMd();
   static TextStyle get labelSmall => badge();
   static TextStyle get caption => badge();
+
+  /// Generates the complete Material 3 TextTheme adhering strictly to the Manrope typography scale
+  static TextTheme buildTextTheme({
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    return TextTheme(
+      displayLarge: displayLarge.copyWith(color: textPrimary),
+      displayMedium: GoogleFonts.manrope(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        height: 1.25,
+        color: textPrimary,
+      ),
+      displaySmall: GoogleFonts.manrope(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        height: 1.25,
+        color: textPrimary,
+      ),
+      headlineLarge: pageTitle(color: textPrimary),
+      headlineMedium: sectionTitle(color: textPrimary),
+      headlineSmall: cardTitle(color: textPrimary),
+      titleLarge: sectionTitle(color: textPrimary),
+      titleMedium: cardTitle(color: textPrimary),
+      titleSmall: buttonText(color: textPrimary),
+      bodyLarge: bodyLg(color: textPrimary),
+      bodyMedium: bodyText(color: textPrimary),
+      bodySmall: description(color: textSecondary),
+      labelLarge: buttonText(color: textPrimary),
+      labelMedium: labelMd(color: textSecondary),
+      labelSmall: badge(color: textSecondary),
+    );
+  }
 }

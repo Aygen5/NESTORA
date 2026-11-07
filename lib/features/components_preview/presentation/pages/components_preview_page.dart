@@ -847,7 +847,7 @@ class _ComponentsPreviewPageState extends State<ComponentsPreviewPage> {
           const SizedBox(height: 8),
           Text(title, style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
           const SizedBox(height: 2),
-          Text(subtitle, style: AppTypography.caption.copyWith(color: AppColors.secondary, fontSize: 10), textAlign: TextAlign.center),
+          Text(subtitle, style: AppTypography.caption.copyWith(color: AppColors.secondary, fontSize: 11), textAlign: TextAlign.center),
           const SizedBox(height: 8),
           if (actionLabel != null)
             Container(
@@ -856,7 +856,7 @@ class _ComponentsPreviewPageState extends State<ComponentsPreviewPage> {
                 color: AppColors.primaryContainer,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(actionLabel, style: AppTypography.caption.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
+              child: Text(actionLabel, style: AppTypography.caption.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
             ),
           if (chipLabel != null)
             Container(
@@ -865,7 +865,7 @@ class _ComponentsPreviewPageState extends State<ComponentsPreviewPage> {
                 color: isDark ? AppColors.darkCard : Colors.white,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(chipLabel, style: AppTypography.caption.copyWith(color: AppColors.secondary, fontWeight: FontWeight.bold, fontSize: 10)),
+              child: Text(chipLabel, style: AppTypography.caption.copyWith(color: AppColors.secondary, fontWeight: FontWeight.bold, fontSize: 11)),
             ),
         ],
       ),

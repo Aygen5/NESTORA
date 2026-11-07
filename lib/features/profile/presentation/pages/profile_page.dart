@@ -336,14 +336,14 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 10)),
+                            const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 11)),
                             const SizedBox(width: 6),
                             Text(
                               '$roomsCount Oda',
                               style: AppTypography.caption.copyWith(color: AppColors.secondary),
                             ),
                             const SizedBox(width: 6),
-                            const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 10)),
+                            const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 11)),
                             const SizedBox(width: 6),
                             Text(
                               '$devicesCount Cihaz',

@@ -224,7 +224,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     style: AppTypography.pageTitle(
                       color: isDark ? AppColors.darkTextPrimary : const Color(0xFF1A261D),
                     ).copyWith(
-                      fontSize: 34,
+                      fontSize: 28,
                       fontWeight: FontWeight.w800,
                       height: 1.16,
                       letterSpacing: -0.6,
