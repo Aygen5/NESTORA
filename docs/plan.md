@@ -225,7 +225,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Bildirime dokunulduğunda ilgili cihaza veya odaya akıllı yönlendirme.
 - "Tümünü Okundu İşaretle" ve bildirim temizleme.
 
-### Adım 6.9: Profil ve Ayarlar Ekranı (`profile_page.dart`)
+### Adım 6.9: [x] Profil ve Ayarlar Ekranı (`profile_page.dart`)
 - Profil bilgileri (Ad, E-posta, Ev Sahibi rolü).
 - Galeri üzerinden profil fotoğrafı seçimi ve yerel depolama.
 - Tema seçimi: Açık Mod, Koyu Mod, Sistem Modu (`ThemeCubit` ve SharedPreferences ile kalıcı).
