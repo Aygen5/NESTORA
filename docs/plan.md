@@ -24,6 +24,15 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `lib/core/errors/exceptions.dart`: Veri katmanında fırlatılacak özel exception sınıfları.
 - `lib/core/utils/result.dart`: `Result<T>` veya temiz başarı/hata dönüş tipi (gereksiz ağır functional programming paketleri olmadan).
 - `lib/core/constants/app_constants.dart`: Uygulama genel sabitleri, varsayılan değerler ve doğrulama regex'leri.
+> *Not:* Bu adım tamamen yerel Dart kodudur, harici Firebase bağlantısı gerektirmez.
+
+> [!IMPORTANT]
+> **Manuel Olarak Yapılması Gereken (Firebase Console Başlangıcı):**
+> Adım 1.2 tamamlandıktan hemen sonra ve Adım 1.3'e başlamadan önce:
+> - **Neden Burada Gerekli?** Adım 1.3'te `lib/firebase_options.dart` dosyasının oluşturulması ve `main.dart` içinde `Firebase.initializeApp()` kodunun çalışabilmesi için Firebase üzerinde gerçek bir projenin var olması ve projenin Flutter uygulamasıyla eşleştirilmesi (Firebase CLI / FlutterFire) gerekir.
+> - **Bu Noktada Console'da Yapılacaklar:**
+>   1. Firebase Console'da yeni proje açmak (ücretsiz **Spark** planı).
+>   2. Flutter uygulamasını bu projeye bağlamak (`google-services.json` / `GoogleService-Info.plist` / `firebase_options.dart`).
 
 ### Adım 1.3: Firebase Başlangıç Yapılandırması
 - `lib/firebase_options.dart` yapılandırmasının oluşturulması/entegrasyonu.
@@ -75,6 +84,11 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 
 > **Amaç:** Firebase Authentication ile gerçek kayıt, giriş, çıkış, şifre sıfırlama ve demo giriş akışını kurmak; ilk kullanım arayüzlerini bağlamak.
 
+> [!IMPORTANT]
+> **Manuel Olarak Yapılması Gereken (Faz 3 — Adım 3.1 Öncesinde):**
+> - **Firebase Authentication:** Firebase Console'dan *"Email/Password"* (E-posta/Şifre) sağlayıcısını tek tıkla aktif etmeniz gerekecektir.
+> - **Hızlı Demo Hesabı (Adım 3.5 için):** Console'dan test/demo kullanıcısının (`users` altında) oluşturulması gerekecektir.
+
 ### Adım 3.1: Auth Domain & Data Katmanı
 - `lib/features/auth/domain/repositories/auth_repository.dart`: Sözleşme tanımları (`signInWithEmail`, `signUpWithEmail`, `signOut`, `sendPasswordReset`, `signInDemo`, `authStateChanges`).
 - `lib/features/auth/data/datasources/auth_remote_data_source.dart`: FirebaseAuth SDK çağrıları.
@@ -105,6 +119,10 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 ## Faz 4: Domain & Data Katmanları (Firestore Şeması ve Modeller)
 
 > **Amaç:** Oda, sanal cihaz, bildirim ve kullanıcı profili için Firestore veri modellerini, DTO dönüşümlerini ve Security Rules kurallarını hayata geçirmek.
+
+> [!IMPORTANT]
+> **Manuel Olarak Yapılması Gereken (Faz 4 — Adım 4.3 ve 4.5 Öncesinde):**
+> - **Cloud Firestore:** Console üzerinden Firestore veritabanını oluşturmanız ("Test Modunda" başlatıp ardından hazırladığımız `firestore.rules` güvenlik kurallarını yapıştırmanız) gerekecektir.
 
 ### Adım 4.1: Domain Entities (Dış Servislerden Bağımsız Saf Modeller)
 - `lib/features/rooms/domain/entities/room.dart`: `id`, `name`, `iconName`, `targetTemperature`, `deviceCount`.
@@ -250,6 +268,10 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 ## Faz 8: Firebase İzleme, Spark Kota Kontrolü ve Güvenlik
 
 > **Amaç:** Firebase Spark plan sınırları içinde kalarak uygulamanın kararlılığını ve güvenliğini sağlamak.
+
+> [!IMPORTANT]
+> **Manuel Olarak Yapılması Gereken (Faz 8 Öncesinde):**
+> - **Remote Config, Crashlytics, Analytics:** İhtiyaç duyulan parametre ve ayarların Firebase Console'da açılması/kontrol edilmesi.
 
 ### Adım 8.1: Crashlytics & Analytics Entegrasyonu
 - Beklenmeyen uygulama çökmelerinin Crashlytics'e bildirilmesi.
