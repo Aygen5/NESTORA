@@ -1,15 +1,22 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../app/router/app_router.dart';
 import '../../app/theme/app_colors.dart';
 
-/// Custom, unique Nestora Logo Emblem & Brand Widget
-/// Displays the official Stitch Nestora Logo asset with fallback to high-precision vector painter.
+/// Custom, unique Nestora Logo Emblem & Brand Widget.
+/// Displays the official circular Nestora Logo asset with transparent corners,
+/// guaranteed circular clipping ([ClipOval]), ambient aura glow, and optional
+/// interactive navigation to the home dashboard on tap.
 class NestoraLogo extends StatelessWidget {
   final double size;
   final double glowProgress; // 0.0 to 1.0
   final bool showGlow;
   final Color? primaryColor;
   final Color? glowColor;
+  final bool enableNavigation;
+  final VoidCallback? onTap;
+  final String? tooltip;
 
   const NestoraLogo({
     super.key,
@@ -18,7 +25,26 @@ class NestoraLogo extends StatelessWidget {
     this.showGlow = false,
     this.primaryColor,
     this.glowColor,
+    this.enableNavigation = false,
+    this.onTap,
+    this.tooltip,
   });
+
+  void _handleTap(BuildContext context) {
+    if (onTap != null) {
+      onTap!();
+      return;
+    }
+    if (enableNavigation) {
+      try {
+        context.goToDashboard();
+      } catch (_) {
+        try {
+          context.go(AppRoutePaths.dashboard);
+        } catch (_) {}
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +52,9 @@ class NestoraLogo extends StatelessWidget {
     final houseColor = primaryColor ??
         (isDark ? AppColors.darkPrimary : AppColors.primaryContainer);
     final lightColor = glowColor ?? AppColors.tertiaryFixedDim;
+    final isClickable = enableNavigation || onTap != null;
 
-    return SizedBox(
+    final Widget emblem = SizedBox(
       width: size,
       height: size,
       child: Stack(
@@ -45,8 +72,12 @@ class NestoraLogo extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      lightColor.withValues(alpha: 0.60 * (showGlow ? 1.0 : glowProgress)),
-                      lightColor.withValues(alpha: 0.20 * (showGlow ? 1.0 : glowProgress)),
+                      lightColor.withValues(
+                        alpha: 0.60 * (showGlow ? 1.0 : glowProgress),
+                      ),
+                      lightColor.withValues(
+                        alpha: 0.20 * (showGlow ? 1.0 : glowProgress),
+                      ),
                       Colors.transparent,
                     ],
                     stops: const [0.0, 0.55, 1.0],
@@ -55,24 +86,47 @@ class NestoraLogo extends StatelessWidget {
               ),
             ),
 
-          // Official Stitch Nestora Logo Asset with Vector Fallback
-          Image.asset(
-            'assets/screens/nestora_logo.png',
-            width: size,
-            height: size,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => CustomPaint(
-              size: Size(size, size),
-              painter: _NestoraEmblemPainter(
-                houseColor: houseColor,
-                lightColor: lightColor,
-                glowIntensity: glowProgress,
+          // Official Circular Nestora Logo with strict ClipOval and vector fallback
+          ClipOval(
+            child: Image.asset(
+              'assets/screens/nestora_logo.png',
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => CustomPaint(
+                size: Size(size, size),
+                painter: _NestoraEmblemPainter(
+                  houseColor: houseColor,
+                  lightColor: lightColor,
+                  glowIntensity: glowProgress,
+                ),
               ),
             ),
           ),
         ],
       ),
     );
+
+    if (isClickable) {
+      final effectiveTooltip = tooltip ?? 'Ana Sayfa';
+      return Semantics(
+        button: true,
+        label: effectiveTooltip,
+        child: Tooltip(
+          message: effectiveTooltip,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _handleTap(context),
+              child: emblem,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return emblem;
   }
 }
 
@@ -92,6 +146,21 @@ class _NestoraEmblemPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
+    // Draw circular light sage emblem background
+    final bgPaint = Paint()
+      ..color = const Color(0xFFDCE6DD)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    canvas.drawCircle(Offset(w / 2, h / 2), w / 2, bgPaint);
+
+    // Draw circular ring
+    final ringPaint = Paint()
+      ..color = const Color(0xFFC0D2C2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1.0, w * 0.03)
+      ..isAntiAlias = true;
+    canvas.drawCircle(Offset(w / 2, h / 2), w * 0.46, ringPaint);
+
     // Draw Modern Rounded Architectural House Silhouette
     final housePaint = Paint()
       ..color = houseColor
@@ -99,13 +168,13 @@ class _NestoraEmblemPainter extends CustomPainter {
       ..isAntiAlias = true;
 
     final path = Path();
-    final left = w * 0.18;
-    final right = w * 0.82;
-    final bottom = h * 0.84;
+    final left = w * 0.22;
+    final right = w * 0.78;
+    final bottom = h * 0.78;
     final eavesY = h * 0.44;
     final peakX = w * 0.50;
-    final peakY = h * 0.14;
-    final r = w * 0.06;
+    final peakY = h * 0.20;
+    final r = w * 0.05;
 
     path.moveTo(left, bottom - r);
     path.quadraticBezierTo(left, bottom, left + r, bottom);
@@ -128,21 +197,21 @@ class _NestoraEmblemPainter extends CustomPainter {
       ..isAntiAlias = true;
 
     final leafPath = Path();
-    leafPath.moveTo(peakX + w * 0.08, peakY + h * 0.02);
+    leafPath.moveTo(peakX + w * 0.06, peakY + h * 0.02);
     leafPath.cubicTo(
-      peakX + w * 0.28,
+      peakX + w * 0.24,
       peakY - h * 0.06,
-      peakX + w * 0.34,
-      peakY + h * 0.12,
-      peakX + w * 0.14,
+      peakX + w * 0.28,
       peakY + h * 0.10,
+      peakX + w * 0.10,
+      peakY + h * 0.08,
     );
     leafPath.cubicTo(
-      peakX + w * 0.10,
-      peakY + h * 0.07,
-      peakX + w * 0.08,
-      peakY + h * 0.04,
-      peakX + w * 0.08,
+      peakX + w * 0.07,
+      peakY + h * 0.05,
+      peakX + w * 0.06,
+      peakY + h * 0.03,
+      peakX + w * 0.06,
       peakY + h * 0.02,
     );
     leafPath.close();
@@ -150,11 +219,11 @@ class _NestoraEmblemPainter extends CustomPainter {
 
     // Center Radiant Light Beacon
     final beaconCenter = Offset(w * 0.50, h * 0.56);
-    final beaconRadius = w * 0.15;
+    final beaconRadius = w * 0.13;
 
     final beaconGlowPaint = Paint()
       ..color = lightColor.withValues(alpha: 0.35 + 0.45 * glowIntensity)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, w * 0.08);
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, w * 0.06);
     canvas.drawCircle(beaconCenter, beaconRadius * 1.3, beaconGlowPaint);
 
     final portalPaint = Paint()

@@ -317,7 +317,7 @@ class _DashboardPageState extends State<DashboardPage> {
             children: [
               Row(
                 children: [
-                  const NestoraLogo(size: 28),
+                  const NestoraLogo(size: 28, enableNavigation: true),
                   const SizedBox(width: 8),
                   Text(
                     'Nestora',

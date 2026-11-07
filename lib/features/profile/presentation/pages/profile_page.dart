@@ -12,6 +12,7 @@ import '../../../../core/constants/seed_data.dart';
 import '../../../../core/widgets/nestora_button.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
 import '../../../../core/widgets/nestora_input.dart';
+import '../../../../core/widgets/nestora_logo.dart';
 import '../../../../core/widgets/nestora_snackbar.dart';
 import '../../../../core/widgets/nestora_switch.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
@@ -187,7 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 0,
         title: Row(
           children: [
-            const Icon(Icons.eco_rounded, size: 24, color: AppColors.primaryContainer),
+            const NestoraLogo(size: 24, enableNavigation: true),
             const SizedBox(width: 8),
             Text(
               'Profil',

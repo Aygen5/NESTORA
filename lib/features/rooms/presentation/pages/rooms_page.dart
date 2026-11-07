@@ -5,6 +5,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
+import '../../../../core/widgets/nestora_logo.dart';
 import '../../../devices/presentation/cubit/devices_cubit.dart';
 import '../../../devices/presentation/cubit/devices_state.dart';
 import '../cubit/rooms_cubit.dart';
@@ -110,12 +111,19 @@ class _RoomsPageState extends State<RoomsPage> {
                 onPressed: () => Navigator.pop(context),
               )
             : null,
-        title: Text(
-          'Odalarım',
-          style: AppTypography.headlineSmall.copyWith(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const NestoraLogo(size: 24, enableNavigation: true),
+            const SizedBox(width: 8),
+            Text(
+              'Odalarım',
+              style: AppTypography.headlineSmall.copyWith(
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(

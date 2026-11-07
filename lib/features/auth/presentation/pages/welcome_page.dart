@@ -43,12 +43,12 @@ class WelcomePage extends StatelessWidget {
                           Container(
                             width: 36,
                             height: 36,
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
                               color: isDark
                                   ? AppColors.darkSecondarySurface
                                   : Colors.white,
-                              borderRadius: BorderRadius.circular(10),
+                              shape: BoxShape.circle,
                               boxShadow: const [
                                 BoxShadow(
                                   color: Color(0x0C000000),
@@ -57,7 +57,9 @@ class WelcomePage extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            child: const NestoraLogo(size: 28),
+                            child: const Center(
+                              child: NestoraLogo(size: 32),
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Text(

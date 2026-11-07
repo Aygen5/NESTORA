@@ -204,12 +204,12 @@ class _LoginPageState extends State<LoginPage> {
                               Container(
                                 width: 64,
                                 height: 64,
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
                                   color: isDark
                                       ? AppColors.darkSecondarySurface
                                       : AppColors.surfaceContainerLow,
-                                  borderRadius: BorderRadius.circular(18),
+                                  shape: BoxShape.circle,
                                   boxShadow: const [
                                     BoxShadow(
                                       color: Color(0x0A000000),
@@ -218,7 +218,9 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ],
                                 ),
-                                child: const NestoraLogo(size: 48),
+                                child: const Center(
+                                  child: NestoraLogo(size: 52),
+                                ),
                               ),
                               const SizedBox(height: 14),
                               Container(

@@ -5,6 +5,14 @@ import '../../../../app/router/app_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 
+/// Animated Splash Screen for Nestora.
+/// Implements a 2-stage explicit animation choreography:
+/// - Stage 1 (0.0 to 0.45): Circular Nestora logo slides down from the top (Y: -1.4 -> 0.0)
+///   with a soft bounce ([Curves.easeOutBack]).
+/// - Rest Hold (0.45 to 0.70): Logo stays centered with radiant ambient aura for clear brand visibility.
+/// - Stage 2 (0.70 to 1.00): Entire screen slides upward out of the screen (Y: 0.0 -> -1.0)
+///   with smooth curtain dismissal ([Curves.easeInOutCubic]).
+/// Fully respects WCAG AAA Reduced-Motion standards via [MediaQuery.disableAnimations].
 class SplashPage extends StatefulWidget {
   final VoidCallback? onFinish;
 
@@ -17,148 +25,204 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scaleAnim;
-  late Animation<double> _fadeAnim;
-  late Animation<double> _glowAnim;
-  Timer? _timer;
+  late Animation<Offset> _logoSlideAnimation;
+  late Animation<double> _logoFadeAnimation;
+  late Animation<Offset> _screenSlideAnimation;
+  late Animation<double> _glowAnimation;
+  Timer? _fallbackTimer;
+  bool _hasNavigated = false;
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1800),
     );
 
-    _scaleAnim = Tween<double>(begin: 0.60, end: 1.0).animate(
+    // 1. Stage: Logo drops smoothly from top into center with spring/bounce
+    _logoSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, -1.4),
+      end: Offset.zero,
+    ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.75, curve: Curves.easeOutBack),
+        curve: const Interval(0.0, 0.45, curve: Curves.easeOutBack),
       ),
     );
 
-    _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+    // Soft fade-in during the initial downward slide
+    _logoFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.40, curve: Curves.easeIn),
+        curve: const Interval(0.0, 0.30, curve: Curves.easeIn),
       ),
     );
 
-    _glowAnim = Tween<double>(begin: 0.2, end: 1.0).animate(
+    // Radiant bloom glow pulsing during center hold
+    _glowAnimation = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.2, 1.0, curve: Curves.easeInOut),
+        curve: const Interval(0.20, 0.65, curve: Curves.easeInOut),
       ),
     );
+
+    // 2. Stage: Entire screen slides upward out of view
+    _screenSlideAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(0, -1.0),
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.70, 1.0, curve: Curves.easeInOutCubic),
+      ),
+    );
+
+    // Trigger navigation immediately when choreography finishes
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _navigateToNext();
+      }
+    });
 
     _controller.forward();
 
-    // Clean, short presentation (~1.8 seconds)
-    _timer = Timer(const Duration(milliseconds: 1800), () {
-      if (mounted) {
-        if (widget.onFinish != null) {
-          widget.onFinish!.call();
-        } else {
-          try {
-            context.go(AppRoutePaths.onboarding);
-          } catch (_) {}
-        }
+    // Safety fallback timer ensuring navigation occurs smoothly even in delayed environments
+    _fallbackTimer = Timer(const Duration(milliseconds: 2100), () {
+      if (mounted && !_hasNavigated) {
+        _navigateToNext();
       }
     });
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (disableAnimations && !_hasNavigated) {
+      _controller.value = 1.0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _navigateToNext();
+      });
+    }
+  }
+
+  void _navigateToNext() {
+    if (!mounted || _hasNavigated) return;
+    _hasNavigated = true;
+    _fallbackTimer?.cancel();
+
+    if (widget.onFinish != null) {
+      widget.onFinish!.call();
+    } else {
+      try {
+        context.go(AppRoutePaths.onboarding);
+      } catch (_) {}
+    }
+  }
+
+  @override
   void dispose() {
-    _timer?.cancel();
+    _fallbackTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Dark ivory/pine background (#131713)
     return Scaffold(
-      backgroundColor: AppColors.darkScaffoldBackground,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            final glowVal = _glowAnim.value;
-            return FadeTransition(
-              opacity: _fadeAnim,
-              child: ScaleTransition(
-                scale: _scaleAnim,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Outer Soft Ambient Aura
-                    Container(
-                      width: 360,
-                      height: 360,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            AppColors.warmAmber.withValues(alpha: 0.28 * glowVal),
-                            AppColors.primaryFixed.withValues(alpha: 0.12 * glowVal),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.55, 1.0],
+      backgroundColor: Colors.transparent,
+      body: SlideTransition(
+        position: _screenSlideAnimation, // Stage 2: Screen slides upward out of view
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: AppColors.darkScaffoldBackground,
+          child: Center(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                final glow = _glowAnimation.value;
+                return FadeTransition(
+                  opacity: _logoFadeAnimation,
+                  child: SlideTransition(
+                    position: _logoSlideAnimation, // Stage 1: Logo slides down from top
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Outer Ambient Halo Ring
+                        Container(
+                          width: 360,
+                          height: 360,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                const Color(0xFFDCE6DD).withValues(alpha: 0.28 * glow),
+                                AppColors.warmAmber.withValues(alpha: 0.16 * glow),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 0.55, 1.0],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
 
-                    // Core Radiant Bloom Halo
-                    Container(
-                      width: 260,
-                      height: 260,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.warmAmber.withValues(alpha: 0.45 * glowVal),
-                            blurRadius: 60,
-                            spreadRadius: 15,
+                        // Soft Core Bloom Halo
+                        Container(
+                          width: 270,
+                          height: 270,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFB4C8B5).withValues(alpha: 0.38 * glow),
+                                blurRadius: 45,
+                                spreadRadius: 10,
+                              ),
+                              BoxShadow(
+                                color: AppColors.warmAmber.withValues(alpha: 0.22 * glow),
+                                blurRadius: 30,
+                                spreadRadius: 4,
+                              ),
+                            ],
                           ),
-                          BoxShadow(
-                            color: const Color(0xFFD3E8D5).withValues(alpha: 0.25 * glowVal),
-                            blurRadius: 40,
-                            spreadRadius: 8,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Big, Prominent, Center-Stage Nestora Logo
-                    Container(
-                      width: 220,
-                      height: 220,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF19201A),
-                        border: Border.all(
-                          color: const Color(0xFF2E3D30),
-                          width: 2,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.4),
-                            blurRadius: 30,
-                            offset: const Offset(0, 10),
+
+                        // Prominent, Large, Center-Stage Circular Nestora Logo
+                        Container(
+                          width: 220,
+                          height: 220,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.35),
+                                blurRadius: 30,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(28),
-                      child: const NestoraLogo(
-                        size: 164,
-                        showGlow: true,
-                      ),
+                          child: const NestoraLogo(
+                            size: 220,
+                            showGlow: false,
+                            enableNavigation: false,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            );
-          },
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
