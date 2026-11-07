@@ -179,14 +179,16 @@ class _LoginPageState extends State<LoginPage> {
           final isLoading = state is AuthLoading;
 
           return Scaffold(
+            resizeToAvoidBottomInset: true,
             backgroundColor: isDark
                 ? AppColors.darkScaffoldBackground
-                : AppColors.lightScaffoldBackground, // Pure #FFFFFF
+                : AppColors.lightScaffoldBackground,
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: SingleChildScrollView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,
@@ -375,8 +377,9 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 8),
 
                         // Remember Me & Forgot Password Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Row(
                               mainAxisSize: MainAxisSize.min,
@@ -541,8 +544,9 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 24),
 
                         // Footer Link: Register
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               'Hesabın yok mu?',

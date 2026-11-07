@@ -65,10 +65,13 @@ class _ComponentsPreviewPageState extends State<ComponentsPreviewPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 820),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Isolation Notice Banner (Dev & Design Verification Only)
@@ -771,7 +774,9 @@ class _ComponentsPreviewPageState extends State<ComponentsPreviewPage> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildSectionHeader(String title, String badge) {

@@ -169,6 +169,7 @@ class _AddEditRoomPageState extends State<AddEditRoomPage> {
         : SeedData.defaultDeviceModels;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
       appBar: AppBar(
         backgroundColor: (isDark ? AppColors.darkCard : AppColors.lightScaffold)

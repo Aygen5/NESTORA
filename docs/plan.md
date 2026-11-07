@@ -253,7 +253,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Küçük etiket/rozet: 11–12 px (Medium 500)
 - Aşırı büyük veya orantısız metinlerin standartlaştırılması.
 
-### Adım 7.3: Responsive & Web Uyumluluğu
+### Adım 7.3: [x] Responsive & Web Uyumluluğu
 - Mobil (360–390px), Tablet (768px), Küçük Masaüstü (1024px) ve Geniş Masaüstü (1440px) testleri.
 - Geniş ekranlarda içeriklerin kontrolsüz yayılmasını önlemek için `maxWidth: 820` / `maxWidth: 480` sınırlayıcılarının doğrulanması.
 - Klavye açıldığında formların erişilebilir kalması (`resizeToAvoidBottomInset` ve kaydırma kontrolleri).

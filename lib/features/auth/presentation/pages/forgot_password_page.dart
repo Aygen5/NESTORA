@@ -129,14 +129,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           final isSuccess = state is AuthPasswordResetSent;
 
           return Scaffold(
+            resizeToAvoidBottomInset: true,
             backgroundColor: isDark
                 ? AppColors.darkScaffoldBackground
-                : AppColors.lightScaffoldBackground, // Pure #FFFFFF
+                : AppColors.lightScaffoldBackground,
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: SingleChildScrollView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,

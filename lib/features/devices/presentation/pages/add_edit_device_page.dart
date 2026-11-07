@@ -372,6 +372,7 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
         : SeedData.defaultDeviceModels;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
       appBar: AppBar(
         backgroundColor: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.9),

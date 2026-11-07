@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nestora/app/theme/app_colors.dart';
 import 'package:nestora/app/theme/app_theme.dart';
-import 'package:nestora/app/theme/app_typography.dart';
 
 /// Helper to compute WCAG 2.1 relative luminance
 double _relativeLuminance(Color color) {
