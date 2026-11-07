@@ -38,7 +38,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `lib/firebase_options.dart` yapılandırmasının oluşturulması/entegrasyonu.
 - `lib/main.dart` dosyasının yalnızca Flutter binding, Firebase initialization, yerel SharedPreferences başlatma ve Root App çağrısına odaklanacak şekilde sadeleştirilmesi (iş mantığından ve sayfa kodlarından arındırılması).
 
-### Adım 1.4: Bağımlılık Enjeksiyonu (Dependency Injection / Service Locator)
+### Adım 1.4: [x] Bağımlılık Enjeksiyonu (Dependency Injection / Service Locator)
 - `lib/app/di/injection.dart`: FirebaseAuth, FirebaseFirestore, SharedPreferences, Data Source'lar ve Repository'lerin merkezi, temiz ve yalın kaydı.
 - Gereksiz karmaşık reflection ve kod üretiminden kaçınılması; doğrudan, tip güvenli kayıt mekanizması.
 

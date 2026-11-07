@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'app/app.dart';
+import 'app/di/injection.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -18,6 +19,9 @@ void main() async {
       debugPrintStack(stackTrace: stackTrace);
     }
   }
+
+  // Initialize dependency injection / service locator
+  await initDependencies();
 
   runApp(const NestoraApp());
 }
