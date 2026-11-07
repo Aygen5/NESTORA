@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/analytics_service.dart';
+import '../../../../core/services/crashlytics_service.dart';
 import '../../../devices/domain/repositories/devices_repository.dart';
 import '../../domain/entities/room.dart';
 import '../../domain/repositories/rooms_repository.dart';
@@ -8,9 +10,12 @@ import 'rooms_state.dart';
 
 /// Cubit managing smart home rooms, real-time room streams, search filtering,
 /// and safe cascading room deletions (preserving devices or deleting them).
+/// Dispatches privacy-safe analytics events and logs unexpected room operation errors.
 class RoomsCubit extends Cubit<RoomsState> {
   final RoomsRepository roomsRepository;
   final DevicesRepository devicesRepository;
+  final AnalyticsService? analyticsService;
+  final CrashlyticsService? crashlyticsService;
 
   StreamSubscription<List<Room>>? _roomsSubscription;
   String? _currentUserId;
@@ -18,6 +23,8 @@ class RoomsCubit extends Cubit<RoomsState> {
   RoomsCubit({
     required this.roomsRepository,
     required this.devicesRepository,
+    this.analyticsService,
+    this.crashlyticsService,
   }) : super(const RoomsInitial());
 
   /// Loads and listens to real-time updates for all rooms belonging to [userId].
@@ -44,7 +51,12 @@ class RoomsCubit extends Cubit<RoomsState> {
           emit(RoomsLoaded(rooms: rooms));
         }
       },
-      onError: (error) {
+      onError: (error, stack) {
+        crashlyticsService?.recordError(
+          error,
+          stack,
+          reason: 'Rooms watchRooms stream error for user: $cleanUid',
+        );
         emit(RoomsError('Odalar yüklenirken bir hata oluştu: $error'));
       },
     );
@@ -88,8 +100,14 @@ class RoomsCubit extends Cubit<RoomsState> {
     final result = await roomsRepository.createRoom(cleanUid, room);
 
     if (result.isSuccess) {
+      analyticsService?.logRoomCreated(roomType: room.iconName);
       _emitSuccessMessage('Oda başarıyla eklendi.');
     } else {
+      crashlyticsService?.recordError(
+        result.failure,
+        null,
+        reason: 'createRoom failure: ${result.failure.message}',
+      );
       _emitErrorMessage(result.failure.message);
     }
   }
@@ -123,6 +141,11 @@ class RoomsCubit extends Cubit<RoomsState> {
     if (result.isSuccess) {
       _emitSuccessMessage('Oda başarıyla güncellendi.');
     } else {
+      crashlyticsService?.recordError(
+        result.failure,
+        null,
+        reason: 'updateRoom failure: ${result.failure.message}',
+      );
       _emitErrorMessage(result.failure.message);
     }
   }
@@ -154,6 +177,11 @@ class RoomsCubit extends Cubit<RoomsState> {
         moveToRoomId.trim(),
       );
       if (moveRes.isFailure) {
+        crashlyticsService?.recordError(
+          moveRes.failure,
+          null,
+          reason: 'deleteRoom moveDevicesToRoom failure',
+        );
         _emitErrorMessage(
           'Cihazlar taşınamadığı için oda silinemedi: ${moveRes.failure.message}',
         );
@@ -165,6 +193,11 @@ class RoomsCubit extends Cubit<RoomsState> {
         cleanRoomId,
       );
       if (deleteDevicesRes.isFailure) {
+        crashlyticsService?.recordError(
+          deleteDevicesRes.failure,
+          null,
+          reason: 'deleteRoom deleteDevicesByRoom failure',
+        );
         _emitErrorMessage(
           'Oda cihazları silinemediği için işlem durduruldu: ${deleteDevicesRes.failure.message}',
         );
@@ -176,11 +209,17 @@ class RoomsCubit extends Cubit<RoomsState> {
     final deleteRoomRes = await roomsRepository.deleteRoom(cleanUid, cleanRoomId);
 
     if (deleteRoomRes.isSuccess) {
+      analyticsService?.logRoomDeleted(roomId: cleanRoomId);
       final msg = moveToRoomId != null && moveToRoomId.trim().isNotEmpty
           ? 'Oda silindi ve cihazlar başarıyla aktarıldı.'
           : 'Oda ve ilişkili cihazlar başarıyla silindi.';
       _emitSuccessMessage(msg);
     } else {
+      crashlyticsService?.recordError(
+        deleteRoomRes.failure,
+        null,
+        reason: 'deleteRoom failure: ${deleteRoomRes.failure.message}',
+      );
       _emitErrorMessage(deleteRoomRes.failure.message);
     }
   }

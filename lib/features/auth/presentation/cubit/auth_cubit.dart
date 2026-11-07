@@ -1,18 +1,26 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/analytics_service.dart';
+import '../../../../core/services/crashlytics_service.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../widgets/password_validator_widget.dart';
 import 'auth_state.dart';
 
 /// Cubit managing user authentication flow, input validation, and session states.
+/// Dispatches privacy-safe analytics events and records unexpected auth failures.
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository authRepository;
+  final AnalyticsService? analyticsService;
+  final CrashlyticsService? crashlyticsService;
+
   StreamSubscription<AuthUser?>? _authSubscription;
 
   AuthCubit({
     required this.authRepository,
+    this.analyticsService,
+    this.crashlyticsService,
   }) : super(const AuthInitial()) {
     _initAuthListener();
   }
@@ -20,6 +28,8 @@ class AuthCubit extends Cubit<AuthState> {
   void _initAuthListener() {
     _authSubscription = authRepository.authStateChanges.listen((authUser) {
       if (authUser != null) {
+        analyticsService?.setUserId(authUser.id);
+        crashlyticsService?.setUserId(authUser.id);
         emit(Authenticated(authUser));
       } else {
         if (state is! AuthInitial && state is! AuthLoading) {
@@ -33,6 +43,8 @@ class AuthCubit extends Cubit<AuthState> {
   void checkAuthStatus() {
     final user = authRepository.currentUser;
     if (user != null) {
+      analyticsService?.setUserId(user.id);
+      crashlyticsService?.setUserId(user.id);
       emit(Authenticated(user));
     } else {
       emit(const Unauthenticated());
@@ -63,8 +75,20 @@ class AuthCubit extends Cubit<AuthState> {
     );
 
     result.when(
-      success: (user) => emit(Authenticated(user)),
-      failure: (failure) => emit(AuthError(failure.message, code: failure.code)),
+      success: (user) {
+        analyticsService?.logLogin(method: 'email');
+        analyticsService?.setUserId(user.id);
+        crashlyticsService?.setUserId(user.id);
+        emit(Authenticated(user));
+      },
+      failure: (failure) {
+        crashlyticsService?.recordError(
+          failure,
+          null,
+          reason: 'signInWithEmail failure: ${failure.code}',
+        );
+        emit(AuthError(failure.message, code: failure.code));
+      },
     );
   }
 
@@ -118,8 +142,20 @@ class AuthCubit extends Cubit<AuthState> {
     );
 
     result.when(
-      success: (user) => emit(Authenticated(user)),
-      failure: (failure) => emit(AuthError(failure.message, code: failure.code)),
+      success: (user) {
+        analyticsService?.logSignUp(method: 'email');
+        analyticsService?.setUserId(user.id);
+        crashlyticsService?.setUserId(user.id);
+        emit(Authenticated(user));
+      },
+      failure: (failure) {
+        crashlyticsService?.recordError(
+          failure,
+          null,
+          reason: 'signUpWithEmail failure: ${failure.code}',
+        );
+        emit(AuthError(failure.message, code: failure.code));
+      },
     );
   }
 
@@ -136,8 +172,20 @@ class AuthCubit extends Cubit<AuthState> {
     );
 
     result.when(
-      success: (user) => emit(Authenticated(user)),
-      failure: (failure) => emit(AuthError(failure.message, code: failure.code)),
+      success: (user) {
+        analyticsService?.logLogin(method: 'demo');
+        analyticsService?.setUserId(user.id);
+        crashlyticsService?.setUserId(user.id);
+        emit(Authenticated(user));
+      },
+      failure: (failure) {
+        crashlyticsService?.recordError(
+          failure,
+          null,
+          reason: 'signInDemo failure: ${failure.code}',
+        );
+        emit(AuthError(failure.message, code: failure.code));
+      },
     );
   }
 
@@ -157,7 +205,14 @@ class AuthCubit extends Cubit<AuthState> {
 
     result.when(
       success: (_) => emit(AuthPasswordResetSent(cleanEmail)),
-      failure: (failure) => emit(AuthError(failure.message, code: failure.code)),
+      failure: (failure) {
+        crashlyticsService?.recordError(
+          failure,
+          null,
+          reason: 'sendPasswordReset failure: ${failure.code}',
+        );
+        emit(AuthError(failure.message, code: failure.code));
+      },
     );
   }
 
@@ -168,8 +223,20 @@ class AuthCubit extends Cubit<AuthState> {
     final result = await authRepository.signOut();
 
     result.when(
-      success: (_) => emit(const Unauthenticated()),
-      failure: (failure) => emit(AuthError(failure.message, code: failure.code)),
+      success: (_) {
+        analyticsService?.logLogout();
+        analyticsService?.setUserId(null);
+        crashlyticsService?.setUserId(null);
+        emit(const Unauthenticated());
+      },
+      failure: (failure) {
+        crashlyticsService?.recordError(
+          failure,
+          null,
+          reason: 'signOut failure: ${failure.code}',
+        );
+        emit(AuthError(failure.message, code: failure.code));
+      },
     );
   }
 

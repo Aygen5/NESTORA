@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Type;
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/services/crashlytics_service.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/datasources/demo_config_service.dart';
 import '../../features/auth/data/datasources/firestore_seed_service.dart';
@@ -129,6 +132,8 @@ final locator = ServiceLocator.instance;
 /// - [FirebaseFirestore]
 /// - [FirebaseAnalytics]
 /// - [FirebaseRemoteConfig]
+/// - [CrashlyticsService]
+/// - [AnalyticsService]
 ///
 /// In subsequent phases, Data Sources and Repositories will be registered here.
 Future<void> initDependencies({
@@ -137,6 +142,9 @@ Future<void> initDependencies({
   FirebaseFirestore? firebaseFirestore,
   FirebaseAnalytics? firebaseAnalytics,
   FirebaseRemoteConfig? firebaseRemoteConfig,
+  FirebaseCrashlytics? firebaseCrashlytics,
+  CrashlyticsService? crashlyticsService,
+  AnalyticsService? analyticsService,
 }) async {
   // 1. SharedPreferences (Local key-value storage)
   if (!sl.isRegistered<SharedPreferences>()) {
@@ -201,6 +209,44 @@ Future<void> initDependencies({
     }
   }
 
+  // 2.1 Crashlytics & Analytics Services
+  if (crashlyticsService != null) {
+    if (!sl.isRegistered<CrashlyticsService>()) {
+      sl.registerSingleton<CrashlyticsService>(crashlyticsService);
+    }
+  } else if (!sl.isRegistered<CrashlyticsService>()) {
+    FirebaseCrashlytics? crashlytics;
+    if (firebaseCrashlytics != null) {
+      crashlytics = firebaseCrashlytics;
+    } else {
+      try {
+        if (!kIsWeb &&
+            (defaultTargetPlatform == TargetPlatform.android ||
+                defaultTargetPlatform == TargetPlatform.iOS ||
+                defaultTargetPlatform == TargetPlatform.macOS)) {
+          crashlytics = FirebaseCrashlytics.instance;
+        }
+      } catch (e) {
+        debugPrint('ServiceLocator: FirebaseCrashlytics could not be initialized ($e)');
+      }
+    }
+    sl.registerSingleton<CrashlyticsService>(
+      CrashlyticsService(crashlytics: crashlytics),
+    );
+  }
+
+  if (analyticsService != null) {
+    if (!sl.isRegistered<AnalyticsService>()) {
+      sl.registerSingleton<AnalyticsService>(analyticsService);
+    }
+  } else if (!sl.isRegistered<AnalyticsService>()) {
+    FirebaseAnalytics? analytics =
+        sl.isRegistered<FirebaseAnalytics>() ? sl<FirebaseAnalytics>() : null;
+    sl.registerSingleton<AnalyticsService>(
+      AnalyticsService(analytics: analytics),
+    );
+  }
+
   // 3. Auth Redirect Listenable for GoRouter
   if (!sl.isRegistered<AppAuthListenable>()) {
     FirebaseAuth? auth;
@@ -260,7 +306,13 @@ Future<void> initDependencies({
   // 6. Auth Cubit
   if (!sl.isRegistered<AuthCubit>()) {
     sl.registerFactory<AuthCubit>(
-      () => AuthCubit(authRepository: sl<AuthRepository>()),
+      () => AuthCubit(
+        authRepository: sl<AuthRepository>(),
+        analyticsService:
+            sl.isRegistered<AnalyticsService>() ? sl<AnalyticsService>() : null,
+        crashlyticsService:
+            sl.isRegistered<CrashlyticsService>() ? sl<CrashlyticsService>() : null,
+      ),
     );
   }
 
@@ -362,6 +414,10 @@ Future<void> initDependencies({
       () => RoomsCubit(
         roomsRepository: sl<RoomsRepository>(),
         devicesRepository: sl<DevicesRepository>(),
+        analyticsService:
+            sl.isRegistered<AnalyticsService>() ? sl<AnalyticsService>() : null,
+        crashlyticsService:
+            sl.isRegistered<CrashlyticsService>() ? sl<CrashlyticsService>() : null,
       ),
     );
   }
@@ -371,6 +427,10 @@ Future<void> initDependencies({
     sl.registerFactory<DevicesCubit>(
       () => DevicesCubit(
         devicesRepository: sl<DevicesRepository>(),
+        analyticsService:
+            sl.isRegistered<AnalyticsService>() ? sl<AnalyticsService>() : null,
+        crashlyticsService:
+            sl.isRegistered<CrashlyticsService>() ? sl<CrashlyticsService>() : null,
       ),
     );
   }
@@ -386,6 +446,11 @@ Future<void> initDependencies({
 
   // 13. Theme Cubit
   if (!sl.isRegistered<ThemeCubit>()) {
-    sl.registerFactory<ThemeCubit>(() => ThemeCubit());
+    sl.registerFactory<ThemeCubit>(
+      () => ThemeCubit(
+        analyticsService:
+            sl.isRegistered<AnalyticsService>() ? sl<AnalyticsService>() : null,
+      ),
+    );
   }
 }

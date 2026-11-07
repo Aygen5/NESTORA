@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/analytics_service.dart';
 
 class ThemeCubit extends Cubit<ThemeMode> {
   static const String _prefKey = 'nestora_theme_mode';
+  final AnalyticsService? analyticsService;
 
-  ThemeCubit() : super(ThemeMode.light) {
+  ThemeCubit({this.analyticsService}) : super(ThemeMode.light) {
     _loadTheme();
   }
 
@@ -32,6 +34,7 @@ class ThemeCubit extends Cubit<ThemeMode> {
 
   Future<void> setTheme(ThemeMode mode) async {
     emit(mode);
+    analyticsService?.logThemeChanged(themeMode: mode.name);
     try {
       final prefs = await SharedPreferences.getInstance();
       String val = 'light';
@@ -41,4 +44,3 @@ class ThemeCubit extends Cubit<ThemeMode> {
     } catch (_) {}
   }
 }
-

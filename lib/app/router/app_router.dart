@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/services/analytics_service.dart';
 import '../di/injection.dart';
 import 'auth_guard.dart';
 
@@ -116,13 +117,19 @@ GoRouter createAppRouter({
               )
           : null);
 
+  final effectiveObservers = observers ??
+      [
+        if (sl.isRegistered<AnalyticsService>())
+          sl<AnalyticsService>().getAnalyticsObserver(),
+      ];
+
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: initialLocation,
     debugLogDiagnostics: kDebugMode,
     refreshListenable: effectiveRefreshListenable,
     redirect: effectiveRedirect,
-    observers: observers,
+    observers: effectiveObservers,
     routes: [
       // 1. Splash
       GoRoute(

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/analytics_service.dart';
+import '../../../../core/services/crashlytics_service.dart';
 import '../../domain/entities/device.dart';
 import '../../domain/repositories/devices_repository.dart';
 import 'devices_state.dart';
@@ -12,9 +14,12 @@ import 'devices_state.dart';
 /// - Optimistic UI updates for 0-latency slider / dial / toggle responsiveness.
 /// - High-frequency update debouncing (default: 300ms) to conserve Firestore write quota on Spark plan.
 /// - Quick Scenes ("Evdeyim", "Gündüz", "Gece Modu", "Dışarıda") multi-device orchestration.
+/// - Dispatches privacy-safe analytics events and logs errors to Crashlytics.
 class DevicesCubit extends Cubit<DevicesState> {
   final DevicesRepository devicesRepository;
   final Duration debounceDuration;
+  final AnalyticsService? analyticsService;
+  final CrashlyticsService? crashlyticsService;
 
   StreamSubscription<List<Device>>? _devicesSubscription;
   String? _currentUserId;
@@ -24,6 +29,8 @@ class DevicesCubit extends Cubit<DevicesState> {
   DevicesCubit({
     required this.devicesRepository,
     this.debounceDuration = AppConstants.sliderDebounceDuration,
+    this.analyticsService,
+    this.crashlyticsService,
   }) : super(const DevicesInitial());
 
   /// Loads and listens to real-time updates for all devices belonging to [userId].
@@ -73,7 +80,12 @@ class DevicesCubit extends Cubit<DevicesState> {
           emit(DevicesLoaded(devices: devices));
         }
       },
-      onError: (error) {
+      onError: (error, stack) {
+        crashlyticsService?.recordError(
+          error,
+          stack,
+          reason: 'Devices watchDevices stream error for user: $cleanUid',
+        );
         emit(DevicesError('Cihazlar yüklenirken hata oluştu: $error'));
       },
     );
@@ -194,6 +206,11 @@ class DevicesCubit extends Cubit<DevicesState> {
     );
 
     _optimisticUpdate(updatedDevice);
+
+    analyticsService?.logDeviceToggle(
+      deviceType: device.type.name,
+      isPoweredOn: newPowerState,
+    );
 
     // Cancel pending debounce for power to ensure immediate consistent state
     _debounceTimers[deviceId]?.cancel();
@@ -347,6 +364,8 @@ class DevicesCubit extends Cubit<DevicesState> {
       updatedDevices.add(updated);
     }
 
+    analyticsService?.logScenarioActivated(scenarioName: sceneDisplayName);
+
     emit(current.copyWith(
       devices: updatedDevices,
       feedbackMessage: '$sceneDisplayName senaryosu uygulandı.',
@@ -417,8 +436,14 @@ class DevicesCubit extends Cubit<DevicesState> {
     final result = await devicesRepository.createDevice(userId, newDevice);
 
     if (result.isSuccess) {
+      analyticsService?.logDeviceCreated(deviceType: newDevice.type.name);
       _emitSuccessMessage('Cihaz başarıyla eklendi.');
     } else {
+      crashlyticsService?.recordError(
+        result.failure,
+        null,
+        reason: 'createDevice failure: ${result.failure.message}',
+      );
       _emitErrorMessage(result.failure.message);
     }
   }
@@ -446,6 +471,11 @@ class DevicesCubit extends Cubit<DevicesState> {
     if (result.isSuccess) {
       _emitSuccessMessage('Cihaz başarıyla güncellendi.');
     } else {
+      crashlyticsService?.recordError(
+        result.failure,
+        null,
+        reason: 'updateDevice failure: ${result.failure.message}',
+      );
       _emitErrorMessage(result.failure.message);
     }
   }
@@ -465,6 +495,11 @@ class DevicesCubit extends Cubit<DevicesState> {
     if (result.isSuccess) {
       _emitSuccessMessage('Cihaz başarıyla silindi.');
     } else {
+      crashlyticsService?.recordError(
+        result.failure,
+        null,
+        reason: 'deleteDevice failure: ${result.failure.message}',
+      );
       _emitErrorMessage(result.failure.message);
     }
   }

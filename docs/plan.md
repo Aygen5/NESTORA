@@ -272,7 +272,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 > **Manuel Olarak Yapılması Gereken (Faz 8 Öncesinde):**
 > - **Remote Config, Crashlytics, Analytics:** İhtiyaç duyulan parametre ve ayarların Firebase Console'da açılması/kontrol edilmesi.
 
-### Adım 8.1: Crashlytics & Analytics Entegrasyonu
+### Adım 8.1: [x] Crashlytics & Analytics Entegrasyonu
 - Beklenmeyen uygulama çökmelerinin Crashlytics'e bildirilmesi.
 - Temel analitik olaylarının (giriş, oda oluşturma, senaryo seçimi) gizlilik kurallarına uygun olarak (şifre ve kişisel veri içermeden) kaydedilmesi.
 

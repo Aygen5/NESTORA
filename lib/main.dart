@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'app/app.dart';
 import 'app/di/injection.dart';
+import 'core/services/crashlytics_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -22,6 +23,11 @@ void main() async {
 
   // Initialize dependency injection / service locator
   await initDependencies();
+
+  // Initialize global Crashlytics error handlers
+  if (sl.isRegistered<CrashlyticsService>()) {
+    await sl<CrashlyticsService>().initialize();
+  }
 
   runApp(const NestoraApp());
 }
