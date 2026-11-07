@@ -5,6 +5,8 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
+import '../../features/auth/data/datasources/demo_config_service.dart';
+import '../../features/auth/data/datasources/firestore_seed_service.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
@@ -190,12 +192,39 @@ Future<void> initDependencies({
     sl.registerSingleton<AppAuthListenable>(AppAuthListenable(firebaseAuth: auth));
   }
 
-  // 4. Auth Data Source & Repository
+  // 4. Demo Config & Firestore Seed Services
+  if (!sl.isRegistered<DemoConfigService>()) {
+    final demoConfig = DemoConfigService(
+      remoteConfig: sl.isRegistered<FirebaseRemoteConfig>()
+          ? sl<FirebaseRemoteConfig>()
+          : null,
+    );
+    demoConfig.initializeDefaults();
+    sl.registerSingleton<DemoConfigService>(demoConfig);
+  }
+
+  if (!sl.isRegistered<FirestoreSeedService>()) {
+    sl.registerLazySingleton<FirestoreSeedService>(
+      () => FirestoreSeedService(
+        firestore: sl.isRegistered<FirebaseFirestore>()
+            ? sl<FirebaseFirestore>()
+            : null,
+      ),
+    );
+  }
+
+  // 5. Auth Data Source & Repository
   if (!sl.isRegistered<AuthRemoteDataSource>()) {
     sl.registerLazySingleton<AuthRemoteDataSource>(
       () => AuthRemoteDataSourceImpl(
         firebaseAuth: sl.isRegistered<FirebaseAuth>() ? sl<FirebaseAuth>() : null,
         firestore: sl.isRegistered<FirebaseFirestore>() ? sl<FirebaseFirestore>() : null,
+        demoConfigService: sl.isRegistered<DemoConfigService>()
+            ? sl<DemoConfigService>()
+            : null,
+        seedService: sl.isRegistered<FirestoreSeedService>()
+            ? sl<FirestoreSeedService>()
+            : null,
       ),
     );
   }

@@ -411,7 +411,7 @@ Firebase Spark planı korunacaktır.
 1. [x] Mevcut Flutter projesinin ve 16 ekranın incelenmesi.
 2. [x] Mevcut tasarımın, widget'ların ve navigasyonun korunması.
 3. [x] Tema, tipografi ve responsive düzenin iyileştirilmesi.
-4. [ ] Auth ve ilk kullanım akışının tamamlanması.
+4. [x] Auth ve ilk kullanım akışının tamamlanması.
 5. [ ] Veri modelleri ve Firestore yapısının oluşturulması.
 6. [ ] Oda ve cihaz CRUD işlemleri.
 7. [ ] Sanal cihaz kontrol state'leri.

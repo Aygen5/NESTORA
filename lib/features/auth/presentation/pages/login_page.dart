@@ -46,6 +46,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
   bool _showDemoFeedback = false;
+  String _demoFeedbackText = 'Demo profili hazırlanıyor...';
 
   @override
   void initState() {
@@ -139,7 +140,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _handleDemoLogin() {
-    setState(() => _showDemoFeedback = true);
+    setState(() {
+      _showDemoFeedback = true;
+      _demoFeedbackText = 'Demo profili hazırlanıyor...';
+    });
     _cubit.signInDemo();
   }
 
@@ -155,6 +159,11 @@ class _LoginPageState extends State<LoginPage> {
             NestoraSnackbar.showError(context, message: state.message);
           } else if (state is Authenticated) {
             _persistRememberMe();
+            if (_showDemoFeedback) {
+              setState(() {
+                _demoFeedbackText = "Aygen Yıldırım profili yüklendi (Aygen'in Evi)";
+              });
+            }
             if (widget.onLoginSuccess != null) {
               widget.onLoginSuccess!.call();
             } else {
@@ -471,10 +480,13 @@ class _LoginPageState extends State<LoginPage> {
                                   color: AppColors.primary,
                                 ),
                                 const SizedBox(width: 8),
-                                Text(
-                                  'Demo profili hazırlanıyor...',
-                                  style: AppTypography.labelSm(
-                                    color: AppColors.primary,
+                                Flexible(
+                                  child: Text(
+                                    _demoFeedbackText,
+                                    textAlign: TextAlign.center,
+                                    style: AppTypography.labelSm(
+                                      color: AppColors.primary,
+                                    ),
                                   ),
                                 ),
                               ],

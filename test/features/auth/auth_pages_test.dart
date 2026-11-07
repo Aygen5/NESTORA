@@ -291,8 +291,9 @@ void main() {
       expect(registerTapped, isTrue);
 
       await tester.tap(find.text('Hızlı Demo ile Giriş Yap'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(fakeRepo.demoCalled, isTrue);
+      expect(find.text("Aygen Yıldırım profili yüklendi (Aygen'in Evi)"), findsOneWidget);
     });
   });
 

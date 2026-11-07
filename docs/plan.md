@@ -109,10 +109,10 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `register_page.dart`: Hesap oluşturma, şifre eşleşme kontrolü, kullanıcı sözleşmesi onayı, Firestore profil dokümanı oluşturma.
 - `forgot_password_page.dart`: Firebase `sendPasswordResetEmail` tetikleyicisi ve bilgilendirme ekranı.
 
-### Adım 3.5: "Hızlı Demo ile Giriş Yap" Özelliği
+### Adım 3.5: [x] "Hızlı Demo ile Giriş Yap" Özelliği
 - Login ekranında tek dokunuşla çalışan demo butonu.
 - Kaynak koda açık şifre/e-posta gömülmeden (Remote Config veya güvenli ortam yapılandırması üzerinden) Firebase üzerinde tanımlı gerçek test hesabına giriş.
-- Demo hesabı için başlangıç odaları, sanal cihazları ve bildirimleri içeren Firestore seed verilerinin hazırlanması.
+- Demo hesabı için başlangıç odaları, sanal cihazları ve bildirimleri içeren Firestore seed verilerinin hazırlanması (`FirestoreSeedService`, `DemoConfigService`, `docs/demo_setup.md`).
 
 ---
 

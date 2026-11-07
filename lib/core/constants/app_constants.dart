@@ -32,9 +32,11 @@ class AppConstants {
   static const String prefLastUserEmail = 'nestora_last_user_email';
   static const String prefHasSeenOnboarding = 'nestora_has_seen_onboarding';
 
-  // Demo Credentials (Spark Free Tier Testing)
+  // Demo Credentials & Remote Config Keys (Spark Free Tier Testing)
   static const String demoEmail = 'demo@nestora.app';
   static const String demoPassword = 'DemoUser2026!';
+  static const String remoteConfigDemoEmail = 'demo_account_email';
+  static const String remoteConfigDemoPassword = 'demo_account_password';
 
   // Input Validation Constants
   static const int minPasswordLength = 8;

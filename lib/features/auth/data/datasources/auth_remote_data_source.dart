@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/errors/exceptions.dart';
+import 'demo_config_service.dart';
+import 'firestore_seed_service.dart';
 
 /// Contract for Remote Authentication Data Source interacting directly with Firebase SDKs.
 abstract class AuthRemoteDataSource {
@@ -44,10 +46,14 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
   final FirebaseFirestore? firestore;
+  final DemoConfigService? demoConfigService;
+  final FirestoreSeedService? seedService;
 
   AuthRemoteDataSourceImpl({
     FirebaseAuth? firebaseAuth,
     this.firestore,
+    this.demoConfigService,
+    this.seedService,
   }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   @override
@@ -153,16 +159,51 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String? email,
     String? password,
   }) async {
-    final demoEmail = email ?? AppConstants.demoEmail;
-    final demoPassword = password ?? AppConstants.demoPassword;
+    final demoEmail = email ??
+        (await demoConfigService?.getDemoEmail() ?? AppConstants.demoEmail);
+    final demoPassword = password ??
+        (await demoConfigService?.getDemoPassword() ?? AppConstants.demoPassword);
 
     try {
-      return await signInWithEmail(
-        email: demoEmail,
-        password: demoPassword,
-      );
+      UserCredential credential;
+      try {
+        credential = await signInWithEmail(
+          email: demoEmail,
+          password: demoPassword,
+        );
+      } on AuthException catch (e) {
+        // If the demo account doesn't exist yet in Firebase Console, attempt creation
+        if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+          credential = await _firebaseAuth.createUserWithEmailAndPassword(
+            email: demoEmail,
+            password: demoPassword,
+          );
+          try {
+            await credential.user?.updateDisplayName('Aygen Yıldırım');
+          } catch (_) {}
+        } else {
+          rethrow;
+        }
+      }
+
+      final user = credential.user;
+      if (user != null && seedService != null) {
+        try {
+          await seedService!.seedDemoUserDataIfEmpty(
+            user.uid,
+            displayName: 'Aygen Yıldırım',
+            email: demoEmail,
+          );
+        } catch (e) {
+          debugPrint('AuthRemoteDataSource: Demo seed warning ($e)');
+        }
+      }
+
+      return credential;
     } on AuthException {
       rethrow;
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseErrorToMessage(e), code: e.code);
     } catch (e) {
       throw AuthException('Demo girişi yapılırken bir hata oluştu: $e');
     }
