@@ -630,8 +630,17 @@ class DevicesCubit extends Cubit<DevicesState> {
     if (state is! DevicesLoaded) return;
     final current = state as DevicesLoaded;
     final target = roomNameOrId.trim().toLowerCase();
+    String? mappedRoomId;
+    if (target.contains('salon')) mappedRoomId = 'room-1';
+    if (target.contains('yatak')) mappedRoomId = 'room-2';
+    if (target.contains('mutfak')) mappedRoomId = 'room-3';
+    if (target.contains('calisma') || target.contains('çalışma')) mappedRoomId = 'room-4';
+
     final roomDevices = current.devices.where(
-      (d) => d.roomId.toLowerCase() == target || d.name.toLowerCase().contains(target),
+      (d) =>
+          d.roomId.toLowerCase() == target ||
+          (mappedRoomId != null && d.roomId.toLowerCase() == mappedRoomId) ||
+          d.name.toLowerCase().contains(target),
     ).toList();
     for (final dev in roomDevices) {
       if (dev.isPoweredOn != powerState) {

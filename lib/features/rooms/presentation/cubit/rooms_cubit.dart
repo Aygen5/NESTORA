@@ -193,6 +193,9 @@ class RoomsCubit extends Cubit<RoomsState> {
     }
   }
 
+  /// Alias for searchRooms.
+  void setSearchQuery(String query) => searchRooms(query);
+
   /// Clears search filter.
   void clearSearch() {
     if (state is RoomsLoaded) {
@@ -244,10 +247,11 @@ class RoomsCubit extends Cubit<RoomsState> {
   String? get currentUserId => _currentUserId;
 
   /// Convenience method for deleting a room by ID.
-  Future<void> deleteRoomById(String roomId, {String? userId}) {
+  Future<void> deleteRoomById(String roomId, {String? moveToRoomId, String? userId}) {
     return deleteRoom(
       userId: userId ?? _currentUserId ?? 'demo-user',
       roomId: roomId,
+      moveToRoomId: moveToRoomId,
     );
   }
 

@@ -5,6 +5,7 @@ export 'entities/device.dart' show DeviceType, AcMode, FanSpeed;
 
 class DeviceModel {
   final String id;
+  final String? roomId;
   String name;
   String room;
   DeviceType type;
@@ -19,6 +20,7 @@ class DeviceModel {
 
   DeviceModel({
     required this.id,
+    this.roomId,
     required this.name,
     required this.room,
     required this.type,
@@ -33,6 +35,7 @@ class DeviceModel {
   });
 
   DeviceModel copyWith({
+    String? roomId,
     String? name,
     String? room,
     DeviceType? type,
@@ -47,6 +50,7 @@ class DeviceModel {
   }) {
     return DeviceModel(
       id: id,
+      roomId: roomId ?? this.roomId,
       name: name ?? this.name,
       room: room ?? this.room,
       type: type ?? this.type,

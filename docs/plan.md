@@ -191,7 +191,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Odalar Karuseli: `RoomsCubit`'ten gelen odalar ve anlık sıcaklıklar.
 - Kompakt Cihazlar: `DevicesCubit`'ten gelen aktif cihazlar, anlık değerler (%72 Parlaklık, 22° Hedef sıcaklık, 240 W güç) ve doğrudan çalışan toggle anahtarları.
 
-### Adım 6.2: Odalarım ve Oda Detayı Ekranları
+### Adım 6.2: [x] Odalarım ve Oda Detayı Ekranları
 - `rooms_page.dart`: Gerçek oda listesi, arama/filtreleme, odaya dokununca `/rooms/:roomId` rotasına gitme.
 - `room_detail_page.dart`: Odaya ait sanal ortam değerleri (sıcaklık, nem, hava kalitesi), odaya bağlı cihazların listesi ve toplu aksiyonlar.
 

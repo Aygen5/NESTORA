@@ -236,6 +236,7 @@ abstract class SeedData {
 
     return DeviceModel(
       id: device.id,
+      roomId: device.roomId,
       name: device.name,
       room: roomName,
       type: device.type,
