@@ -147,7 +147,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `RoomsRepositoryImpl`, `DevicesRepositoryImpl`, `NotificationsRepositoryImpl`, `ProfileRepositoryImpl`.
 - Firestore hatalarının yakalanıp `Failure` olarak Cubit katmanına aktarılması.
 
-### Adım 4.5: Firestore Security Rules (`firestore.rules`)
+### Adım 4.5: [x] Firestore Security Rules (`firestore.rules`)
 - `users/{userId}` altında kullanıcının yalnızca kendi verilerini okuyup yazabilmesini sağlayan (`request.auth.uid == userId`) güvenlik kuralları dosyasının hazırlanması.
 
 ---

@@ -1,0 +1,81 @@
+rules_version = '2';
+
+/**
+ * NESTORA Smart Home - Cloud Firestore Security Rules
+ *
+ * Güvenlik Mimarisi:
+ * 1. En az yetki prensibi (Principle of Least Privilege): Belirtilmeyen tüm yollar varsayılan olarak reddedilir (Deny all).
+ * 2. Kullanıcı Veri İzolasyonu (User-scoped Data Isolation): Her kullanıcı yalnızca kendi `users/{userId}`
+ *    dokümanına ve bu dokümanın altındaki `rooms`, `devices`, `notifications` alt koleksiyonlarına erişebilir.
+ * 3. Oturum Doğrulama (Authentication Guard): Anonim veya kayıtlı olsun, Firebase Auth oturumu açılmamış hiçbir
+ *    istek Firestore'da veri okuyamaz veya yazamaz (`request.auth != null`).
+ * 4. Veri Bütünlüğü (Data Integrity): Sahiplik eşleşmesi (`request.auth.uid == userId`) her alt koleksiyon için zorunludur.
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------
+    // GÜVENLİK YARDIMCI FONKSİYONLARI (Helper Functions)
+    // -------------------------------------------------------------
+
+    /// Kullanıcının geçerli bir Firebase Auth oturumuna sahip olup olmadığını denetler.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    /// İstekte bulunan oturum sahibinin (request.auth.uid) hedef doküman sahibine (userId)
+    /// eşit olup olmadığını doğrular.
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // -------------------------------------------------------------
+    // KULLANICI PROFİLİ VE ALT KOLEKSİYONLAR
+    // -------------------------------------------------------------
+
+    match /users/{userId} {
+      /**
+       * Kullanıcı Profil Dokümanı: `users/{userId}`
+       * - displayName, homeName, email, photoPath, preferences, createdAt, updatedAt
+       * - Sadece ilgili kullanıcı kendi profil dokümanını okuyabilir, oluşturabilir, güncelleyebilir veya silebilir.
+       */
+      allow read, write: if isOwner(userId);
+
+      /**
+       * Odalar Alt Koleksiyonu: `users/{userId}/rooms/{roomId}`
+       * - id, name, iconName, targetTemperature, humidity, deviceCount, activeDeviceCount, vb.
+       * - Kullanıcı yalnızca kendi evindeki odaları listeleyebilir ve yönetebilir.
+       */
+      match /rooms/{roomId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      /**
+       * Sanal Cihazlar Alt Koleksiyonu: `users/{userId}/devices/{deviceId}`
+       * - id, name, type, roomId, isPoweredOn, brightness, colorHex, targetTemp, acMode, fanSpeed, vb.
+       * - Kullanıcı yalnızca kendi evindeki sanal cihazları görüntüleyebilir ve durumlarını değiştirebilir.
+       */
+      match /devices/{deviceId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      /**
+       * Bildirimler Alt Koleksiyonu: `users/{userId}/notifications/{notificationId}`
+       * - id, title, message, type, isRead, createdAt, relatedRoomId, relatedDeviceId
+       * - Kullanıcı yalnızca kendisine ait bildirimleri okuyabilir, okundu olarak işaretleyebilir veya silebilir.
+       */
+      match /notifications/{notificationId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // VARSAYILAN ENGELLEME (Default Deny)
+    // -------------------------------------------------------------
+    // Tanımlanmamış herhangi bir koleksiyon veya dokümana yetkisiz erişimi engeller.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
