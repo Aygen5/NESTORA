@@ -147,7 +147,7 @@ class _AppShellState extends State<AppShell> {
       {'num': '13', 'title': 'Nestora - Profil ve Ayarlar', 'page': const ProfilePage()},
       {'num': '14', 'title': 'Nestora - Bildirimler', 'page': const NotificationsPage()},
       {'num': '15', 'title': 'Nestora - Kayıt Ol', 'page': const RegisterPage()},
-      {'num': '16', 'title': 'Nestora - Bileşenler ve Durumlar', 'page': const ComponentsPreviewPage()},
+      {'num': '16', 'title': 'Nestora - Bileşenler ve Durumlar (Tasarım Kontrolü)', 'page': const ComponentsPreviewPage()},
     ];
 
     showModalBottomSheet(

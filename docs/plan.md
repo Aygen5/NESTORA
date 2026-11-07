@@ -231,7 +231,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Tema seçimi: Açık Mod, Koyu Mod, Sistem Modu (`ThemeCubit` ve SharedPreferences ile kalıcı).
 - Güvenli oturum kapatma (Logout diyaloğu ve login rotasına dönüş).
 
-### Adım 6.10: Components Preview Ekranı İzolasyonu
+### Adım 6.10: [x] Components Preview Ekranı İzolasyonu
 - `components_preview_page.dart`: Yalnızca tasarım kontrolü amacıyla korunması, son kullanıcı menülerinden tamamen çıkarılması.
 
 ---
