@@ -99,7 +99,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
   - `AuthInitial`, `AuthLoading`, `Authenticated`, `Unauthenticated`, `AuthError`.
 - E-posta doğrulama ve anlık şifre güçlülük kuralları (en az 8 karakter, büyük harf, rakam, özel karakter).
 
-### Adım 3.3: Splash, Onboarding & Welcome Ekranlarının Entegrasyonu
+### Adım 3.3: [x] Splash, Onboarding & Welcome Ekranlarının Entegrasyonu
 - `splash_page.dart`: Mevcut 220px büyük logo ve glow animasyonu korunarak, auth state kontrolüyle yönlendirme.
 - `onboarding_page.dart`: 3D izometrik ev görseli ve interaktif `> Başla >>>` kaydırıcısı ile `/welcome`'a geçiş.
 - `welcome_page.dart`: Suluboya villa görseli ve mikro ambiyans rozeti korunarak `Hemen Başla` (Register/Login) ve `Giriş Yap` butonlarının GoRouter rotalarına bağlanması.

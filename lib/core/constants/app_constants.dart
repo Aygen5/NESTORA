@@ -30,6 +30,7 @@ class AppConstants {
   static const String prefRememberMe = 'nestora_remember_me';
   static const String prefUserHomeName = 'nestora_user_home_name';
   static const String prefLastUserEmail = 'nestora_last_user_email';
+  static const String prefHasSeenOnboarding = 'nestora_has_seen_onboarding';
 
   // Demo Credentials (Spark Free Tier Testing)
   static const String demoEmail = 'demo@nestora.app';

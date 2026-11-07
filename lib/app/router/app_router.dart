@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../di/injection.dart';
 import 'auth_guard.dart';
 
@@ -128,7 +130,17 @@ GoRouter createAppRouter({
             if (effectiveAuthListenable?.isAuthenticated ?? false) {
               context.go(AppRoutePaths.dashboard);
             } else {
-              context.go(AppRoutePaths.onboarding);
+              bool hasSeenOnboarding = false;
+              if (sl.isRegistered<SharedPreferences>()) {
+                hasSeenOnboarding = sl<SharedPreferences>()
+                        .getBool(AppConstants.prefHasSeenOnboarding) ??
+                    false;
+              }
+              if (hasSeenOnboarding) {
+                context.go(AppRoutePaths.welcome);
+              } else {
+                context.go(AppRoutePaths.onboarding);
+              }
             }
           },
         ),
@@ -140,7 +152,15 @@ GoRouter createAppRouter({
         name: AppRouteNames.onboarding,
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => OnboardingPage(
-          onStart: () => context.go(AppRoutePaths.welcome),
+          onStart: () async {
+            if (sl.isRegistered<SharedPreferences>()) {
+              await sl<SharedPreferences>()
+                  .setBool(AppConstants.prefHasSeenOnboarding, true);
+            }
+            if (context.mounted) {
+              context.go(AppRoutePaths.welcome);
+            }
+          },
           onBack: () => context.go(AppRoutePaths.splash),
         ),
       ),

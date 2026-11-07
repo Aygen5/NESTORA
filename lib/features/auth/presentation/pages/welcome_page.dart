@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../app/router/app_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/nestora_button.dart';
@@ -395,13 +397,29 @@ class WelcomePage extends StatelessWidget {
                   NestoraButton(
                     text: 'Hemen Başla',
                     trailingIcon: Icons.arrow_forward_rounded,
-                    onPressed: onGetStarted,
+                    onPressed: () {
+                      if (onGetStarted != null) {
+                        onGetStarted!.call();
+                      } else {
+                        try {
+                          context.go(AppRoutePaths.dashboard);
+                        } catch (_) {}
+                      }
+                    },
                   ),
                   const SizedBox(height: 12),
                   NestoraButton(
                     text: 'Zaten hesabın var mı? Giriş Yap',
                     variant: NestoraButtonVariant.secondary,
-                    onPressed: onLogin,
+                    onPressed: () {
+                      if (onLogin != null) {
+                        onLogin!.call();
+                      } else {
+                        try {
+                          context.go(AppRoutePaths.login);
+                        } catch (_) {}
+                      }
+                    },
                   ),
                   const SizedBox(height: 14),
                 ],

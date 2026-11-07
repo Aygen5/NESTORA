@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../app/router/app_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 
@@ -27,7 +29,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
     });
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) {
-        widget.onStart?.call();
+        if (widget.onStart != null) {
+          widget.onStart!.call();
+        } else {
+          try {
+            context.go(AppRoutePaths.welcome);
+          } catch (_) {}
+        }
       }
     });
   }

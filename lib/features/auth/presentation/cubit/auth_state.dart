@@ -81,3 +81,4 @@ class AuthPasswordResetSent extends AuthState {
   @override
   int get hashCode => email.hashCode;
 }
+

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../app/router/app_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 
@@ -54,7 +56,13 @@ class _SplashPageState extends State<SplashPage>
     // Clean, short presentation (~1.8 seconds)
     _timer = Timer(const Duration(milliseconds: 1800), () {
       if (mounted) {
-        widget.onFinish?.call();
+        if (widget.onFinish != null) {
+          widget.onFinish!.call();
+        } else {
+          try {
+            context.go(AppRoutePaths.onboarding);
+          } catch (_) {}
+        }
       }
     });
   }
