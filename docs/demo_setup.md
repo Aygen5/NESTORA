@@ -84,3 +84,4 @@ Demo kimlik bilgileri istemci koduna açık ve statik olarak bağımlı kalmamak
    flutter run --dart-define=DEMO_EMAIL=demo@nestora.app --dart-define=DEMO_PASSWORD=GuvenliSifre2026!
    ```
 3. **Varsayılan Fallback:** Remote Config veya `--dart-define` sağlanmadığında `DemoConfigService` yerleşik güvenli varsayılanları kullanarak geliştiricinin kesintisiz test yapabilmesini sağlar.
+

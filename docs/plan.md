@@ -124,11 +124,11 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 > **Manuel Olarak Yapılması Gereken (Faz 4 — Adım 4.3 ve 4.5 Öncesinde):**
 > - **Cloud Firestore:** Console üzerinden Firestore veritabanını oluşturmanız ("Test Modunda" başlatıp ardından hazırladığımız `firestore.rules` güvenlik kurallarını yapıştırmanız) gerekecektir.
 
-### Adım 4.1: Domain Entities (Dış Servislerden Bağımsız Saf Modeller)
-- `lib/features/rooms/domain/entities/room.dart`: `id`, `name`, `iconName`, `targetTemperature`, `deviceCount`.
-- `lib/features/devices/domain/entities/device.dart`: `id`, `name`, `type`, `roomId`, `isPoweredOn`, `brightness`, `color`, `targetTemp`, `mode`, `fanSpeed`, `currentPowerWatts`.
-- `lib/features/notifications/domain/entities/app_notification.dart`: `id`, `title`, `message`, `type`, `isRead`, `createdAt`, `relatedRoomId`, `relatedDeviceId`.
-- `lib/features/profile/domain/entities/user_profile.dart`: `uid`, `email`, `displayName`, `homeName`, `photoPath`, `preferences`.
+### Adım 4.1: [x] Domain Entities (Dış Servislerden Bağımsız Saf Modeller)
+- `lib/features/rooms/domain/entities/room.dart`: `id`, `name`, `iconName`, `targetTemperature`, `deviceCount`, `activeDeviceCount`, `humidity`, `imageAsset`, `createdAt`, `updatedAt`.
+- `lib/features/devices/domain/entities/device.dart`: `id`, `name`, `type`, `roomId`, `isPoweredOn`, `brightness`, `colorHex`, `colorName`, `targetTemp`, `acMode`, `fanSpeed`, `currentPowerWatts`, `isFavorite`, `createdAt`, `updatedAt`.
+- `lib/features/notifications/domain/entities/app_notification.dart`: `id`, `title`, `message`, `type`, `isRead`, `createdAt`, `relatedRoomId`, `relatedDeviceId`, `timeAgoFormatted`.
+- `lib/features/profile/domain/entities/user_profile.dart`: `uid`, `email`, `displayName`, `homeName`, `photoPath`, `preferences` (`UserPreferences`), `initials`, `createdAt`, `updatedAt`.
 
 ### Adım 4.2: Data Modelleri / DTOs & Güvenli Firestore Parsing
 - `RoomModel.fromFirestore` / `toFirestore`
