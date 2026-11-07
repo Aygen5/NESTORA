@@ -94,7 +94,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `lib/features/auth/data/datasources/auth_remote_data_source.dart`: FirebaseAuth SDK çağrıları.
 - `lib/features/auth/data/repositories/auth_repository_impl.dart`: Hataları `Failure` nesnelerine dönüştüren implementasyon.
 
-### Adım 3.2: `AuthCubit` ve Durum Yönetimi
+### Adım 3.2: [x] `AuthCubit` ve Durum Yönetimi
 - `lib/features/auth/presentation/cubit/auth_cubit.dart` ve `auth_state.dart`:
   - `AuthInitial`, `AuthLoading`, `Authenticated`, `Unauthenticated`, `AuthError`.
 - E-posta doğrulama ve anlık şifre güçlülük kuralları (en az 8 karakter, büyük harf, rakam, özel karakter).

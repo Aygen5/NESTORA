@@ -61,3 +61,4 @@ class AuthUser {
   String toString() =>
       'AuthUser(id: $id, email: $email, displayName: $displayName)';
 }
+

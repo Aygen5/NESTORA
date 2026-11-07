@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../router/auth_guard.dart';
 
 typedef FactoryFunc<T> = T Function();
@@ -206,6 +207,13 @@ Future<void> initDependencies({
         sharedPreferences:
             sl.isRegistered<SharedPreferences>() ? sl<SharedPreferences>() : null,
       ),
+    );
+  }
+
+  // 5. Auth Cubit
+  if (!sl.isRegistered<AuthCubit>()) {
+    sl.registerFactory<AuthCubit>(
+      () => AuthCubit(authRepository: sl<AuthRepository>()),
     );
   }
 }
