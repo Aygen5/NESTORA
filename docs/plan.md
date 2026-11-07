@@ -89,7 +89,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 > - **Firebase Authentication:** Firebase Console'dan *"Email/Password"* (E-posta/Şifre) sağlayıcısını tek tıkla aktif etmeniz gerekecektir.
 > - **Hızlı Demo Hesabı (Adım 3.5 için):** Console'dan test/demo kullanıcısının (`users` altında) oluşturulması gerekecektir.
 
-### Adım 3.1: Auth Domain & Data Katmanı
+### Adım 3.1: [x] Auth Domain & Data Katmanı
 - `lib/features/auth/domain/repositories/auth_repository.dart`: Sözleşme tanımları (`signInWithEmail`, `signUpWithEmail`, `signOut`, `sendPasswordReset`, `signInDemo`, `authStateChanges`).
 - `lib/features/auth/data/datasources/auth_remote_data_source.dart`: FirebaseAuth SDK çağrıları.
 - `lib/features/auth/data/repositories/auth_repository_impl.dart`: Hataları `Failure` nesnelerine dönüştüren implementasyon.

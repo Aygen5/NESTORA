@@ -29,6 +29,11 @@ class AppConstants {
   static const String prefProfilePhotoPath = 'nestora_profile_photo_path';
   static const String prefRememberMe = 'nestora_remember_me';
   static const String prefUserHomeName = 'nestora_user_home_name';
+  static const String prefLastUserEmail = 'nestora_last_user_email';
+
+  // Demo Credentials (Spark Free Tier Testing)
+  static const String demoEmail = 'demo@nestora.app';
+  static const String demoPassword = 'DemoUser2026!';
 
   // Input Validation Constants
   static const int minPasswordLength = 8;
