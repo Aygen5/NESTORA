@@ -195,7 +195,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `rooms_page.dart`: Gerçek oda listesi, arama/filtreleme, odaya dokununca `/rooms/:roomId` rotasına gitme.
 - `room_detail_page.dart`: Odaya ait sanal ortam değerleri (sıcaklık, nem, hava kalitesi), odaya bağlı cihazların listesi ve toplu aksiyonlar.
 
-### Adım 6.3: Oda Ekle ve Düzenle Ekranı (`add_edit_room_page.dart`)
+### Adım 6.3: [x] Oda Ekle ve Düzenle Ekranı (`add_edit_room_page.dart`)
 - Oda adı, simge seçici grid, varsayılan sıcaklık ayarı.
 - Form doğrulama, Firestore kaydı ve onay diyaloğuyla oda silme.
 

@@ -266,6 +266,14 @@ class RoomsCubit extends Cubit<RoomsState> {
     );
   }
 
+  /// Convenience method for updating an existing Room entity.
+  Future<void> updateRoomEntity(Room room, {String? userId}) {
+    return updateRoom(
+      userId: userId ?? _currentUserId ?? 'demo-user',
+      room: room,
+    );
+  }
+
   @override
   Future<void> close() {
     _roomsSubscription?.cancel();
