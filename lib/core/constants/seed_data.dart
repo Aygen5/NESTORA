@@ -161,6 +161,8 @@ abstract class SeedData {
       message: 'Salon ortamında parlaklık %72 olarak devreye girdi.',
       type: NotificationType.device,
       isRead: false,
+      relatedRoomId: 'room-1',
+      relatedDeviceId: 'dev-1',
       createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
     ),
     AppNotification(
@@ -169,6 +171,8 @@ abstract class SeedData {
       message: 'Çalışma Odası için odak aydınlatması güncellendi.',
       type: NotificationType.device,
       isRead: false,
+      relatedRoomId: 'room-4',
+      relatedDeviceId: 'dev-2',
       createdAt: DateTime.now().subtract(const Duration(minutes: 24)),
     ),
     AppNotification(
@@ -177,6 +181,8 @@ abstract class SeedData {
       message: 'Yatak Odası Kliması başarıyla tanımlandı.',
       type: NotificationType.device,
       isRead: false,
+      relatedRoomId: 'room-2',
+      relatedDeviceId: 'dev-5',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
     ),
     AppNotification(
@@ -185,6 +191,8 @@ abstract class SeedData {
       message: 'Hedef sanal sıcaklık 24°C olarak ayarlandı.',
       type: NotificationType.device,
       isRead: true,
+      relatedRoomId: 'room-2',
+      relatedDeviceId: 'dev-5',
       createdAt: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
     ),
     AppNotification(
@@ -193,7 +201,26 @@ abstract class SeedData {
       message: '‘Çalışma Odası’ listene dahil edildi.',
       type: NotificationType.device,
       isRead: true,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      relatedRoomId: 'room-4',
+      createdAt: DateTime.now().subtract(const Duration(days: 1, hours: 5)),
+    ),
+    AppNotification(
+      id: 'notif-6',
+      title: 'Sanal güvenlik kontrolü tamamlandı.',
+      message: 'Tüm sanal kapılar, pencereler ve sensörler güvenli durumda.',
+      type: NotificationType.security,
+      isRead: true,
+      relatedRoomId: 'room-5',
+      relatedDeviceId: 'dev-8',
+      createdAt: DateTime.now().subtract(const Duration(days: 4)),
+    ),
+    AppNotification(
+      id: 'notif-7',
+      title: 'Haftalık enerji özeti hazırlandı.',
+      message: 'Geçen hafta toplam 48,2 kWh sanal enerji tasarrufu sağlandı.',
+      type: NotificationType.eco,
+      isRead: true,
+      createdAt: DateTime.now().subtract(const Duration(days: 6)),
     ),
   ];
 
@@ -265,18 +292,24 @@ abstract class SeedData {
     IconData icon = Icons.notifications_rounded;
     Color iconBg = const Color(0xFFDCE5D7);
 
-    if (notif.title.contains('Lamba')) {
+    if (notif.title.contains('Lamba') || notif.title.contains('parlaklığı')) {
       icon = Icons.lightbulb_rounded;
       iconBg = const Color(0xFFFEDDBB);
-    } else if (notif.title.contains('Klima')) {
+    } else if (notif.title.contains('Klima') || notif.title.contains('sıcaklık')) {
       icon = Icons.thermostat_rounded;
       iconBg = const Color(0xFFE4EAE1);
-    } else if (notif.title.contains('Yeni cihaz')) {
+    } else if (notif.title.contains('Yeni cihaz') || notif.title.contains('Priz')) {
       icon = Icons.add_circle_outline_rounded;
       iconBg = const Color(0xFFD3E8D5);
-    } else if (notif.title.contains('Yeni oda')) {
+    } else if (notif.title.contains('Yeni oda') || notif.title.contains('oda')) {
       icon = Icons.meeting_room_outlined;
       iconBg = const Color(0xFFE4EAE1);
+    } else if (notif.type == NotificationType.security) {
+      icon = Icons.security_rounded;
+      iconBg = const Color(0xFFFDE8E8);
+    } else if (notif.type == NotificationType.eco) {
+      icon = Icons.eco_rounded;
+      iconBg = const Color(0xFFE0F2E9);
     }
 
     return NotificationModel(
@@ -287,6 +320,10 @@ abstract class SeedData {
       isUnread: !notif.isRead,
       icon: icon,
       iconBg: iconBg,
+      createdAt: notif.createdAt,
+      relatedRoomId: notif.relatedRoomId,
+      relatedDeviceId: notif.relatedDeviceId,
+      type: notif.type,
     );
   }
 }

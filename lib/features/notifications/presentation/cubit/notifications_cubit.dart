@@ -256,6 +256,29 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     );
   }
 
+  /// Convenience method for clearing all notifications.
+  Future<void> clearAllNotifications({String? userId}) async {
+    if (state is! NotificationsLoaded) return;
+    final current = state as NotificationsLoaded;
+    if (current.notifications.isEmpty) return;
+
+    _setProcessing(true);
+    final user = userId ?? _currentUserId ?? 'demo-user';
+    final notifsToDelete = List<AppNotification>.from(current.notifications);
+
+    emit(current.copyWith(notifications: const [], isProcessing: true));
+
+    for (final notif in notifsToDelete) {
+      await notificationsRepository.deleteNotification(user, notif.id);
+    }
+
+    emit(const NotificationsLoaded(
+      notifications: [],
+      isProcessing: false,
+      feedbackMessage: 'Tüm bildirimler temizlendi.',
+    ));
+  }
+
   @override
   Future<void> close() {
     _subscription?.cancel();

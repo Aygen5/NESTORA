@@ -220,7 +220,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Cihaz türü seçimi, cihaz adı, oda atama seçicisi.
 - Sanal eşleştirme akışı ve kaydetme/silme işlemleri.
 
-### Adım 6.8: Bildirimler Ekranı (`notifications_page.dart`)
+### Adım 6.8: [x] Bildirimler Ekranı (`notifications_page.dart`)
 - Tarih gruplamalı (Bugün, Dün, Geçen Hafta) bildirim kartları.
 - Bildirime dokunulduğunda ilgili cihaza veya odaya akıllı yönlendirme.
 - "Tümünü Okundu İşaretle" ve bildirim temizleme.

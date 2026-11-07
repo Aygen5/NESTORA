@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'entities/app_notification.dart';
+
+export 'entities/app_notification.dart' show NotificationType;
 
 class NotificationModel {
   final String id;
@@ -8,6 +11,10 @@ class NotificationModel {
   bool isUnread;
   final IconData icon;
   final Color? iconBg;
+  final DateTime? createdAt;
+  final String? relatedRoomId;
+  final String? relatedDeviceId;
+  final NotificationType type;
 
   NotificationModel({
     required this.id,
@@ -17,6 +24,9 @@ class NotificationModel {
     this.isUnread = true,
     required this.icon,
     this.iconBg,
+    this.createdAt,
+    this.relatedRoomId,
+    this.relatedDeviceId,
+    this.type = NotificationType.device,
   });
 }
-
