@@ -183,7 +183,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 
 > **Amaç:** 16 arayüz ekranının mock veriler yerine gerçek Cubit durumlarıyla çalışmasını sağlamak.
 
-### Adım 6.1: Dashboard (Ana Sayfa) Entegrasyonu
+### Adım 6.1: [x] Dashboard (Ana Sayfa) Entegrasyonu
 - Üst bar: `ProfileCubit`'ten ev adı ve profil ikonu, `NotificationsCubit`'ten okunmamış bildirim zili.
 - Hero Banner: Güncel ev karşılama bilgisi.
 - Enerji Özeti: Günlük sanal enerji tüketimi (7,8 kWh) ve ilerleme barı.

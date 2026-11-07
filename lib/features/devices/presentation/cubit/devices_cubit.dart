@@ -270,7 +270,15 @@ class DevicesCubit extends Cubit<DevicesState> {
   }) async {
     if (state is! DevicesLoaded) return;
     final current = state as DevicesLoaded;
-    final normalized = sceneKey.trim().toLowerCase();
+    final normalized = sceneKey
+        .trim()
+        .toLowerCase()
+        .replaceAll('ı', 'i')
+        .replaceAll('ü', 'u')
+        .replaceAll('ö', 'o')
+        .replaceAll('ş', 's')
+        .replaceAll('ç', 'c')
+        .replaceAll('ğ', 'g');
 
     final updatedDevices = <Device>[];
     String sceneDisplayName = 'Senaryo';
@@ -278,7 +286,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     for (final dev in current.devices) {
       Device updated = dev;
 
-      if (normalized == 'home' || normalized == 'evdeyim') {
+      if (normalized == 'home' || normalized == 'evdeyim' || normalized.contains('evde')) {
         sceneDisplayName = 'Evdeyim';
         if (dev.type == DeviceType.bulb) {
           updated = dev.copyWith(
@@ -294,7 +302,7 @@ class DevicesCubit extends Cubit<DevicesState> {
             currentPowerWatts: 1100.0,
           );
         }
-      } else if (normalized == 'day' || normalized == 'gunduz') {
+      } else if (normalized == 'day' || normalized == 'gunduz' || normalized.contains('gunduz')) {
         sceneDisplayName = 'Gündüz';
         if (dev.type == DeviceType.bulb) {
           updated = dev.copyWith(
@@ -307,7 +315,7 @@ class DevicesCubit extends Cubit<DevicesState> {
             acMode: AcMode.auto,
           );
         }
-      } else if (normalized == 'night' || normalized == 'gece') {
+      } else if (normalized == 'night' || normalized == 'gece' || normalized.contains('gece')) {
         sceneDisplayName = 'Gece Modu';
         if (dev.type == DeviceType.bulb) {
           // Keep only 1 warm night lamp or turn off
@@ -326,7 +334,7 @@ class DevicesCubit extends Cubit<DevicesState> {
             fanSpeed: FanSpeed.low,
           );
         }
-      } else if (normalized == 'away' || normalized == 'disarida') {
+      } else if (normalized == 'away' || normalized == 'disarida' || normalized.contains('disari')) {
         sceneDisplayName = 'Dışarıda';
         updated = dev.copyWith(
           isPoweredOn: false,
@@ -630,6 +638,14 @@ class DevicesCubit extends Cubit<DevicesState> {
         await togglePower(userId ?? _currentUserId ?? 'demo-user', dev.id);
       }
     }
+  }
+
+  /// Convenience method for applying one of the 4 quick scenes ('Evdeyim', 'Gündüz', 'Gece Modu', 'Dışarıda').
+  Future<void> applyQuickScene(String sceneKey, {String? userId}) {
+    return applyScene(
+      userId: userId ?? _currentUserId ?? 'demo-user',
+      sceneKey: sceneKey,
+    );
   }
 
   @override
