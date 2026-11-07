@@ -104,7 +104,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `onboarding_page.dart`: 3D izometrik ev görseli ve interaktif `> Başla >>>` kaydırıcısı ile `/welcome`'a geçiş.
 - `welcome_page.dart`: Suluboya villa görseli ve mikro ambiyans rozeti korunarak `Hemen Başla` (Register/Login) ve `Giriş Yap` butonlarının GoRouter rotalarına bağlanması.
 
-### Adım 3.4: Login, Register ve Şifremi Unuttum Ekranlarının Bağlanması
+### Adım 3.4: [x] Login, Register ve Şifremi Unuttum Ekranlarının Bağlanması
 - `login_page.dart`: Gerçek Firebase giriş entegrasyonu, form validasyonu, hata durumlarında Türkçe SnackBar bildirimleri.
 - `register_page.dart`: Hesap oluşturma, şifre eşleşme kontrolü, kullanıcı sözleşmesi onayı, Firestore profil dokümanı oluşturma.
 - `forgot_password_page.dart`: Firebase `sendPasswordResetEmail` tetikleyicisi ve bilgilendirme ekranı.
