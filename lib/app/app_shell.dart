@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../core/widgets/nestora_bottom_nav.dart';
 import '../features/auth/presentation/pages/forgot_password_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
@@ -23,8 +24,9 @@ import 'theme/app_typography.dart';
 
 class AppShell extends StatefulWidget {
   final VoidCallback? onLogout;
+  final Widget? child;
 
-  const AppShell({super.key, this.onLogout});
+  const AppShell({super.key, this.onLogout, this.child});
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -32,6 +34,38 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+
+  int _calculateSelectedIndex(BuildContext context) {
+    if (widget.child == null) return _currentIndex;
+    try {
+      final location = GoRouterState.of(context).matchedLocation;
+      if (location.startsWith('/devices')) return 1;
+      if (location.startsWith('/profile')) return 2;
+      return 0;
+    } catch (_) {
+      return _currentIndex;
+    }
+  }
+
+  void _onItemTapped(int index, BuildContext context) {
+    if (widget.child != null) {
+      switch (index) {
+        case 0:
+          context.go('/dashboard');
+          break;
+        case 1:
+          context.go('/devices');
+          break;
+        case 2:
+          context.go('/profile');
+          break;
+      }
+    } else {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,18 +87,15 @@ class _AppShellState extends State<AppShell> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
-      body: IndexedStack(
-        sizing: StackFit.expand,
-        index: _currentIndex,
-        children: pages,
-      ),
+      body: widget.child ??
+          IndexedStack(
+            sizing: StackFit.expand,
+            index: _currentIndex,
+            children: pages,
+          ),
       bottomNavigationBar: NestoraBottomNav(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        currentIndex: _calculateSelectedIndex(context),
+        onTap: (index) => _onItemTapped(index, context),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showScreenNavigator(context, appState),

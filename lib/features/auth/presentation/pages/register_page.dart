@@ -373,8 +373,9 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 20),
 
               // Footer Account Switch Prompt
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     'Zaten hesabın var mı?',

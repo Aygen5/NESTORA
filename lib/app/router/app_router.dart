@@ -1,0 +1,325 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/onboarding_page.dart';
+import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/splash_page.dart';
+import '../../features/auth/presentation/pages/welcome_page.dart';
+import '../../features/components_preview/presentation/pages/components_preview_page.dart';
+import '../../features/devices/presentation/pages/ac_control_page.dart';
+import '../../features/devices/presentation/pages/add_edit_device_page.dart';
+import '../../features/devices/presentation/pages/devices_page.dart';
+import '../../features/devices/presentation/pages/lamp_control_page.dart';
+import '../../features/home/presentation/pages/dashboard_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/rooms/domain/room_model.dart';
+import '../../features/rooms/presentation/pages/add_edit_room_page.dart';
+import '../../features/rooms/presentation/pages/room_detail_page.dart';
+import '../../features/rooms/presentation/pages/rooms_page.dart';
+import '../app_shell.dart';
+import '../app_state.dart';
+
+/// URL and Path definitions for all 16 application screens and preview tools.
+abstract class AppRoutePaths {
+  static const String splash = '/splash';
+  static const String onboarding = '/onboarding';
+  static const String welcome = '/welcome';
+  static const String login = '/login';
+  static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
+
+  // Shell Tabs
+  static const String dashboard = '/dashboard';
+  static const String devices = '/devices';
+  static const String profile = '/profile';
+
+  // Standalone Full-Page Routes
+  static const String rooms = '/rooms';
+  static const String roomDetail = '/rooms/:roomId';
+  static const String addEditRoom = '/rooms/add-edit';
+  static const String lampControl = '/devices/lamp/:deviceId';
+  static const String climateControl = '/devices/climate/:deviceId';
+  static const String addEditDevice = '/devices/add-edit';
+  static const String notifications = '/notifications';
+
+  // Dev / Debug Preview
+  static const String componentsPreview = '/components-preview';
+}
+
+/// Named routes for type-safe and clear routing.
+abstract class AppRouteNames {
+  static const String splash = 'splash';
+  static const String onboarding = 'onboarding';
+  static const String welcome = 'welcome';
+  static const String login = 'login';
+  static const String register = 'register';
+  static const String forgotPassword = 'forgot-password';
+
+  // Shell Tabs
+  static const String dashboard = 'dashboard';
+  static const String devices = 'devices';
+  static const String profile = 'profile';
+
+  // Standalone Full-Page Routes
+  static const String rooms = 'rooms';
+  static const String roomDetail = 'room-detail';
+  static const String addEditRoom = 'add-edit-room';
+  static const String lampControl = 'lamp-control';
+  static const String climateControl = 'climate-control';
+  static const String addEditDevice = 'add-edit-device';
+  static const String notifications = 'notifications';
+
+  // Dev / Debug Preview
+  static const String componentsPreview = 'components-preview';
+}
+
+/// Global navigator keys for root and shell navigators.
+final GlobalKey<NavigatorState> rootNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'rootNav');
+final GlobalKey<NavigatorState> shellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellNav');
+
+/// Central GoRouter factory function.
+GoRouter createAppRouter({
+  String initialLocation = AppRoutePaths.splash,
+  Listenable? refreshListenable,
+  GoRouterRedirect? redirect,
+  List<NavigatorObserver>? observers,
+}) {
+  return GoRouter(
+    navigatorKey: rootNavigatorKey,
+    initialLocation: initialLocation,
+    debugLogDiagnostics: kDebugMode,
+    refreshListenable: refreshListenable,
+    redirect: redirect,
+    observers: observers,
+    routes: [
+      // 1. Splash
+      GoRoute(
+        path: AppRoutePaths.splash,
+        name: AppRouteNames.splash,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => SplashPage(
+          onFinish: () => context.go(AppRoutePaths.onboarding),
+        ),
+      ),
+
+      // 2. Onboarding
+      GoRoute(
+        path: AppRoutePaths.onboarding,
+        name: AppRouteNames.onboarding,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => OnboardingPage(
+          onStart: () => context.go(AppRoutePaths.welcome),
+          onBack: () => context.go(AppRoutePaths.splash),
+        ),
+      ),
+
+      // 3. Welcome
+      GoRoute(
+        path: AppRoutePaths.welcome,
+        name: AppRouteNames.welcome,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => WelcomePage(
+          onGetStarted: () => context.go(AppRoutePaths.register),
+          onLogin: () => context.go(AppRoutePaths.login),
+        ),
+      ),
+
+      // 4. Login
+      GoRoute(
+        path: AppRoutePaths.login,
+        name: AppRouteNames.login,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => LoginPage(
+          onLoginSuccess: () => context.go(AppRoutePaths.dashboard),
+          onNavigateToRegister: () => context.go(AppRoutePaths.register),
+          onNavigateToForgotPassword: () =>
+              context.go(AppRoutePaths.forgotPassword),
+        ),
+      ),
+
+      // 5. Register
+      GoRoute(
+        path: AppRoutePaths.register,
+        name: AppRouteNames.register,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => RegisterPage(
+          onRegisterSuccess: () => context.go(AppRoutePaths.dashboard),
+          onNavigateToLogin: () => context.go(AppRoutePaths.login),
+        ),
+      ),
+
+      // 6. Forgot Password
+      GoRoute(
+        path: AppRoutePaths.forgotPassword,
+        name: AppRouteNames.forgotPassword,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => ForgotPasswordPage(
+          onBackToLogin: () => context.go(AppRoutePaths.login),
+        ),
+      ),
+
+      // 7. ShellRoute: Dashboard (Tab 0), Devices (Tab 1), Profile (Tab 2)
+      ShellRoute(
+        navigatorKey: shellNavigatorKey,
+        builder: (context, state, child) {
+          return AppShell(child: child);
+        },
+        routes: [
+          GoRoute(
+            path: AppRoutePaths.dashboard,
+            name: AppRouteNames.dashboard,
+            builder: (context, state) => DashboardPage(
+              onNavigateToDevices: () => context.go(AppRoutePaths.devices),
+              onNavigateToProfile: () => context.go(AppRoutePaths.profile),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutePaths.devices,
+            name: AppRouteNames.devices,
+            builder: (context, state) => DevicesPage(
+              onNavigateToProfile: () => context.go(AppRoutePaths.profile),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutePaths.profile,
+            name: AppRouteNames.profile,
+            builder: (context, state) => ProfilePage(
+              onLogout: () => context.go(AppRoutePaths.welcome),
+            ),
+          ),
+        ],
+      ),
+
+      // 8. Rooms List (Full page)
+      GoRoute(
+        path: AppRoutePaths.rooms,
+        name: AppRouteNames.rooms,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => const RoomsPage(),
+      ),
+
+      // 9. Add / Edit Room (/rooms/add-edit) - Must precede /rooms/:roomId to prevent param collision
+      GoRoute(
+        path: AppRoutePaths.addEditRoom,
+        name: AppRouteNames.addEditRoom,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) {
+          final room =
+              state.extra is RoomModel ? state.extra as RoomModel : null;
+          return AddEditRoomPage(
+            isEditing: room != null,
+            room: room,
+          );
+        },
+      ),
+
+      // 10. Room Detail (/rooms/:roomId)
+      GoRoute(
+        path: AppRoutePaths.roomDetail,
+        name: AppRouteNames.roomDetail,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) {
+          final roomId = state.pathParameters['roomId'] ?? 'room-1';
+          RoomModel? room;
+          if (state.extra is RoomModel) {
+            room = state.extra as RoomModel;
+          } else {
+            try {
+              final appState = AppStateScope.of(context);
+              room = appState.rooms.firstWhere(
+                (r) => r.id == roomId,
+                orElse: () => appState.rooms.first,
+              );
+            } catch (_) {
+              // AppStateScope fallback
+            }
+          }
+
+          if (room == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Oda')),
+              body: const Center(child: Text('Oda bulunamadı')),
+            );
+          }
+          return RoomDetailPage(room: room);
+        },
+      ),
+
+      // 11. Lamp Control (/devices/lamp/:deviceId)
+      GoRoute(
+        path: AppRoutePaths.lampControl,
+        name: AppRouteNames.lampControl,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => const LampControlPage(),
+      ),
+
+      // 12. Climate Control (/devices/climate/:deviceId)
+      GoRoute(
+        path: AppRoutePaths.climateControl,
+        name: AppRouteNames.climateControl,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => const AcControlPage(),
+      ),
+
+      // 13. Add / Edit Device (/devices/add-edit)
+      GoRoute(
+        path: AppRoutePaths.addEditDevice,
+        name: AppRouteNames.addEditDevice,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) {
+          final initialRoom = state.uri.queryParameters['room'] ??
+              (state.extra is String ? state.extra as String : null);
+          return AddEditDevicePage(initialRoom: initialRoom);
+        },
+      ),
+
+      // 14. Notifications (/notifications)
+      GoRoute(
+        path: AppRoutePaths.notifications,
+        name: AppRouteNames.notifications,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => const NotificationsPage(),
+      ),
+
+      // 15. Components Preview (/components-preview)
+      GoRoute(
+        path: AppRoutePaths.componentsPreview,
+        name: AppRouteNames.componentsPreview,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => const ComponentsPreviewPage(),
+      ),
+    ],
+  );
+}
+
+/// Helper navigation extension methods on BuildContext for clean call sites.
+extension NestoraNavigationExtension on BuildContext {
+  void goToSplash() => go(AppRoutePaths.splash);
+  void goToOnboarding() => go(AppRoutePaths.onboarding);
+  void goToWelcome() => go(AppRoutePaths.welcome);
+  void goToLogin() => go(AppRoutePaths.login);
+  void goToRegister() => go(AppRoutePaths.register);
+  void goToForgotPassword() => go(AppRoutePaths.forgotPassword);
+  void goToDashboard() => go(AppRoutePaths.dashboard);
+  void goToDevices() => go(AppRoutePaths.devices);
+  void goToProfile() => go(AppRoutePaths.profile);
+  void goToRooms() => push(AppRoutePaths.rooms);
+  void goToRoomDetail(String roomId, {RoomModel? room}) =>
+      push('/rooms/$roomId', extra: room);
+  void goToAddEditRoom({RoomModel? room}) =>
+      push(AppRoutePaths.addEditRoom, extra: room);
+  void goToLampControl(String deviceId) =>
+      push('/devices/lamp/$deviceId');
+  void goToClimateControl(String deviceId) =>
+      push('/devices/climate/$deviceId');
+  void goToAddEditDevice({String? initialRoom}) =>
+      push(AppRoutePaths.addEditDevice, extra: initialRoom);
+  void goToNotifications() => push(AppRoutePaths.notifications);
+  void goToComponentsPreview() => push(AppRoutePaths.componentsPreview);
+}

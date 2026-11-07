@@ -48,7 +48,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 
 > **Amaç:** Sayfa geçişlerini GoRouter ile merkezi, tip güvenli, URL uyumlu ve oturum durumuna duyarlı (Route Guards) hâle getirmek; Bottom Navigation'ı 3 sekmeli hedefe uyarlamak.
 
-### Adım 2.1: GoRouter Rota Tanımları (`app/router/app_router.dart`)
+### Adım 2.1: [x] GoRouter Rota Tanımları (`app/router/app_router.dart`)
 - Rota isimlendirme ve hiyerarşisinin tanımlanması:
   - `/splash`
   - `/onboarding`
