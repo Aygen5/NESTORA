@@ -68,7 +68,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.darkScaffoldBackground
-          : AppColors.lightScaffoldBackground, // #FDF5E6 Old Lace
+          : AppColors.lightScaffoldBackground, // #F4F3EC Neutral Pearl
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(

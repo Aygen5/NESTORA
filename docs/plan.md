@@ -240,7 +240,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 
 > **Amaç:** Tasarım bütünlüğünü, Manrope tipografisini ve tüm ekran boyutlarında taşmasız (zero-overflow) görüntülemeyi garanti altına almak.
 
-### Adım 7.1: Tema Renklerinin Son Uyarlaması
+### Adım 7.1: [x] Tema Renklerinin Son Uyarlaması
 - Açık mod ana arka plan renginin değerlendirilmesi (`#F4F3EC` nötr inci tonu ile mevcut `#FDF5E6` karşılaştırması).
 - Koyu mod (`#131713`) ve kart yüzeylerinin (`#FFFFFF` / `#1C221D`) kontrast denetimi.
 

@@ -10,7 +10,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: AppTypography.fontFamily,
-      scaffoldBackgroundColor: AppColors.lightScaffoldBackground, // Pure #FFFFFF
+      scaffoldBackgroundColor: AppColors.lightScaffoldBackground, // #F4F3EC (Neutral Pearl)
       colorScheme: const ColorScheme(
         brightness: Brightness.light,
         primary: AppColors.primary,

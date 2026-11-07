@@ -6,10 +6,16 @@ class AppColors {
   AppColors._();
 
   // === LIGHT THEME (Default) ===
-  // Primary Scaffold Background: #FDF5E6 – Old Lace (Sıcak, yumuşak inci beyazı)
-  static const Color lightScaffoldBackground = Color(0xFFFDF5E6);
+  /// Nötr inci tonu (#F4F3EC) – Modern, ferah ve sarı/krem tonlarından arındırılmış inci beyazı (Faz 7.1)
+  static const Color lightNeutralPearl = Color(0xFFF4F3EC);
+
+  /// Klasik Old Lace (#FDF5E6) – Sarı/krem alt tonlu sıcak fildişi
+  static const Color lightOldLace = Color(0xFFFDF5E6);
+
+  /// Birincil Açık Tema İskele Arka Planı (Varsayılan olarak #F4F3EC nötr inci beyazı)
+  static const Color lightScaffoldBackground = lightNeutralPearl;
   static const Color lightCardBackground = Color(0xFFFFFFFF);
-  static const Color lightSecondarySurface = Color(0xFFF4EFE6); // Warm Light Cream
+  static const Color lightSecondarySurface = Color(0xFFF1F4EF); // Soft Sage Secondary Surface
 
   // Brand Palette
   static const Color primary = Color(0xFF344638); // Deep Forest Pine
