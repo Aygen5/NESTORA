@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../app/app_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../../../devices/presentation/cubit/devices_cubit.dart';
+import '../../../devices/presentation/cubit/devices_state.dart';
+import '../cubit/rooms_cubit.dart';
+import '../cubit/rooms_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import 'add_edit_room_page.dart';
@@ -10,11 +15,20 @@ class RoomsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
+    final roomsState = context.watch<RoomsCubit>().state;
+    final devicesState = context.watch<DevicesCubit>().state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final totalRooms = appState.rooms.length;
-    final totalDevices = appState.devices.length;
-    final activeDevices = appState.devices.where((d) => d.isPoweredOn).length;
+
+    final rooms = (roomsState is RoomsLoaded)
+        ? roomsState.rooms.map(SeedData.roomToModel).toList()
+        : SeedData.defaultRoomModels;
+    final devices = (devicesState is DevicesLoaded)
+        ? devicesState.devices.map(SeedData.deviceToModel).toList()
+        : SeedData.defaultDeviceModels;
+
+    final totalRooms = rooms.length;
+    final totalDevices = devices.length;
+    final activeDevices = devices.where((d) => d.isPoweredOn).length;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
@@ -150,11 +164,11 @@ class RoomsPage extends StatelessWidget {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: appState.rooms.length,
+              itemCount: rooms.length,
               separatorBuilder: (ctx, i) => const SizedBox(height: 14),
               itemBuilder: (context, index) {
-                final room = appState.rooms[index];
-                final roomDevices = appState.devices.where((d) => d.room == room.name).toList();
+                final room = rooms[index];
+                final roomDevices = devices.where((d) => d.room == room.name).toList();
 
                 return GestureDetector(
                   onTap: () {

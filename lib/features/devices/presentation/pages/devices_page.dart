@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../app/app_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../cubit/devices_cubit.dart';
+import '../cubit/devices_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/nestora_logo.dart';
@@ -33,16 +36,21 @@ class _DevicesPageState extends State<DevicesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
+    final devicesCubit = context.watch<DevicesCubit>();
+    final devicesState = devicesCubit.state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final totalCount = appState.devices.length;
-    final activeCount = appState.devices.where((d) => d.isPoweredOn).length;
+    final devices = (devicesState is DevicesLoaded)
+        ? devicesState.devices.map(SeedData.deviceToModel).toList()
+        : SeedData.defaultDeviceModels;
+
+    final totalCount = devices.length;
+    final activeCount = devices.where((d) => d.isPoweredOn).length;
     final inactiveCount = totalCount - activeCount;
-    final favCount = appState.devices.where((d) => d.isFavorite).length;
+    final favCount = devices.where((d) => d.isFavorite).length;
 
     // Filter devices
-    List<DeviceModel> filteredDevices = appState.devices.where((d) {
+    List<DeviceModel> filteredDevices = devices.where((d) {
       if (_searchQuery.isNotEmpty) {
         final matchesQuery = d.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
             d.room.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -385,7 +393,7 @@ class _DevicesPageState extends State<DevicesPage> {
                   itemCount: filteredDevices.length,
                   itemBuilder: (context, index) {
                     final device = filteredDevices[index];
-                    return _buildDeviceCard(context, appState, device, isDark);
+                    return _buildDeviceCard(context, device, isDark);
                   },
                 );
               },
@@ -444,7 +452,6 @@ class _DevicesPageState extends State<DevicesPage> {
 
   Widget _buildDeviceCard(
     BuildContext context,
-    AppState appState,
     DeviceModel device,
     bool isDark,
   ) {
@@ -498,7 +505,7 @@ class _DevicesPageState extends State<DevicesPage> {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () => appState.toggleFavorite(device.id),
+                      onTap: () => context.read<DevicesCubit>().toggleDeviceFavorite(device.id),
                       child: Icon(
                         device.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
                         size: 20,
@@ -508,7 +515,7 @@ class _DevicesPageState extends State<DevicesPage> {
                     const SizedBox(width: 6),
                     NestoraSwitch(
                       value: device.isPoweredOn,
-                      onChanged: (_) => appState.toggleDevicePower(device.id),
+                      onChanged: (_) => context.read<DevicesCubit>().toggleDevicePower(device.id),
                     ),
                   ],
                 ),

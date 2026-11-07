@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../app/app_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/entities/device.dart' as entity;
+import '../cubit/devices_cubit.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/nestora_button.dart';
@@ -46,7 +48,6 @@ class _AddEditDevicePageState extends State<AddEditDevicePage> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -639,17 +640,17 @@ class _AddEditDevicePageState extends State<AddEditDevicePage> {
               text: _isAddMode ? 'Cihazı Ekle' : 'Değişiklikleri Kaydet',
               onPressed: () {
                 final name = _nameController.text.trim().isEmpty ? 'Yeni Cihaz' : _nameController.text.trim();
-                final newDev = DeviceModel(
+                final deviceEntity = entity.Device(
                   id: 'dev-${DateTime.now().millisecondsSinceEpoch}',
                   name: name,
-                  room: _selectedRoom,
+                  roomId: _selectedRoom,
                   type: _selectedType,
                   isPoweredOn: _initialPowerState,
                   brightness: _selectedType == DeviceType.bulb ? _bulbBrightness.round() : 72,
-                  targetTemp: _selectedType == DeviceType.ac ? _acTemp.round() : 24,
+                  targetTemp: _selectedType == DeviceType.ac ? _acTemp : 24.0,
                   isFavorite: _isFavorite,
                 );
-                appState.addDevice(newDev);
+                context.read<DevicesCubit>().addDeviceEntity(deviceEntity);
 
                 showNestoraSnackbar(
                   context,

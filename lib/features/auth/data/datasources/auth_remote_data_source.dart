@@ -44,7 +44,7 @@ abstract class AuthRemoteDataSource {
 
 /// Firebase implementation of [AuthRemoteDataSource].
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final FirebaseAuth _firebaseAuth;
+  final FirebaseAuth? _injectedAuth;
   final FirebaseFirestore? firestore;
   final DemoConfigService? demoConfigService;
   final FirestoreSeedService? seedService;
@@ -54,13 +54,32 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     this.firestore,
     this.demoConfigService,
     this.seedService,
-  }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+  }) : _injectedAuth = firebaseAuth;
+
+  FirebaseAuth get _firebaseAuth {
+    if (_injectedAuth != null) return _injectedAuth;
+    try {
+      return FirebaseAuth.instance;
+    } catch (_) {
+      throw const AuthException('Firebase Authentication servisi hazır değil.');
+    }
+  }
+
+  FirebaseAuth? get _safeAuth {
+    if (_injectedAuth != null) return _injectedAuth;
+    try {
+      return FirebaseAuth.instance;
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
-  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+  Stream<User?> get authStateChanges =>
+      _safeAuth?.authStateChanges() ?? const Stream.empty();
 
   @override
-  User? get currentUser => _firebaseAuth.currentUser;
+  User? get currentUser => _safeAuth?.currentUser;
 
   @override
   Future<UserCredential> signInWithEmail({

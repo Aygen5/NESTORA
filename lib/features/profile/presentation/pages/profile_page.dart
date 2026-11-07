@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../app/app_state.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../../../devices/presentation/cubit/devices_cubit.dart';
+import '../../../devices/presentation/cubit/devices_state.dart';
+import '../../../rooms/presentation/cubit/rooms_cubit.dart';
+import '../../../rooms/presentation/cubit/rooms_state.dart';
+import '../cubit/profile_cubit.dart';
+import '../cubit/profile_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../app/theme/theme_cubit.dart';
@@ -23,10 +29,28 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
+    final profileState = context.watch<ProfileCubit>().state;
+    final roomsState = context.watch<RoomsCubit>().state;
+    final devicesState = context.watch<DevicesCubit>().state;
     final themeCubit = context.watch<ThemeCubit>();
     final currentThemeMode = themeCubit.state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final userName = profileState is ProfileLoaded
+        ? profileState.profile.displayName
+        : SeedData.defaultProfile.displayName;
+    final userEmail = profileState is ProfileLoaded
+        ? profileState.profile.email
+        : SeedData.defaultProfile.email;
+    final homeName = profileState is ProfileLoaded
+        ? profileState.profile.homeName
+        : SeedData.defaultProfile.homeName;
+    final roomsCount = roomsState is RoomsLoaded
+        ? roomsState.rooms.length
+        : SeedData.defaultRooms.length;
+    final devicesCount = devicesState is DevicesLoaded
+        ? devicesState.devices.length
+        : SeedData.defaultDevices.length;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
@@ -116,7 +140,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    appState.userName,
+                    userName,
                     style: AppTypography.headlineMedium.copyWith(
                       color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                       fontWeight: FontWeight.bold,
@@ -124,7 +148,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    appState.userEmail,
+                    userEmail,
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.secondary,
                     ),
@@ -144,7 +168,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         Icon(Icons.cottage_rounded, size: 16, color: AppColors.primaryContainer),
                         const SizedBox(width: 6),
                         Text(
-                          appState.homeName,
+                          homeName,
                           style: AppTypography.labelSmall.copyWith(
                             color: AppColors.primaryContainer,
                             fontWeight: FontWeight.bold,
@@ -154,14 +178,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 10)),
                         const SizedBox(width: 6),
                         Text(
-                          '${appState.rooms.length} Oda',
+                          '$roomsCount Oda',
                           style: AppTypography.caption.copyWith(color: AppColors.secondary),
                         ),
                         const SizedBox(width: 6),
                         const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 10)),
                         const SizedBox(width: 6),
                         Text(
-                          '${appState.devices.length} Cihaz',
+                          '$devicesCount Cihaz',
                           style: AppTypography.caption.copyWith(color: AppColors.secondary),
                         ),
                       ],
@@ -207,7 +231,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        appState.userEmail,
+                        userEmail,
                         style: AppTypography.caption.copyWith(color: AppColors.secondary),
                       ),
                       const SizedBox(width: 4),

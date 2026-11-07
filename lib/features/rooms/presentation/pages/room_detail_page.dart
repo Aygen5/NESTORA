@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../app/app_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../../../devices/presentation/cubit/devices_cubit.dart';
+import '../../../devices/presentation/cubit/devices_state.dart';
+import '../cubit/rooms_cubit.dart';
+import '../cubit/rooms_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/nestora_button.dart';
@@ -25,13 +30,22 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
+    final roomsState = context.watch<RoomsCubit>().state;
+    final devicesState = context.watch<DevicesCubit>().state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentRoom = appState.rooms.firstWhere(
+
+    final rooms = (roomsState is RoomsLoaded)
+        ? roomsState.rooms.map(SeedData.roomToModel).toList()
+        : SeedData.defaultRoomModels;
+    final devices = (devicesState is DevicesLoaded)
+        ? devicesState.devices.map(SeedData.deviceToModel).toList()
+        : SeedData.defaultDeviceModels;
+
+    final currentRoom = rooms.firstWhere(
       (r) => r.id == widget.room.id,
       orElse: () => widget.room,
     );
-    final roomDevices = appState.devices.where((d) => d.room == currentRoom.name).toList();
+    final roomDevices = devices.where((d) => d.room == currentRoom.name).toList();
     final activeCount = roomDevices.where((d) => d.isPoweredOn).length;
     final allActive = roomDevices.isNotEmpty && activeCount == roomDevices.length;
 
@@ -78,7 +92,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded, size: 22, color: AppColors.error),
-            onPressed: () => _showDeleteDialog(context, appState, currentRoom),
+            onPressed: () => _showDeleteDialog(context, currentRoom),
           ),
         ],
       ),
@@ -285,7 +299,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
-                      appState.toggleAllInRoom(currentRoom.name, !allActive);
+                      context.read<DevicesCubit>().toggleAllInRoom(currentRoom.name, !allActive);
                     },
                     icon: const Icon(Icons.power_settings_new_rounded, size: 16),
                     label: Text(allActive ? 'Tümünü Kapat' : 'Tümünü Aç'),
@@ -432,7 +446,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                             NestoraSwitch(
                               value: device.isPoweredOn,
                               onChanged: (_) {
-                                appState.toggleDevicePower(device.id);
+                                context.read<DevicesCubit>().toggleDevicePower(device.id);
                               },
                             ),
                           ],
@@ -570,7 +584,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
-                      onPressed: () => _showDeleteDialog(context, appState, currentRoom),
+                      onPressed: () => _showDeleteDialog(context, currentRoom),
                       icon: const Icon(Icons.delete_sweep_rounded, size: 18, color: AppColors.error),
                       label: Text(
                         'Odayı Sil',
@@ -593,7 +607,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
 );
 }
 
-  void _showDeleteDialog(BuildContext context, AppState appState, RoomModel currentRoom) {
+  void _showDeleteDialog(BuildContext context, RoomModel currentRoom) {
     showNestoraDialog(
       context: context,
       variation: DialogVariation.variationB,
@@ -602,7 +616,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
           'Bu işlem odayı kaldırır. ${currentRoom.deviceCount} cihazınız silinmez, otomatik olarak Atanmamış Cihazlar listesine aktarılır.',
       confirmText: 'Odayı Sil ve Cihazları Koru',
       onConfirm: () {
-        appState.deleteRoom(currentRoom.id);
+        context.read<RoomsCubit>().deleteRoomById(currentRoom.id);
         Navigator.pop(context); // close room detail page
       },
     );

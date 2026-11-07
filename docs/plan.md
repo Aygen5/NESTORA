@@ -173,7 +173,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Bildirim listesini yükleme, tekil okundu işaretleme, tümünü okundu işaretleme, bildirim silme.
 - Okunmamış bildirim sayısının Dashboard bildirim zilinde anlık kırmızı rozet olarak gösterilmesi.
 
-### Adım 5.5: `app_state.dart`'ın Güvenle Emekliye Ayrılması
+### Adım 5.5: [x] `app_state.dart`'ın Güvenle Emekliye Ayrılması
 - Mevcut ekranların `AppStateScope.of(context)` referanslarının ilgili `context.watch<DevicesCubit>()`, `context.watch<RoomsCubit>()` gibi Cubit çağrılarına geçirilmesi.
 - `app_state.dart` dosyasının projeden temizlenmesi.
 

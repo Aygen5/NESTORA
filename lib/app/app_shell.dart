@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../core/widgets/nestora_bottom_nav.dart';
 import '../features/auth/presentation/pages/forgot_password_page.dart';
@@ -19,7 +20,9 @@ import '../features/profile/presentation/pages/profile_page.dart';
 import '../features/rooms/presentation/pages/add_edit_room_page.dart';
 import '../features/rooms/presentation/pages/room_detail_page.dart';
 import '../features/rooms/presentation/pages/rooms_page.dart';
-import 'app_state.dart';
+import '../core/constants/seed_data.dart';
+import '../features/rooms/presentation/cubit/rooms_cubit.dart';
+import '../features/rooms/presentation/cubit/rooms_state.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_typography.dart';
 
@@ -70,7 +73,6 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final pages = [
@@ -100,7 +102,7 @@ class _AppShellState extends State<AppShell> {
       ),
       floatingActionButton: kDebugMode
           ? FloatingActionButton.extended(
-              onPressed: () => _showScreenNavigator(context, appState),
+              onPressed: () => _showScreenNavigator(context),
               backgroundColor: AppColors.primaryContainer,
               foregroundColor: Colors.white,
               elevation: 4,
@@ -117,8 +119,12 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  void _showScreenNavigator(BuildContext context, AppState appState) {
+  void _showScreenNavigator(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final roomsState = context.read<RoomsCubit>().state;
+    final firstRoom = (roomsState is RoomsLoaded && roomsState.rooms.isNotEmpty)
+        ? SeedData.roomToModel(roomsState.rooms.first)
+        : SeedData.defaultRoomModels.first;
 
     final screens = [
       {'num': '1', 'title': 'Nestora - Açılış (Splash)', 'page': const SplashPage()},
@@ -129,7 +135,7 @@ class _AppShellState extends State<AppShell> {
       {
         'num': '5',
         'title': 'Nestora - Salon Oda Detayı',
-        'page': RoomDetailPage(room: appState.rooms.first),
+        'page': RoomDetailPage(room: firstRoom),
       },
       {'num': '6', 'title': 'Nestora - Oda Ekle ve Düzenle', 'page': const AddEditRoomPage()},
       {'num': '7', 'title': 'Nestora - Salon Lambası Kontrolü', 'page': const LampControlPage()},

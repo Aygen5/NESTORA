@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../../../app/app_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../cubit/devices_cubit.dart';
+import '../cubit/devices_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/nestora_button.dart';
@@ -36,9 +39,17 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
-    final ac = appState.bedroomAc;
+    final devicesCubit = context.watch<DevicesCubit>();
+    final devicesState = devicesCubit.state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final devices = (devicesState is DevicesLoaded)
+        ? devicesState.devices.map(SeedData.deviceToModel).toList()
+        : SeedData.defaultDeviceModels;
+    final ac = devices.firstWhere(
+      (d) => d.id == 'dev-5',
+      orElse: () => devices.firstWhere((d) => d.type == DeviceType.ac, orElse: () => devices.first),
+    );
     final isPowered = ac.isPoweredOn;
     final currentTemp = ac.targetTemp;
 
@@ -65,7 +76,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
               color: ac.isFavorite ? AppColors.warmAmber : AppColors.secondary,
               size: 22,
             ),
-            onPressed: () => appState.toggleFavorite(ac.id),
+            onPressed: () => context.read<DevicesCubit>().toggleDeviceFavorite(ac.id),
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 22),
@@ -78,7 +89,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded, size: 22, color: AppColors.error),
-            onPressed: () => _showDeleteDialog(context, appState),
+            onPressed: () => _showDeleteDialog(context),
           ),
         ],
       ),
@@ -139,7 +150,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                     const SizedBox(width: 8),
                     NestoraSwitch(
                       value: isPowered,
-                      onChanged: (_) => appState.toggleDevicePower(ac.id),
+                      onChanged: (_) => context.read<DevicesCubit>().toggleDevicePower(ac.id),
                     ),
                   ],
                 ),
@@ -407,7 +418,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                           child: GestureDetector(
                             onTap: () {
                               if (currentTemp > 16) {
-                                appState.setAcTargetTemp(ac.id, currentTemp - 1);
+                                context.read<DevicesCubit>().setAcTemp(ac.id, (currentTemp - 1).toDouble());
                               }
                             },
                             child: Container(
@@ -431,7 +442,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                           child: GestureDetector(
                             onTap: () {
                               if (currentTemp < 30) {
-                                appState.setAcTargetTemp(ac.id, currentTemp + 1);
+                                context.read<DevicesCubit>().setAcTemp(ac.id, (currentTemp + 1).toDouble());
                               }
                             },
                             child: Container(
@@ -462,7 +473,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                         label: '20°C Serin',
                         temp: 20,
                         currentTemp: currentTemp,
-                        onTap: () => appState.setAcTargetTemp(ac.id, 20),
+                        onTap: () => context.read<DevicesCubit>().setAcTemp(ac.id, 20.0),
                         isDark: isDark,
                       ),
                       const SizedBox(width: 8),
@@ -470,7 +481,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                         label: '24°C Konfor',
                         temp: 24,
                         currentTemp: currentTemp,
-                        onTap: () => appState.setAcTargetTemp(ac.id, 24),
+                        onTap: () => context.read<DevicesCubit>().setAcTemp(ac.id, 24.0),
                         isDark: isDark,
                       ),
                       const SizedBox(width: 8),
@@ -478,7 +489,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                         label: '26°C Eko',
                         temp: 26,
                         currentTemp: currentTemp,
-                        onTap: () => appState.setAcTargetTemp(ac.id, 26),
+                        onTap: () => context.read<DevicesCubit>().setAcTemp(ac.id, 26.0),
                         isDark: isDark,
                       ),
                     ],
@@ -514,7 +525,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                     subtitle: 'Ferah Esinti',
                     icon: Icons.ac_unit_rounded,
                     isSelected: ac.acMode == AcMode.cool,
-                    onTap: () => appState.setAcMode(ac.id, AcMode.cool),
+                    onTap: () => context.read<DevicesCubit>().setAcModeChoice(ac.id, AcMode.cool),
                     isDark: isDark,
                   ),
                 ),
@@ -525,7 +536,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                     subtitle: 'Dengeli Ilık',
                     icon: Icons.local_fire_department_rounded,
                     isSelected: ac.acMode == AcMode.heat,
-                    onTap: () => appState.setAcMode(ac.id, AcMode.heat),
+                    onTap: () => context.read<DevicesCubit>().setAcModeChoice(ac.id, AcMode.heat),
                     isDark: isDark,
                   ),
                 ),
@@ -536,7 +547,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                     subtitle: 'Akıllı Ayar',
                     icon: Icons.autorenew_rounded,
                     isSelected: ac.acMode == AcMode.auto,
-                    onTap: () => appState.setAcMode(ac.id, AcMode.auto),
+                    onTap: () => context.read<DevicesCubit>().setAcModeChoice(ac.id, AcMode.auto),
                     isDark: isDark,
                   ),
                 ),
@@ -570,13 +581,13 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
             const SizedBox(height: 12),
             Row(
               children: [
-                _buildFanPill('Düşük', FanSpeed.low, ac.fanSpeed, () => appState.setAcFanSpeed(ac.id, FanSpeed.low), isDark),
+                _buildFanPill('Düşük', FanSpeed.low, ac.fanSpeed, () => context.read<DevicesCubit>().setAcFanSpeedChoice(ac.id, FanSpeed.low), isDark),
                 const SizedBox(width: 8),
-                _buildFanPill('Orta', FanSpeed.mid, ac.fanSpeed, () => appState.setAcFanSpeed(ac.id, FanSpeed.mid), isDark),
+                _buildFanPill('Orta', FanSpeed.mid, ac.fanSpeed, () => context.read<DevicesCubit>().setAcFanSpeedChoice(ac.id, FanSpeed.mid), isDark),
                 const SizedBox(width: 8),
-                _buildFanPill('Yüksek', FanSpeed.high, ac.fanSpeed, () => appState.setAcFanSpeed(ac.id, FanSpeed.high), isDark),
+                _buildFanPill('Yüksek', FanSpeed.high, ac.fanSpeed, () => context.read<DevicesCubit>().setAcFanSpeedChoice(ac.id, FanSpeed.high), isDark),
                 const SizedBox(width: 8),
-                _buildFanPill('Oto', FanSpeed.auto, ac.fanSpeed, () => appState.setAcFanSpeed(ac.id, FanSpeed.auto), isDark),
+                _buildFanPill('Oto', FanSpeed.auto, ac.fanSpeed, () => context.read<DevicesCubit>().setAcFanSpeedChoice(ac.id, FanSpeed.auto), isDark),
               ],
             ),
             const SizedBox(height: 20),
@@ -640,7 +651,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
               text: 'Cihazı Sil',
               variant: ButtonVariant.ghost,
               icon: Icons.delete_outline_rounded,
-              onPressed: () => _showDeleteDialog(context, appState),
+              onPressed: () => _showDeleteDialog(context),
             ),
             const SizedBox(height: 32),
           ],
@@ -791,7 +802,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
     );
   }
 
-  void _showDeleteDialog(BuildContext context, AppState appState) {
+  void _showDeleteDialog(BuildContext context) {
     showNestoraDialog(
       context: context,
       variation: DialogVariation.variationA,
@@ -799,7 +810,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
       description:
           'Bu cihazı silmek istediğine emin misin? Bu işlem geri alınamaz ve cihazın bağlı olduğu tüm rutinler devre dışı bırakılır.',
       onConfirm: () {
-        appState.deleteDevice('dev-5');
+        context.read<DevicesCubit>().deleteDeviceById('dev-5');
         Navigator.pop(context);
       },
     );

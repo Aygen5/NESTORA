@@ -1,25 +1,7 @@
 import 'package:flutter/material.dart';
+import 'entities/device.dart';
 
-enum DeviceType {
-  bulb,
-  ac,
-  plug,
-  fan,
-  tv,
-}
-
-enum AcMode {
-  cool,
-  heat,
-  auto,
-}
-
-enum FanSpeed {
-  low,
-  mid,
-  high,
-  auto,
-}
+export 'entities/device.dart' show DeviceType, AcMode, FanSpeed;
 
 class DeviceModel {
   final String id;

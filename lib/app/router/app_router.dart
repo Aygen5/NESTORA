@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,7 +29,9 @@ import '../../features/rooms/presentation/pages/add_edit_room_page.dart';
 import '../../features/rooms/presentation/pages/room_detail_page.dart';
 import '../../features/rooms/presentation/pages/rooms_page.dart';
 import '../app_shell.dart';
-import '../app_state.dart';
+import '../../core/constants/seed_data.dart';
+import '../../features/rooms/presentation/cubit/rooms_cubit.dart';
+import '../../features/rooms/presentation/cubit/rooms_state.dart';
 
 /// URL and Path definitions for all 16 application screens and preview tools.
 abstract class AppRoutePaths {
@@ -289,22 +292,22 @@ GoRouter createAppRouter({
             room = state.extra as RoomModel;
           } else {
             try {
-              final appState = AppStateScope.of(context);
-              room = appState.rooms.firstWhere(
-                (r) => r.id == roomId,
-                orElse: () => appState.rooms.first,
-              );
-            } catch (_) {
-              // AppStateScope fallback
-            }
-          }
-
-          if (room == null) {
-            return Scaffold(
-              appBar: AppBar(title: const Text('Oda')),
-              body: const Center(child: Text('Oda bulunamadı')),
+              final roomsCubit = context.read<RoomsCubit>();
+              final roomsState = roomsCubit.state;
+              if (roomsState is RoomsLoaded) {
+                final found = roomsState.rooms.where((r) => r.id == roomId).firstOrNull ??
+                    roomsState.rooms.firstOrNull;
+                if (found != null) {
+                  room = SeedData.roomToModel(found);
+                }
+              }
+            } catch (_) {}
+            room ??= SeedData.defaultRoomModels.firstWhere(
+              (r) => r.id == roomId,
+              orElse: () => SeedData.defaultRoomModels.first,
             );
           }
+
           return RoomDetailPage(room: room);
         },
       ),

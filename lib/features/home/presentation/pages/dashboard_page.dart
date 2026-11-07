@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../../app/app_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../../../devices/presentation/cubit/devices_cubit.dart';
+import '../../../devices/presentation/cubit/devices_state.dart';
+import '../../../notifications/presentation/cubit/notifications_cubit.dart';
+import '../../../notifications/presentation/cubit/notifications_state.dart';
+import '../../../profile/presentation/cubit/profile_cubit.dart';
+import '../../../profile/presentation/cubit/profile_state.dart';
+import '../../../rooms/presentation/cubit/rooms_cubit.dart';
+import '../../../rooms/presentation/cubit/rooms_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/nestora_logo.dart';
@@ -30,8 +39,27 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
+    final profileState = context.watch<ProfileCubit>().state;
+    final notificationsState = context.watch<NotificationsCubit>().state;
+    final roomsState = context.watch<RoomsCubit>().state;
+    final devicesState = context.watch<DevicesCubit>().state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final homeName = (profileState is ProfileLoaded)
+        ? profileState.profile.homeName
+        : SeedData.defaultProfile.homeName;
+    final unreadNotificationCount = (notificationsState is NotificationsLoaded)
+        ? notificationsState.unreadCount
+        : 0;
+    final rooms = (roomsState is RoomsLoaded)
+        ? roomsState.rooms.map(SeedData.roomToModel).toList()
+        : SeedData.defaultRoomModels;
+    final devices = (devicesState is DevicesLoaded)
+        ? devicesState.devices.map(SeedData.deviceToModel).toList()
+        : SeedData.defaultDeviceModels;
+    final activeDeviceCount = (devicesState is DevicesLoaded)
+        ? devicesState.activeCount
+        : devices.where((d) => d.isPoweredOn).length;
 
     return SizedBox.expand(
       child: Container(
@@ -86,7 +114,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 size: 22,
                                 color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                               ),
-                              if (appState.unreadNotificationCount > 0)
+                              if (unreadNotificationCount > 0)
                                 Positioned(
                                   right: 0,
                                   top: 0,
@@ -174,7 +202,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            appState.homeName,
+                            homeName,
                             style: AppTypography.badge(color: Colors.white),
                           ),
                         ),
@@ -387,7 +415,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: Row(
-                  children: appState.rooms.map((room) {
+                  children: rooms.map((room) {
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -482,7 +510,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '${appState.activeDeviceCount} cihaz açık',
+                      '$activeDeviceCount cihaz açık',
                       style: AppTypography.badge(
                         color: const Color(0xFFDCE5D7),
                       ).copyWith(fontWeight: FontWeight.w600),
@@ -500,7 +528,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: appState.devices.length,
+                    itemCount: devices.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: crossAxisCount,
                       crossAxisSpacing: 12,
@@ -508,12 +536,11 @@ class _DashboardPageState extends State<DashboardPage> {
                       childAspectRatio: 1.15,
                     ),
                     itemBuilder: (context, index) {
-                      final device = appState.devices[index];
+                      final device = devices[index];
 
                       return _buildCompactDeviceCard(
                         context: context,
                         device: device,
-                        appState: appState,
                         isDark: isDark,
                       );
                     },
@@ -537,7 +564,6 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildCompactDeviceCard({
     required BuildContext context,
     required DeviceModel device,
-    required AppState appState,
     required bool isDark,
   }) {
     String valueText = device.isPoweredOn ? 'Açık' : 'Kapalı';
@@ -595,7 +621,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 NestoraSwitch(
                   value: device.isPoweredOn,
-                  onChanged: (_) => appState.toggleDevicePower(device.id),
+                  onChanged: (_) => context.read<DevicesCubit>().toggleDevicePower(device.id),
                 ),
               ],
             ),

@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../app/app_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../../../devices/presentation/cubit/devices_cubit.dart';
+import '../../../devices/presentation/cubit/devices_state.dart';
+import '../../domain/entities/room.dart';
+import '../cubit/rooms_cubit.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/nestora_button.dart';
@@ -63,8 +68,11 @@ class _AddEditRoomPageState extends State<AddEditRoomPage> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
+    final devicesState = context.watch<DevicesCubit>().state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final devices = (devicesState is DevicesLoaded)
+        ? devicesState.devices.map(SeedData.deviceToModel).toList()
+        : SeedData.defaultDeviceModels;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
@@ -422,10 +430,10 @@ class _AddEditRoomPageState extends State<AddEditRoomPage> {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: appState.devices.length,
+              itemCount: devices.length,
               separatorBuilder: (ctx, i) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                final dev = appState.devices[index];
+                final dev = devices[index];
                 final isChecked = _assignedDeviceIds.contains(dev.id);
 
                 return CheckboxListTile(
@@ -467,17 +475,15 @@ class _AddEditRoomPageState extends State<AddEditRoomPage> {
               onPressed: () {
                 final roomName = _nameController.text.trim().isEmpty ? 'Yeni Oda' : _nameController.text.trim();
                 if (!widget.isEditing) {
-                  final newRoom = RoomModel(
+                  final newRoom = Room(
                     id: 'room-${DateTime.now().millisecondsSinceEpoch}',
                     name: roomName,
-                    type: _selectedType,
-                    icon: _selectedIcon,
+                    iconName: 'chair',
+                    targetTemperature: 23.0,
                     deviceCount: _assignedDeviceIds.length,
-                    activeDeviceCount: 0,
-                    temperature: 23.0,
                     humidity: 50,
                   );
-                  appState.addRoom(newRoom);
+                  context.read<RoomsCubit>().addRoomEntity(newRoom);
                 }
                 showNestoraSnackbar(
                   context,

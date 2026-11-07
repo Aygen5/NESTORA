@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../app/app_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../cubit/notifications_cubit.dart';
+import '../cubit/notifications_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 
@@ -8,9 +11,16 @@ class NotificationsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
+    final notificationsCubit = context.watch<NotificationsCubit>();
+    final notificationsState = notificationsCubit.state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final unreadCount = appState.unreadNotificationCount;
+
+    final notifications = (notificationsState is NotificationsLoaded)
+        ? notificationsState.notifications.map(SeedData.notificationToModel).toList()
+        : SeedData.defaultNotificationModels;
+    final unreadCount = (notificationsState is NotificationsLoaded)
+        ? notificationsState.unreadCount
+        : notifications.where((n) => n.isUnread).length;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
@@ -98,7 +108,7 @@ class NotificationsPage extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: unreadCount > 0
-                      ? () => appState.markAllNotificationsAsRead()
+                      ? () => context.read<NotificationsCubit>().markAllNotificationsRead()
                       : null,
                   child: Text(
                     'Tümünü Okundu İşaretle',
@@ -116,13 +126,13 @@ class NotificationsPage extends StatelessWidget {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: appState.notifications.length,
+              itemCount: notifications.length,
               separatorBuilder: (ctx, i) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
-                final notif = appState.notifications[index];
+                final notif = notifications[index];
 
                 return GestureDetector(
-                  onTap: () => appState.markNotificationAsRead(notif.id),
+                  onTap: () => context.read<NotificationsCubit>().markNotificationRead(notif.id),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(

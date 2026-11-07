@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../app/app_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../cubit/devices_cubit.dart';
+import '../cubit/devices_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/nestora_button.dart';
@@ -50,9 +53,14 @@ class _LampControlPageState extends State<LampControlPage> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = AppStateScope.of(context);
-    final lamp = appState.salonLamp;
+    final devicesCubit = context.watch<DevicesCubit>();
+    final devicesState = devicesCubit.state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final devices = (devicesState is DevicesLoaded)
+        ? devicesState.devices.map(SeedData.deviceToModel).toList()
+        : SeedData.defaultDeviceModels;
+    final lamp = devices.firstWhere((d) => d.id == 'dev-1', orElse: () => devices.first);
 
     final brightness = lamp.brightness;
     final isPowered = lamp.isPoweredOn;
@@ -88,7 +96,7 @@ class _LampControlPageState extends State<LampControlPage> {
               color: lamp.isFavorite ? AppColors.warmAmber : AppColors.secondary,
               size: 22,
             ),
-            onPressed: () => appState.toggleFavorite(lamp.id),
+            onPressed: () => context.read<DevicesCubit>().toggleDeviceFavorite(lamp.id),
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 22),
@@ -101,7 +109,7 @@ class _LampControlPageState extends State<LampControlPage> {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded, size: 22, color: AppColors.error),
-            onPressed: () => _showDeleteDialog(context, appState),
+            onPressed: () => _showDeleteDialog(context),
           ),
         ],
       ),
@@ -269,7 +277,7 @@ class _LampControlPageState extends State<LampControlPage> {
                         NestoraSwitch(
                           value: isPowered,
                           onChanged: (_) {
-                            appState.toggleDevicePower(lamp.id);
+                            context.read<DevicesCubit>().toggleDevicePower(lamp.id);
                           },
                         ),
                       ],
@@ -352,7 +360,7 @@ class _LampControlPageState extends State<LampControlPage> {
                       min: 1,
                       max: 100,
                       onChanged: (val) {
-                        appState.setLampBrightness(lamp.id, val.round());
+                        context.read<DevicesCubit>().setLampBrightness(lamp.id, val.round());
                       },
                     ),
                   ),
@@ -368,7 +376,7 @@ class _LampControlPageState extends State<LampControlPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: GestureDetector(
                             onTap: () {
-                              appState.setLampBrightness(lamp.id, preset);
+                              context.read<DevicesCubit>().setLampBrightness(lamp.id, preset);
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -455,10 +463,10 @@ class _LampControlPageState extends State<LampControlPage> {
 
                       return GestureDetector(
                         onTap: () {
-                          appState.setLampColor(
+                          context.read<DevicesCubit>().setLampColor(
                             lamp.id,
-                            swatch['name'] as String,
-                            swatch['hex'] as String,
+                            name: swatch['name'] as String,
+                            hex: swatch['hex'] as String,
                           );
                         },
                         child: Container(
@@ -511,7 +519,7 @@ class _LampControlPageState extends State<LampControlPage> {
               text: 'Cihazı Kaldır',
               variant: ButtonVariant.ghost,
               icon: Icons.delete_outline_rounded,
-              onPressed: () => _showDeleteDialog(context, appState),
+              onPressed: () => _showDeleteDialog(context),
             ),
             const SizedBox(height: 32),
           ],
@@ -522,7 +530,7 @@ class _LampControlPageState extends State<LampControlPage> {
 );
 }
 
-  void _showDeleteDialog(BuildContext context, AppState appState) {
+  void _showDeleteDialog(BuildContext context) {
     showNestoraDialog(
       context: context,
       variation: DialogVariation.variationA,
@@ -530,7 +538,7 @@ class _LampControlPageState extends State<LampControlPage> {
       description:
           'Bu cihazı silmek istediğine emin misin? Bu işlem geri alınamaz ve cihazın bağlı olduğu tüm rutinler devre dışı bırakılır.',
       onConfirm: () {
-        appState.deleteDevice('dev-1');
+        context.read<DevicesCubit>().deleteDeviceById('dev-1');
         Navigator.pop(context);
       },
     );

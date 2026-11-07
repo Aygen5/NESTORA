@@ -28,6 +28,7 @@ import '../../features/rooms/data/repositories/rooms_repository_impl.dart';
 import '../../features/rooms/domain/repositories/rooms_repository.dart';
 import '../../features/rooms/presentation/cubit/rooms_cubit.dart';
 import '../router/auth_guard.dart';
+import '../theme/theme_cubit.dart';
 
 typedef FactoryFunc<T> = T Function();
 
@@ -381,5 +382,10 @@ Future<void> initDependencies({
         notificationsRepository: sl<NotificationsRepository>(),
       ),
     );
+  }
+
+  // 13. Theme Cubit
+  if (!sl.isRegistered<ThemeCubit>()) {
+    sl.registerFactory<ThemeCubit>(() => ThemeCubit());
   }
 }

@@ -13,6 +13,7 @@ class RoomsCubit extends Cubit<RoomsState> {
   final DevicesRepository devicesRepository;
 
   StreamSubscription<List<Room>>? _roomsSubscription;
+  String? _currentUserId;
 
   RoomsCubit({
     required this.roomsRepository,
@@ -26,6 +27,7 @@ class RoomsCubit extends Cubit<RoomsState> {
       emit(const RoomsError('Geçersiz kullanıcı kimliği.'));
       return;
     }
+    _currentUserId = cleanUid;
 
     if (state is! RoomsLoaded) {
       emit(const RoomsLoading());
@@ -236,6 +238,28 @@ class RoomsCubit extends Cubit<RoomsState> {
         errorMessage: message,
       ));
     }
+  }
+
+  /// Currently active authenticated user ID.
+  String? get currentUserId => _currentUserId;
+
+  /// Convenience method for deleting a room by ID.
+  Future<void> deleteRoomById(String roomId, {String? userId}) {
+    return deleteRoom(
+      userId: userId ?? _currentUserId ?? 'demo-user',
+      roomId: roomId,
+    );
+  }
+
+  /// Convenience method for adding a Room entity.
+  Future<void> addRoomEntity(Room room, {String? userId}) {
+    return createRoom(
+      userId: userId ?? _currentUserId ?? 'demo-user',
+      name: room.name,
+      iconName: room.iconName,
+      targetTemperature: room.targetTemperature,
+      humidity: room.humidity,
+    );
   }
 
   @override

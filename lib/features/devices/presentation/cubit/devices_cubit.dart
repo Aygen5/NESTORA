@@ -17,6 +17,7 @@ class DevicesCubit extends Cubit<DevicesState> {
   final Duration debounceDuration;
 
   StreamSubscription<List<Device>>? _devicesSubscription;
+  String? _currentUserId;
   final Map<String, Timer> _debounceTimers = {};
   final Map<String, Map<String, dynamic>> _pendingUpdates = {};
 
@@ -32,6 +33,7 @@ class DevicesCubit extends Cubit<DevicesState> {
       emit(const DevicesError('Geçersiz kullanıcı kimliği.'));
       return;
     }
+    _currentUserId = cleanUid;
 
     if (state is! DevicesLoaded) {
       emit(const DevicesLoading());
@@ -555,6 +557,78 @@ class DevicesCubit extends Cubit<DevicesState> {
         isSaving: false,
         errorMessage: message,
       ));
+    }
+  }
+
+  /// Currently active authenticated user ID.
+  String? get currentUserId => _currentUserId;
+
+  /// Convenience method for toggling device power.
+  Future<void> toggleDevicePower(String deviceId, {String? userId}) {
+    return togglePower(userId ?? _currentUserId ?? 'demo-user', deviceId);
+  }
+
+  /// Convenience method for toggling favorite flag.
+  Future<void> toggleDeviceFavorite(String deviceId, {String? userId}) {
+    return toggleFavorite(userId ?? _currentUserId ?? 'demo-user', deviceId);
+  }
+
+  /// Convenience method for setting lamp brightness.
+  void setLampBrightness(String deviceId, int brightness, {String? userId}) {
+    setBrightness(userId ?? _currentUserId ?? 'demo-user', deviceId, brightness);
+  }
+
+  /// Convenience method for setting lamp color.
+  void setLampColor(String deviceId, {required String name, required String hex, String? userId}) {
+    setColor(userId ?? _currentUserId ?? 'demo-user', deviceId, hex, name);
+  }
+
+  /// Convenience method for setting AC target temperature.
+  void setAcTemp(String deviceId, double targetTemp, {String? userId}) {
+    setTargetTemperature(userId ?? _currentUserId ?? 'demo-user', deviceId, targetTemp);
+  }
+
+  /// Convenience method for setting AC mode.
+  Future<void> setAcModeChoice(String deviceId, AcMode mode, {String? userId}) {
+    return setAcMode(userId ?? _currentUserId ?? 'demo-user', deviceId, mode);
+  }
+
+  /// Convenience method for setting AC fan speed.
+  Future<void> setAcFanSpeedChoice(String deviceId, FanSpeed speed, {String? userId}) {
+    return setFanSpeed(userId ?? _currentUserId ?? 'demo-user', deviceId, speed);
+  }
+
+  /// Convenience method for adding a Device entity.
+  Future<void> addDeviceEntity(Device device, {String? userId}) {
+    return createDevice(
+      userId: userId ?? _currentUserId ?? 'demo-user',
+      name: device.name,
+      roomId: device.roomId,
+      type: device.type,
+      brightness: device.brightness,
+      targetTemp: device.targetTemp,
+      colorHex: device.colorHex,
+      colorName: device.colorName,
+    );
+  }
+
+  /// Convenience method for deleting a device.
+  Future<void> deleteDeviceById(String deviceId, {String? userId}) {
+    return deleteDevice(userId: userId ?? _currentUserId ?? 'demo-user', deviceId: deviceId);
+  }
+
+  /// Convenience method for toggling power state of all devices in a room.
+  Future<void> toggleAllInRoom(String roomNameOrId, bool powerState, {String? userId}) async {
+    if (state is! DevicesLoaded) return;
+    final current = state as DevicesLoaded;
+    final target = roomNameOrId.trim().toLowerCase();
+    final roomDevices = current.devices.where(
+      (d) => d.roomId.toLowerCase() == target || d.name.toLowerCase().contains(target),
+    ).toList();
+    for (final dev in roomDevices) {
+      if (dev.isPoweredOn != powerState) {
+        await togglePower(userId ?? _currentUserId ?? 'demo-user', dev.id);
+      }
     }
   }
 

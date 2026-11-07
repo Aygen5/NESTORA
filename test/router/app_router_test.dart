@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nestora/app/app.dart';
 import 'package:nestora/app/app_shell.dart';
-import 'package:nestora/app/app_state.dart';
 import 'package:nestora/app/router/app_router.dart';
-import 'package:nestora/app/theme/theme_cubit.dart';
 import 'package:nestora/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:nestora/features/auth/presentation/pages/login_page.dart';
 import 'package:nestora/features/auth/presentation/pages/onboarding_page.dart';
@@ -25,15 +23,7 @@ import 'package:nestora/features/rooms/presentation/pages/rooms_page.dart';
 
 Widget _buildTestApp(String initialLocation) {
   final router = createAppRouter(initialLocation: initialLocation);
-  return BlocProvider<ThemeCubit>(
-    create: (_) => ThemeCubit(),
-    child: AppStateScope(
-      notifier: AppState(),
-      child: MaterialApp.router(
-        routerConfig: router,
-      ),
-    ),
-  );
+  return NestoraApp(router: router);
 }
 
 void _setTestViewport(WidgetTester tester) {

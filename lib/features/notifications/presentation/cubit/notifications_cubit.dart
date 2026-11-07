@@ -10,6 +10,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   final NotificationsRepository notificationsRepository;
 
   StreamSubscription<List<AppNotification>>? _subscription;
+  String? _currentUserId;
 
   NotificationsCubit({
     required this.notificationsRepository,
@@ -22,6 +23,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       emit(const NotificationsError('Geçersiz kullanıcı kimliği.'));
       return;
     }
+    _currentUserId = cleanUid;
 
     if (state is! NotificationsLoaded) {
       emit(const NotificationsLoading());
@@ -228,9 +230,36 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 
+  /// Currently active authenticated user ID.
+  String? get currentUserId => _currentUserId;
+
+  /// Convenience method for marking a notification as read.
+  Future<void> markNotificationRead(String notificationId, {String? userId}) {
+    return markAsRead(
+      userId: userId ?? _currentUserId ?? 'demo-user',
+      notificationId: notificationId,
+    );
+  }
+
+  /// Convenience method for marking all notifications as read.
+  Future<void> markAllNotificationsRead({String? userId}) {
+    return markAllAsRead(
+      userId: userId ?? _currentUserId ?? 'demo-user',
+    );
+  }
+
+  /// Convenience method for deleting a notification.
+  Future<void> deleteNotificationById(String notificationId, {String? userId}) {
+    return deleteNotification(
+      userId: userId ?? _currentUserId ?? 'demo-user',
+      notificationId: notificationId,
+    );
+  }
+
   @override
   Future<void> close() {
     _subscription?.cancel();
     return super.close();
   }
 }
+

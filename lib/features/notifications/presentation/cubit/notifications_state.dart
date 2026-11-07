@@ -137,3 +137,4 @@ class NotificationsError extends NotificationsState {
   @override
   int get hashCode => message.hashCode ^ (code?.hashCode ?? 0);
 }
+
