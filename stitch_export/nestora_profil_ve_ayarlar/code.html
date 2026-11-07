@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html lang="tr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,300..800;1,6..12,300..800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-tertiary": "#ffffff", "on-tertiary-container": "#c7a98a", "error-container": "#ffdad6", "surface-tint": "#506354", "on-error-container": "#93000a", "on-primary": "#ffffff", "background": "#f5fbf2", "secondary-fixed-dim": "#c0c9bc", "on-secondary": "#ffffff", "error": "#ba1a1a", "surface-container-low": "#eff5ec", "on-error": "#ffffff", "secondary": "#586156", "surface-container-high": "#e4eae1", "surface-variant": "#dee4db", "secondary-container": "#dce5d7", "secondary-fixed": "#dce5d7", "on-tertiary-fixed-variant": "#58432a", "surface-container": "#eaf0e6", "primary-fixed-dim": "#b7ccb9", "on-tertiary-fixed": "#291804", "on-surface": "#171d18", "on-surface-variant": "#434843", "tertiary": "#3b2811", "on-secondary-fixed-variant": "#41493f", "surface-dim": "#d6dcd3", "on-primary-container": "#9fb3a1", "on-secondary-container": "#5e675c", "on-background": "#171d18", "inverse-primary": "#b7ccb9", "inverse-on-surface": "#edf2e9", "primary-fixed": "#d3e8d5", "tertiary-fixed": "#feddbb", "outline": "#737872", "outline-variant": "#c3c8c1", "on-secondary-fixed": "#161e15", "on-primary-fixed-variant": "#394b3d", "tertiary-container": "#533e25", "on-primary-fixed": "#0e1f13", "surface-container-highest": "#dee4db", "primary-container": "#344638", "surface": "#f5fbf2", "surface-container-lowest": "#ffffff", "tertiary-fixed-dim": "#e1c1a0", "primary": "#1e3023", "surface-bright": "#f5fbf2", "inverse-surface": "#2c322c" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-md": "1rem", "space-sm": "0.5rem", "gutter": "1rem", "margin": "1.25rem", "space-xl": "2rem", "space-lg": "1.5rem", "space-xs": "0.25rem" }, fontFamily: { "headline-sm": ["Nunito Sans"], "body-lg": ["Nunito Sans"], "headline-xl": ["Nunito Sans"], "body-md": ["Nunito Sans"], "headline-lg": ["Nunito Sans"], "label-lg": ["Nunito Sans"], "body-sm": ["Nunito Sans"], "label-sm": ["Nunito Sans"], "headline-md": ["Nunito Sans"], "label-md": ["Nunito Sans"] }, fontSize: { "headline-sm": ["17px", { lineHeight: "24px", fontWeight: "600" }], "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }], "headline-xl": ["34px", { lineHeight: "42px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }], "headline-lg": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "700" }], "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }], "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }], "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "700" }], "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#f5fbf2;color:#171d18;font-family:'Nunito Sans',sans-serif;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-primary text-[24px]">nest_eco_leaf</span><h1 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">Profil</h1></div><div class="flex items-center gap-space-sm"><button aria-label="Bildirimler" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface px-margin"><div class="flex flex-col w-full pb-8 space-y-space-md">
+<!-- 1. Profil Başlığı (Header Card) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-[0_8px_24px_-4px_rgba(41,47,41,0.04),0_2px_6px_-1px_rgba(41,47,41,0.02)] flex flex-col items-center text-center relative overflow-hidden">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-secondary-container/40 rounded-full blur-2xl pointer-events-none"></div>
+<div class="absolute -bottom-10 -left-10 w-28 h-28 bg-tertiary-fixed/30 rounded-full blur-xl pointer-events-none"></div>
+<div class="relative mb-space-sm">
+<div class="w-20 h-20 rounded-full p-1 bg-surface-container-low shadow-sm">
+<img class="w-full h-full object-cover rounded-full" data-alt="Portrait of an elegant Turkish woman in her early thirties with a warm genuine smile, softly styled dark brown hair, wearing a neutral organic linen shirt in a modern bright eco-architectural living space with diffuse morning sunlight and lush houseplants in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr6rua6pAtaoB4eAAFEPJPAiOAOygvLrUFpnl-iNHatB_t6wE8jHF6Ku0ehushl4Tp_h90jrKq56JYt6SZK3_uWPmNrFzJA6Brdw6o5854VWpqEsQHRGON45tKuFcDdU7a3S4xYmvZ8B2IE7xjI_Sckect30SxyrWGNSZYFX65F85IGZFSJ2zVJxTLcp9kgY71qSN2XwPzAjWIqVwSH0PQl0vrhJCz4aol67bo6Y4"/>
+</div>
+<div class="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+</div>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Aygen Yıldırım</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">aygen@example.com</p>
+<!-- Mini Özet Çipi -->
+<div class="mt-space-sm inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant">
+<span class="material-symbols-outlined text-primary-container text-[16px]">cottage</span>
+<span class="font-label-sm text-label-sm font-semibold text-primary">Aygen'in Evi</span>
+<span class="text-on-surface-variant/40 text-[10px]">•</span>
+<span class="font-body-sm text-body-sm">4 Oda</span>
+<span class="text-on-surface-variant/40 text-[10px]">•</span>
+<span class="font-body-sm text-body-sm">7 Cihaz</span>
+</div>
+<!-- Düzenle Butonu -->
+<button class="mt-space-md w-full max-w-[200px] h-10 px-4 rounded-full bg-surface-container-low text-primary-container font-label-lg text-label-lg flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+<span>Profili Düzenle</span>
+</button>
+</div>
+<!-- 2. Hesap Bölümü (Grup Kartı) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-[0_8px_24px_-4px_rgba(41,47,41,0.04)]">
+<div class="flex items-center justify-between mb-space-sm px-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Hesap</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[16px]">badge</span>
+</div>
+<div class="space-y-1">
+<!-- Satır 1: Profil Bilgilerim -->
+<a class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors active:scale-[0.99]" href="javascript:void(0)">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-low text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">person_outline</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Profil Bilgilerim</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</a>
+<!-- Satır 2: E-posta Adresim -->
+<a class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors active:scale-[0.99]" href="javascript:void(0)">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-low text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">E-posta Adresim</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="font-body-sm text-body-sm text-on-surface-variant">aygen@example.com</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</div>
+</a>
+<!-- Satır 3: Şifre Değiştir -->
+<a class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors active:scale-[0.99]" href="javascript:void(0)">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-low text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">lock_reset</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Şifre Değiştir</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</a>
+</div>
+</div>
+<!-- 3. Uygulama Ayarları Bölümü (Grup Kartı) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-[0_8px_24px_-4px_rgba(41,47,41,0.04)] space-y-space-md">
+<div class="flex items-center justify-between px-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Uygulama Ayarları</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[16px]">tune</span>
+</div>
+<!-- Görünüm (Tema Seçimi) -->
+<div>
+<div class="flex items-center gap-2 mb-2 px-1">
+<span class="material-symbols-outlined text-primary-container text-[18px]">palette</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Görünüm</span>
+</div>
+<!-- Segment Kontrolü -->
+<div class="grid grid-cols-3 gap-2 p-1.5 bg-surface-container-low rounded-xl" id="theme-segmented-control">
+<button class="h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center gap-1.5 shadow-sm font-label-md text-label-md transition-all" data-theme="light" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Açık</span>
+</button>
+<button class="h-10 rounded-lg text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1 font-label-md text-label-md transition-all" data-theme="dark" type="button">
+<span>Koyu</span>
+</button>
+<button class="h-10 rounded-lg text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1 font-label-md text-label-md transition-all" data-theme="system" type="button">
+<span>Sistem</span>
+</button>
+</div>
+</div>
+<!-- Bildirim Tercihleri -->
+<div class="pt-2">
+<div class="flex items-center gap-2 mb-3 px-1">
+<span class="material-symbols-outlined text-primary-container text-[18px]">notifications_active</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Bildirim Tercihleri</span>
+</div>
+<div class="space-y-3 px-1">
+<!-- Switch 1: Cihaz Durum Bildirimleri (Açık) -->
+<div class="flex items-center justify-between py-1">
+<div class="flex flex-col pr-2">
+<span class="font-body-md text-body-md text-on-surface font-medium">Cihaz Durum Bildirimleri</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Kritik cihaz uyarıları ve bağlantı bilgisi</span>
+</div>
+<button aria-checked="true" class="w-[52px] h-[30px] rounded-full bg-primary-container relative p-[3px] transition-colors shrink-0" data-toggle="device-status" role="switch" type="button">
+<span class="block w-6 h-6 rounded-full bg-surface-container-lowest shadow-sm translate-x-[22px] transition-transform duration-200"></span>
+</button>
+</div>
+<!-- Switch 2: Oda Güncelleme Bildirimleri (Açık) -->
+<div class="flex items-center justify-between py-1">
+<div class="flex flex-col pr-2">
+<span class="font-body-md text-body-md text-on-surface font-medium">Oda Güncelleme Bildirimleri</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sıcaklık ve hava kalitesi değişimleri</span>
+</div>
+<button aria-checked="true" class="w-[52px] h-[30px] rounded-full bg-primary-container relative p-[3px] transition-colors shrink-0" data-toggle="room-status" role="switch" type="button">
+<span class="block w-6 h-6 rounded-full bg-surface-container-lowest shadow-sm translate-x-[22px] transition-transform duration-200"></span>
+</button>
+</div>
+<!-- Switch 3: Haftalık Özet Raporu (Kapalı) -->
+<div class="flex items-center justify-between py-1">
+<div class="flex flex-col pr-2">
+<span class="font-body-md text-body-md text-on-surface font-medium">Haftalık Özet Raporu</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Enerji tasarrufu ve tüketim analizleri</span>
+</div>
+<button aria-checked="false" class="w-[52px] h-[30px] rounded-full bg-surface-container-high relative p-[3px] transition-colors shrink-0" data-toggle="weekly-report" role="switch" type="button">
+<span class="block w-6 h-6 rounded-full bg-surface-container-lowest shadow-sm translate-x-0 transition-transform duration-200"></span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 4. Hakkında Bölümü (Grup Kartı) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-[0_8px_24px_-4px_rgba(41,47,41,0.04)]">
+<div class="flex items-center justify-between mb-space-sm px-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Hakkında</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[16px]">info</span>
+</div>
+<div class="space-y-1">
+<a class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors active:scale-[0.99]" href="javascript:void(0)">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-low text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">eco</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Hakkında</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sürdürülebilir Akıllı Yaşam</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</a>
+<div class="flex items-center justify-between p-3 rounded-lg">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-low text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Uygulama Sürümü</span>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">v1.0.0 Güncel</span>
+</div>
+</div>
+</div>
+<!-- 5. Çıkış Butonu -->
+<div class="pt-2 px-1">
+<button class="w-full h-12 rounded-full bg-error-container/60 hover:bg-error-container text-error flex items-center justify-center gap-2 font-label-lg text-label-lg active:scale-[0.98] transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span>Çıkış Yap</span>
+</button>
+</div>
+</div>
+<script>
+  (function() {
+    // Profil sekmesini bottom nav'da aktif işaretle
+    const navLinks = document.querySelectorAll('nav a[data-path]');
+    navLinks.forEach(link => {
+      if (link.getAttribute('data-path') === 'profil') {
+        link.classList.remove('text-on-surface-variant');
+        link.classList.add('text-primary', 'font-bold');
+      } else {
+        link.classList.remove('text-primary', 'font-bold');
+        link.classList.add('text-on-surface-variant');
+      }
+    });
+
+    // Tema segment kontrolleri
+    const segmentButtons = document.querySelectorAll('#theme-segmented-control button');
+    segmentButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        segmentButtons.forEach(b => {
+          b.className = 'h-10 rounded-lg text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1 font-label-md text-label-md transition-all';
+          b.innerHTML = `<span>${b.querySelector('span:last-child')?.textContent || b.textContent.trim()}</span>`;
+        });
+        btn.className = 'h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center gap-1.5 shadow-sm font-label-md text-label-md transition-all';
+        const label = btn.textContent.trim();
+        btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">check</span><span>${label}</span>`;
+      });
+    });
+
+    // Anahtar (Switch) Toggles
+    const toggleButtons = document.querySelectorAll('button[role="switch"]');
+    toggleButtons.forEach(switchBtn => {
+      switchBtn.addEventListener('click', () => {
+        const isChecked = switchBtn.getAttribute('aria-checked') === 'true';
+        const knob = switchBtn.firstElementChild;
+        if (isChecked) {
+          switchBtn.setAttribute('aria-checked', 'false');
+          switchBtn.classList.remove('bg-primary-container');
+          switchBtn.classList.add('bg-surface-container-high');
+          knob.classList.remove('translate-x-[22px]');
+          knob.classList.add('translate-x-0');
+        } else {
+          switchBtn.setAttribute('aria-checked', 'true');
+          switchBtn.classList.remove('bg-surface-container-high');
+          switchBtn.classList.add('bg-primary-container');
+          knob.classList.remove('translate-x-0');
+          knob.classList.add('translate-x-[22px]');
+        }
+      });
+    });
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/80 backdrop-blur-xl shadow-[0_-2px_12px_rgba(41,47,41,0.04)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-16 px-gutter"><a class="flex flex-col items-center justify-center w-16 h-12 gap-space-xs text-on-surface-variant transition-colors" data-path="ana-sayfa" href="#"><span class="material-symbols-outlined text-[22px]">home</span><span class="font-label-sm text-label-sm">Ana Sayfa</span></a><a class="flex flex-col items-center justify-center w-16 h-12 gap-space-xs text-on-surface-variant transition-colors" data-path="cihazlar" href="#"><span class="material-symbols-outlined text-[22px]">devices</span><span class="font-label-sm text-label-sm">Cihazlar</span></a><a aria-current="page" class="flex flex-col items-center justify-center w-16 h-12 gap-space-xs transition-colors text-primary font-bold" data-path="profil" href="#"><span class="material-symbols-outlined text-[22px]">person</span><span class="font-label-sm text-label-sm">Profil</span></a></div></nav></body></html>
