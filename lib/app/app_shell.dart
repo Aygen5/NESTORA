@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../core/widgets/nestora_bottom_nav.dart';
@@ -97,20 +98,22 @@ class _AppShellState extends State<AppShell> {
         currentIndex: _calculateSelectedIndex(context),
         onTap: (index) => _onItemTapped(index, context),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showScreenNavigator(context, appState),
-        backgroundColor: AppColors.primaryContainer,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        icon: const Icon(Icons.grid_view_rounded, size: 20),
-        label: Text(
-          '16 Ekran Galerisi',
-          style: AppTypography.labelSmall.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+      floatingActionButton: kDebugMode
+          ? FloatingActionButton.extended(
+              onPressed: () => _showScreenNavigator(context, appState),
+              backgroundColor: AppColors.primaryContainer,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              icon: const Icon(Icons.grid_view_rounded, size: 20),
+              label: Text(
+                '16 Ekran Galerisi',
+                style: AppTypography.labelSmall.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
+          : null,
     );
   }
 

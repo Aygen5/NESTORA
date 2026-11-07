@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'app_shell.dart';
+import 'package:go_router/go_router.dart';
+
 import 'app_state.dart';
+import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_cubit.dart';
-import '../features/auth/presentation/pages/onboarding_page.dart';
-import '../features/auth/presentation/pages/splash_page.dart';
-import '../features/auth/presentation/pages/welcome_page.dart';
 
+/// Root application widget for Nestora.
+/// Connects [ThemeCubit], [AppStateScope], and the centralized [GoRouter] configuration.
 class NestoraApp extends StatefulWidget {
-  const NestoraApp({super.key});
+  final GoRouter? router;
+  final AppState? appState;
+
+  const NestoraApp({
+    super.key,
+    this.router,
+    this.appState,
+  });
 
   @override
   State<NestoraApp> createState() => _NestoraAppState();
@@ -17,16 +25,23 @@ class NestoraApp extends StatefulWidget {
 
 class _NestoraAppState extends State<NestoraApp> {
   late final AppState _appState;
+  late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
-    _appState = AppState();
+    _appState = widget.appState ?? AppState();
+    _router = widget.router ?? createAppRouter();
   }
 
   @override
   void dispose() {
-    _appState.dispose();
+    if (widget.router == null) {
+      _router.dispose();
+    }
+    if (widget.appState == null) {
+      _appState.dispose();
+    }
     super.dispose();
   }
 
@@ -38,13 +53,13 @@ class _NestoraAppState extends State<NestoraApp> {
         notifier: _appState,
         child: BlocBuilder<ThemeCubit, ThemeMode>(
           builder: (context, themeMode) {
-            return MaterialApp(
+            return MaterialApp.router(
               title: 'Nestora Smart Home',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
               themeMode: themeMode,
-              home: _AppNavigatorRoot(),
+              routerConfig: _router,
             );
           },
         ),
@@ -52,61 +67,3 @@ class _NestoraAppState extends State<NestoraApp> {
     );
   }
 }
-
-class _AppNavigatorRoot extends StatefulWidget {
-  @override
-  State<_AppNavigatorRoot> createState() => _AppNavigatorRootState();
-}
-
-class _AppNavigatorRootState extends State<_AppNavigatorRoot> {
-  bool _splashCompleted = false;
-  bool _onboardingCompleted = false;
-  bool _isAuthenticated = false;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_splashCompleted) {
-      return SplashPage(
-        onFinish: () {
-          setState(() {
-            _splashCompleted = true;
-          });
-        },
-      );
-    }
-
-    if (!_onboardingCompleted) {
-      return OnboardingPage(
-        onStart: () {
-          setState(() {
-            _onboardingCompleted = true;
-          });
-        },
-      );
-    }
-
-    if (!_isAuthenticated) {
-      return WelcomePage(
-        onGetStarted: () {
-          setState(() {
-            _isAuthenticated = true;
-          });
-        },
-        onLogin: () {
-          setState(() {
-            _isAuthenticated = true;
-          });
-        },
-      );
-    }
-
-    return AppShell(
-      onLogout: () {
-        setState(() {
-          _isAuthenticated = false;
-        });
-      },
-    );
-  }
-}
-

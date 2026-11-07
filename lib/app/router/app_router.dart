@@ -151,7 +151,10 @@ GoRouter createAppRouter({
         name: AppRouteNames.welcome,
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => WelcomePage(
-          onGetStarted: () => context.go(AppRoutePaths.register),
+          onGetStarted: () {
+            effectiveAuthListenable?.setAuthenticated(true);
+            context.go(AppRoutePaths.dashboard);
+          },
           onLogin: () => context.go(AppRoutePaths.login),
         ),
       ),

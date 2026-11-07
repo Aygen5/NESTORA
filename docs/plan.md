@@ -73,7 +73,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Oturum açmış kullanıcının Splash/Welcome/Login ekranlarına tekrar düşmesini engelleyip doğrudan `/dashboard`'a yönlendirme.
 - GoRouter `refreshListenable` ile auth state değişimlerini dinleme.
 
-### Adım 2.3: `AppShell` Dönüşümü ve 3 Öğeli Bottom Navigation
+### Adım 2.3: [x] `AppShell` Dönüşümü ve 3 Öğeli Bottom Navigation
 - `lib/app/app_shell.dart`: Yalnızca **Ana Sayfa**, **Cihazlar** ve **Profil** sekmelerini barındıracak şekilde yapılandırılması.
 - `IndexedStack(sizing: StackFit.expand)` düzeni ve `NestoraBottomNav` (64px sabit yükseklik) entegrasyonu ile sayfa gövdelerinin çökmesini önleyen yapının korunması.
 - Ekran Galerisi FAB butonunun geliştirici bayrağına (kDebugMode) bağlanması.
