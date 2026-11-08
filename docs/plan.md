@@ -296,7 +296,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `AuthCubit`, `RoomsCubit`, `DevicesCubit`, `NotificationsCubit`, `ProfileCubit` durum geçiş testleri.
 - Şifre ve e-posta doğrulama kuralları testleri.
 
-### Adım 9.2: Widget Testler
+### Adım 9.2: [x] Widget Testler
 - Login, Register form alanları ve doğrulama hata mesajları.
 - Cihaz kartları, lamba parlaklık slider'ı ve toggle anahtarları.
 - Tema değiştirme etkileşimleri.
