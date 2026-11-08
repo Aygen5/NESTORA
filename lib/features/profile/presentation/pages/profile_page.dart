@@ -44,17 +44,18 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _roomStatusNotif = true;
   bool _weeklyReportNotif = false;
 
-  ImageProvider _resolveAvatarImage(String? photoPath) {
-    if (photoPath != null && photoPath.isNotEmpty) {
-      if (photoPath.startsWith('assets/')) {
-        return AssetImage(photoPath);
+  ImageProvider? _resolveAvatarImage(String? photoPath) {
+    if (photoPath != null && photoPath.trim().isNotEmpty) {
+      final trimmed = photoPath.trim();
+      if (trimmed.startsWith('assets/')) {
+        return AssetImage(trimmed);
       }
-      final file = File(photoPath);
+      final file = File(trimmed);
       if (file.existsSync()) {
         return FileImage(file);
       }
     }
-    return const AssetImage('assets/profile/user_avatar.jpg');
+    return null;
   }
 
   void _showPhotoOptionsModal(BuildContext context, String? currentPhotoPath) {
@@ -110,45 +111,16 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: const Icon(Icons.photo_library_rounded, color: AppColors.primaryContainer),
                       ),
                       title: Text(
-                        'Galeriden Seç',
+                        'Fotoğraf Seç / Yükle',
                         style: AppTypography.labelLarge.copyWith(
                           color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      subtitle: const Text('Cihazınızdaki fotoğraflardan seçin'),
+                      subtitle: const Text('Cihazınızdaki fotoğraflardan bir profil resmi seçin'),
                       onTap: () async {
                         Navigator.pop(modalCtx);
                         await context.read<ProfileCubit>().pickAndSavePhoto(source: ImageSource.gallery);
-                        if (context.mounted) {
-                          showGlowingToast(
-                            context,
-                            message: 'Profil fotoğrafı güncellendi.',
-                            icon: Icons.face_rounded,
-                          );
-                        }
-                      },
-                    ),
-                    ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.camera_alt_rounded, color: AppColors.primaryContainer),
-                      ),
-                      title: Text(
-                        'Kamera ile Çek',
-                        style: AppTypography.labelLarge.copyWith(
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: const Text('Yeni bir portre fotoğrafı çekin'),
-                      onTap: () async {
-                        Navigator.pop(modalCtx);
-                        await context.read<ProfileCubit>().pickAndSavePhoto(source: ImageSource.camera);
                         if (context.mounted) {
                           showGlowingToast(
                             context,
@@ -168,20 +140,20 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: const Icon(Icons.face_retouching_natural_rounded, color: AppColors.primaryContainer),
                       ),
                       title: Text(
-                        'Varsayılan Kadın Portresine Dön',
+                        'Varsayılan Profil Avatarına Dön',
                         style: AppTypography.labelLarge.copyWith(
                           color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      subtitle: const Text('Nestora şık kadın profil avatarı'),
+                      subtitle: const Text('Profil Avatarı'),
                       onTap: () async {
                         Navigator.pop(modalCtx);
                         await context.read<ProfileCubit>().setPhotoPath('assets/profile/user_avatar.jpg');
                         if (context.mounted) {
                           showGlowingToast(
                             context,
-                            message: 'Varsayılan kadın portresi uygulandı.',
+                            message: 'Varsayılan profil avatarı uygulandı.',
                             icon: Icons.face_rounded,
                           );
                         }
@@ -564,15 +536,32 @@ class _ProfilePageState extends State<ProfilePage> {
                               height: 84,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
+                                color: AppColors.secondaryContainer,
                                 border: Border.all(
                                   color: AppColors.secondaryContainer,
                                   width: 3,
                                 ),
-                                image: DecorationImage(
-                                  image: _resolveAvatarImage(photoPath),
-                                  fit: BoxFit.cover,
-                                ),
+                                image: _resolveAvatarImage(photoPath) != null
+                                    ? DecorationImage(
+                                        image: _resolveAvatarImage(photoPath)!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
                               ),
+                              child: _resolveAvatarImage(photoPath) == null
+                                  ? Center(
+                                      child: Text(
+                                        userName.trim().isNotEmpty
+                                            ? userName.trim().substring(0, 1).toUpperCase()
+                                            : 'A',
+                                        style: AppTypography.displayLarge.copyWith(
+                                          color: AppColors.primaryContainer,
+                                          fontSize: 34,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
                             ),
                             Container(
                               width: 28,
@@ -1364,9 +1353,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Nestora; enerji verimliliği, yüksek güvenlik ve doğal konforu '
-                  'İskandinav ve modern kaşmir estetiğiyle harmanlayan '
-                  'yeni nesil akıllı ev yönetim ekosistemidir.',
+                  'Nestora, evinizdeki tüm akıllı cihazları tek merkezden kolayca yönetmenizi, enerji tüketiminizi optimize etmenizi ve yaşam alanlarınızı daha konforlu hale getirmenizi sağlayan yeni nesil akıllı ev platformudur.',
                   textAlign: TextAlign.center,
                   style: AppTypography.description(
                     color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
@@ -1383,11 +1370,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.eco_rounded, size: 16, color: AppColors.primaryContainer),
+                          const Icon(Icons.touch_app_rounded, size: 16, color: AppColors.primaryContainer),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Sürdürülebilirlik & Eko-Tasarruf Algoritmaları',
+                              'Hızlı Senaryolar & Tek Tıkla Cihaz Kontrolü',
                               style: AppTypography.caption.copyWith(
                                 color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                                 fontWeight: FontWeight.w600,
@@ -1399,11 +1386,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.security_rounded, size: 16, color: AppColors.primaryContainer),
+                          const Icon(Icons.insights_rounded, size: 16, color: AppColors.primaryContainer),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Sıfır Gecikmeli Güvenli Yerel Kontrol & Gizlilik',
+                              'Gerçek Zamanlı Enerji ve Güç Tüketimi Takibi',
                               style: AppTypography.caption.copyWith(
                                 color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                                 fontWeight: FontWeight.w600,
@@ -1415,11 +1402,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.palette_outlined, size: 16, color: AppColors.primaryContainer),
+                          const Icon(Icons.shield_outlined, size: 16, color: AppColors.primaryContainer),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Modern Kaşmir & Doğal Taş Mimari Estetiği',
+                              'Uçtan Uca Yerel Gizlilik & Güvenli Veri Saklama',
                               style: AppTypography.caption.copyWith(
                                 color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                                 fontWeight: FontWeight.w600,

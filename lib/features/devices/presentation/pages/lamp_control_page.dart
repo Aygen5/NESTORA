@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/theme/app_colors.dart';
@@ -44,6 +45,13 @@ class LampControlPage extends StatefulWidget {
 
 class _LampControlPageState extends State<LampControlPage> {
   int _selectedTimerMinutes = 0; // 0 = off
+  Timer? _countdownTimer;
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
 
   static const List<LampAtmosphereMode> _atmosphereModes = [
     LampAtmosphereMode(
@@ -136,17 +144,35 @@ class _LampControlPageState extends State<LampControlPage> {
     );
   }
 
-  void _selectTimer(int minutes) {
+  void _selectTimer(int minutes, DeviceModel lamp) {
+    _countdownTimer?.cancel();
     setState(() => _selectedTimerMinutes = minutes);
-    final message = minutes > 0
-        ? 'Lamba $minutes dakika sonra otomatik olarak kapatılacak.'
-        : 'Zamanlayıcı iptal edildi.';
 
-    showGlowingToast(
-      context,
-      message: message,
-      icon: minutes > 0 ? Icons.timer_rounded : Icons.timer_off_rounded,
-    );
+    if (minutes > 0) {
+      _countdownTimer = Timer(Duration(minutes: minutes), () {
+        if (mounted) {
+          context.read<DevicesCubit>().toggleDevicePower(lamp.id);
+          showGlowingToast(
+            context,
+            message: '${lamp.name} zamanlayıcı dolduğu için kapatıldı.',
+            icon: Icons.timer_off_rounded,
+          );
+          setState(() => _selectedTimerMinutes = 0);
+        }
+      });
+
+      showGlowingToast(
+        context,
+        message: 'Lamba $minutes dakika sonra otomatik olarak kapatılacak.',
+        icon: Icons.timer_rounded,
+      );
+    } else {
+      showGlowingToast(
+        context,
+        message: 'Kapanma zamanlayıcısı iptal edildi.',
+        icon: Icons.timer_off_rounded,
+      );
+    }
   }
 
   void _showDeleteDialog(BuildContext context, DeviceModel lamp) {
@@ -936,7 +962,9 @@ class _LampControlPageState extends State<LampControlPage> {
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 3),
                               child: GestureDetector(
-                                onTap: () => _selectTimer(val),
+                                key: Key('lamp_timer_chip_$val'),
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => _selectTimer(val, lamp),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(vertical: 8),
                                   decoration: BoxDecoration(

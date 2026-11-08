@@ -223,7 +223,7 @@ void showGlowingToast(
   Duration? duration,
 }) {
   final messenger = ScaffoldMessenger.of(context);
-  messenger.hideCurrentSnackBar();
+  messenger.clearSnackBars();
 
   messenger.showSnackBar(
     SnackBar(

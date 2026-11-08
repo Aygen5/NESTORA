@@ -462,9 +462,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Profil Fotoğrafı Seç'), findsOneWidget);
-      expect(find.text('Galeriden Seç'), findsOneWidget);
-      expect(find.text('Kamera ile Çek'), findsOneWidget);
-      expect(find.text('Varsayılan Kadın Portresine Dön'), findsOneWidget);
+      expect(find.text('Fotoğraf Seç / Yükle'), findsOneWidget);
+      expect(find.text('Varsayılan Profil Avatarına Dön'), findsOneWidget);
     });
 
     testWidgets('Tapping "Profili Düzenle" updates Name, Email, Role, and Home Name', (tester) async {
@@ -527,8 +526,8 @@ void main() {
 
       expect(find.text('Nestora'), findsWidgets);
       expect(find.text('Sürdürülebilir Akıllı Yaşam Platformu'), findsOneWidget);
-      expect(find.text('Sürdürülebilirlik & Eko-Tasarruf Algoritmaları'), findsOneWidget);
-      expect(find.text('Modern Kaşmir & Doğal Taş Mimari Estetiği'), findsOneWidget);
+      expect(find.text('Hızlı Senaryolar & Tek Tıkla Cihaz Kontrolü'), findsOneWidget);
+      expect(find.text('Uçtan Uca Yerel Gizlilik & Güvenli Veri Saklama'), findsOneWidget);
       expect(find.text('Sürüm v2.4.0 (Build 2026.1) • Güncel'), findsOneWidget);
       expect(find.text('Kapat'), findsOneWidget);
 

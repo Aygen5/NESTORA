@@ -467,11 +467,7 @@ class _DashboardPageState extends State<DashboardPage> {
         );
       }
     }
-    return Image.asset(
-      'assets/profile/user_avatar.jpg',
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => _buildFallbackAvatar(displayName),
-    );
+    return _buildFallbackAvatar(displayName);
   }
 
   Widget _buildHeaderButton({
