@@ -186,7 +186,7 @@ class _NestoraAppState extends State<NestoraApp> {
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
-              themeMode: themeMode,
+              themeMode: themeMode == ThemeMode.system ? ThemeMode.light : themeMode,
               routerConfig: _router,
             );
           },
