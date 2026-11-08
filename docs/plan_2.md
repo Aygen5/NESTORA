@@ -129,9 +129,9 @@ graph TD
 - [x] **E.5:** En altta çağrı kartı: `🏠+ Evini genişletmek için yeni oda tanımlayabilirsin.` (tıklandığında `AddEditRoomPage` açar).
 
 ### Faz F: Test Güvencesi & Regresyon Doğrulaması
-- [ ] **F.1:** Mevcut 428 testin `AppShell` 4-sekme ve yeni `DashboardPage` hiyerarşisiyle uyumlu hale getirilmesi.
-- [ ] **F.2:** Yeni 3'lü özet sayaçları, 2x2 oda grid'i, `Tümünü Gör` sekme geçişi ve Image 4 oda kartları için kapsamlı widget testlerinin yazılması.
-- [ ] **F.3:** `flutter analyze` (0 issue) ve `flutter test` (%100 pass) doğrulaması.
+- [x] **F.1:** Mevcut 428 testin `AppShell` 4-sekme ve yeni `DashboardPage` hiyerarşisiyle uyumlu hale getirilmesi.
+- [x] **F.2:** Yeni 3'lü özet sayaçları, 2x2 oda grid'i, `Tümünü Gör` sekme geçişi ve Image 4 oda kartları için kapsamlı widget testlerinin yazılması.
+- [x] **F.3:** `flutter analyze` (0 issue) ve `flutter test` (%100 pass - 436/436 test) doğrulaması.
 
 ---
 
