@@ -199,3 +199,4 @@ class RemoteConfigService {
     return (defaultParameters[key] as double?) ?? defaultValue;
   }
 }
+

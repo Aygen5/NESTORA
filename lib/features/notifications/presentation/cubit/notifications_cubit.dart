@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/spark_quota_service.dart';
 import '../../domain/entities/app_notification.dart';
 import '../../domain/repositories/notifications_repository.dart';
 import 'notifications_state.dart';
@@ -8,12 +9,14 @@ import 'notifications_state.dart';
 /// individual and bulk read confirmations, and deletions.
 class NotificationsCubit extends Cubit<NotificationsState> {
   final NotificationsRepository notificationsRepository;
+  final SparkQuotaService? quotaService;
 
   StreamSubscription<List<AppNotification>>? _subscription;
   String? _currentUserId;
 
   NotificationsCubit({
     required this.notificationsRepository,
+    this.quotaService,
   }) : super(const NotificationsInitial());
 
   /// Loads and listens to real-time notification updates for [userId].
@@ -30,6 +33,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
 
     _subscription?.cancel();
+    quotaService?.registerListener('NotificationsCubit_$cleanUid');
 
     _subscription = notificationsRepository.watchNotifications(cleanUid).listen(
       (notifications) {
@@ -282,6 +286,9 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   @override
   Future<void> close() {
     _subscription?.cancel();
+    if (_currentUserId != null) {
+      quotaService?.unregisterListener('NotificationsCubit_$_currentUserId');
+    }
     return super.close();
   }
 }

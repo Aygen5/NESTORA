@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/crashlytics_service.dart';
+import '../../../../core/services/spark_quota_service.dart';
 import '../../../devices/domain/repositories/devices_repository.dart';
 import '../../domain/entities/room.dart';
 import '../../domain/repositories/rooms_repository.dart';
@@ -10,12 +11,14 @@ import 'rooms_state.dart';
 
 /// Cubit managing smart home rooms, real-time room streams, search filtering,
 /// and safe cascading room deletions (preserving devices or deleting them).
-/// Dispatches privacy-safe analytics events and logs unexpected room operation errors.
+/// Dispatches privacy-safe analytics events, logs unexpected room operation errors,
+/// and guards Firestore resource limits under Firebase Spark Plan.
 class RoomsCubit extends Cubit<RoomsState> {
   final RoomsRepository roomsRepository;
   final DevicesRepository devicesRepository;
   final AnalyticsService? analyticsService;
   final CrashlyticsService? crashlyticsService;
+  final SparkQuotaService? quotaService;
 
   StreamSubscription<List<Room>>? _roomsSubscription;
   String? _currentUserId;
@@ -25,6 +28,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     required this.devicesRepository,
     this.analyticsService,
     this.crashlyticsService,
+    this.quotaService,
   }) : super(const RoomsInitial());
 
   /// Loads and listens to real-time updates for all rooms belonging to [userId].
@@ -41,6 +45,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     }
 
     _roomsSubscription?.cancel();
+    quotaService?.registerListener('RoomsCubit_$cleanUid');
 
     _roomsSubscription = roomsRepository.watchRooms(cleanUid).listen(
       (rooms) {
@@ -80,6 +85,14 @@ class RoomsCubit extends Cubit<RoomsState> {
     final cleanUid = userId.trim();
     if (cleanUid.isEmpty) {
       _emitErrorMessage('Geçersiz kullanıcı kimliği.');
+      return;
+    }
+
+    final currentRooms = state is RoomsLoaded ? (state as RoomsLoaded).rooms : <Room>[];
+    if (quotaService != null && !quotaService!.canCreateRoom(currentRooms.length)) {
+      _emitErrorMessage(
+        'Maksimum oda sınırına (${quotaService!.maxRoomsPerUser}) ulaşıldı. Spark planı kotası gereği daha fazla oda eklenemez.',
+      );
       return;
     }
 
@@ -316,6 +329,9 @@ class RoomsCubit extends Cubit<RoomsState> {
   @override
   Future<void> close() {
     _roomsSubscription?.cancel();
+    if (_currentUserId != null) {
+      quotaService?.unregisterListener('RoomsCubit_$_currentUserId');
+    }
     return super.close();
   }
 }

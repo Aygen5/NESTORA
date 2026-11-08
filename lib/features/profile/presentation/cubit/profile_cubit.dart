@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/spark_quota_service.dart';
 import '../../data/datasources/profile_photo_service.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/repositories/profile_repository.dart';
@@ -13,13 +14,16 @@ class ProfileCubit extends Cubit<ProfileState> {
   final ProfileRepository profileRepository;
   final ProfilePhotoService? photoService;
   final SharedPreferences? sharedPreferences;
+  final SparkQuotaService? quotaService;
 
   StreamSubscription<UserProfile?>? _profileSubscription;
+  String? _currentUserId;
 
   ProfileCubit({
     required this.profileRepository,
     this.photoService,
     this.sharedPreferences,
+    this.quotaService,
   }) : super(const ProfileInitial());
 
   String _photoPrefKey(String userId) =>
@@ -32,12 +36,14 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(const ProfileError('Geçersiz kullanıcı kimliği.'));
       return;
     }
+    _currentUserId = cleanUid;
 
     if (state is! ProfileLoaded) {
       emit(const ProfileLoading());
     }
 
     _profileSubscription?.cancel();
+    quotaService?.registerListener('ProfileCubit_$cleanUid');
 
     _profileSubscription = profileRepository.watchProfile(cleanUid).listen(
       (profile) {
@@ -308,6 +314,9 @@ class ProfileCubit extends Cubit<ProfileState> {
   @override
   Future<void> close() {
     _profileSubscription?.cancel();
+    if (_currentUserId != null) {
+      quotaService?.unregisterListener('ProfileCubit_$_currentUserId');
+    }
     return super.close();
   }
 }

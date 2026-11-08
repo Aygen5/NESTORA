@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/crashlytics_service.dart';
+import '../../../../core/services/spark_quota_service.dart';
 import '../../domain/entities/device.dart';
 import '../../domain/repositories/devices_repository.dart';
 import 'devices_state.dart';
@@ -15,11 +16,13 @@ import 'devices_state.dart';
 /// - High-frequency update debouncing (default: 300ms) to conserve Firestore write quota on Spark plan.
 /// - Quick Scenes ("Evdeyim", "Gündüz", "Gece Modu", "Dışarıda") multi-device orchestration.
 /// - Dispatches privacy-safe analytics events and logs errors to Crashlytics.
+/// - Guards Firestore quotas under Firebase Spark free tier.
 class DevicesCubit extends Cubit<DevicesState> {
   final DevicesRepository devicesRepository;
   final Duration debounceDuration;
   final AnalyticsService? analyticsService;
   final CrashlyticsService? crashlyticsService;
+  final SparkQuotaService? quotaService;
 
   StreamSubscription<List<Device>>? _devicesSubscription;
   String? _currentUserId;
@@ -31,6 +34,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     this.debounceDuration = AppConstants.sliderDebounceDuration,
     this.analyticsService,
     this.crashlyticsService,
+    this.quotaService,
   }) : super(const DevicesInitial());
 
   /// Loads and listens to real-time updates for all devices belonging to [userId].
@@ -47,6 +51,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
 
     _devicesSubscription?.cancel();
+    quotaService?.registerListener('DevicesCubit_$cleanUid');
 
     _devicesSubscription = devicesRepository.watchDevices(cleanUid).listen(
       (devices) {
@@ -413,6 +418,17 @@ class DevicesCubit extends Cubit<DevicesState> {
       return;
     }
 
+    if (state is DevicesLoaded && quotaService != null) {
+      final currentDevices = (state as DevicesLoaded).devices;
+      final roomDevicesCount = currentDevices.where((d) => d.roomId == cleanRoomId).length;
+      if (!quotaService!.canAddDevice(roomDevicesCount)) {
+        _emitErrorMessage(
+          'Bu odadaki maksimum cihaz sınırına (${quotaService!.maxDevicesPerRoom}) ulaşıldı. Spark planı kotası gereği daha fazla cihaz eklenemez.',
+        );
+        return;
+      }
+    }
+
     _setSaving(true);
 
     final deviceId = 'device-${DateTime.now().millisecondsSinceEpoch}';
@@ -717,6 +733,9 @@ class DevicesCubit extends Cubit<DevicesState> {
   @override
   Future<void> close() {
     _devicesSubscription?.cancel();
+    if (_currentUserId != null) {
+      quotaService?.unregisterListener('DevicesCubit_$_currentUserId');
+    }
     for (final timer in _debounceTimers.values) {
       timer.cancel();
     }

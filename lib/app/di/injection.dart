@@ -10,6 +10,7 @@ import '../../core/services/analytics_service.dart';
 import '../../core/services/crashlytics_service.dart';
 import '../../core/services/performance_service.dart';
 import '../../core/services/remote_config_service.dart';
+import '../../core/services/spark_quota_service.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/datasources/demo_config_service.dart';
 import '../../features/auth/data/datasources/firestore_seed_service.dart';
@@ -139,6 +140,7 @@ final locator = ServiceLocator.instance;
 /// - [AnalyticsService]
 /// - [PerformanceService]
 /// - [RemoteConfigService]
+/// - [SparkQuotaService]
 ///
 /// In subsequent phases, Data Sources and Repositories will be registered here.
 Future<void> initDependencies({
@@ -153,6 +155,7 @@ Future<void> initDependencies({
   AnalyticsService? analyticsService,
   PerformanceService? performanceService,
   RemoteConfigService? remoteConfigService,
+  SparkQuotaService? sparkQuotaService,
 }) async {
   // 1. SharedPreferences (Local key-value storage)
   if (!sl.isRegistered<SharedPreferences>()) {
@@ -293,6 +296,24 @@ Future<void> initDependencies({
     );
     rcService.initializeDefaults();
     sl.registerSingleton<RemoteConfigService>(rcService);
+  }
+
+  // 2.4 Spark Quota Service (Firebase Spark Plan Quota Guard)
+  if (sparkQuotaService != null) {
+    if (!sl.isRegistered<SparkQuotaService>()) {
+      sl.registerSingleton<SparkQuotaService>(sparkQuotaService);
+    }
+  } else if (!sl.isRegistered<SparkQuotaService>()) {
+    sl.registerSingleton<SparkQuotaService>(
+      SparkQuotaService(
+        remoteConfigService: sl.isRegistered<RemoteConfigService>()
+            ? sl<RemoteConfigService>()
+            : null,
+        crashlyticsService: sl.isRegistered<CrashlyticsService>()
+            ? sl<CrashlyticsService>()
+            : null,
+      ),
+    );
   }
 
   // 3. Auth Redirect Listenable for GoRouter
@@ -455,6 +476,8 @@ Future<void> initDependencies({
         photoService: sl<ProfilePhotoService>(),
         sharedPreferences:
             sl.isRegistered<SharedPreferences>() ? sl<SharedPreferences>() : null,
+        quotaService:
+            sl.isRegistered<SparkQuotaService>() ? sl<SparkQuotaService>() : null,
       ),
     );
   }
@@ -469,6 +492,8 @@ Future<void> initDependencies({
             sl.isRegistered<AnalyticsService>() ? sl<AnalyticsService>() : null,
         crashlyticsService:
             sl.isRegistered<CrashlyticsService>() ? sl<CrashlyticsService>() : null,
+        quotaService:
+            sl.isRegistered<SparkQuotaService>() ? sl<SparkQuotaService>() : null,
       ),
     );
   }
@@ -482,6 +507,8 @@ Future<void> initDependencies({
             sl.isRegistered<AnalyticsService>() ? sl<AnalyticsService>() : null,
         crashlyticsService:
             sl.isRegistered<CrashlyticsService>() ? sl<CrashlyticsService>() : null,
+        quotaService:
+            sl.isRegistered<SparkQuotaService>() ? sl<SparkQuotaService>() : null,
       ),
     );
   }
@@ -491,6 +518,8 @@ Future<void> initDependencies({
     sl.registerFactory<NotificationsCubit>(
       () => NotificationsCubit(
         notificationsRepository: sl<NotificationsRepository>(),
+        quotaService:
+            sl.isRegistered<SparkQuotaService>() ? sl<SparkQuotaService>() : null,
       ),
     );
   }

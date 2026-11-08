@@ -280,7 +280,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Sayfa yüklenme süreleri ve ağ gecikmelerinin izlenmesi.
 - Remote Config üzerinden uygulama duyurusu ve dinamik parametre desteği.
 
-### Adım 8.3: Spark Plan Kota Koruması
+### Adım 8.3: [x] Spark Plan Kota Koruması
 - Firestore okuma ve yazmalarının optimize edilmesi.
 - Gereksiz gerçek zamanlı listener açılmaması; ekran kapandığında listener'ların iptal edilmesi.
 - Cloud Storage ve Cloud Functions bağımlılığı oluşturulmadığının teyidi.
