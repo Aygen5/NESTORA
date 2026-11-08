@@ -279,10 +279,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 820),
-                    child: ListView(
+                    child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      children: [
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                         // Remote Broadcast Announcement Banner
                         if (!_isAnnouncementDismissed &&
                             sl.isRegistered<RemoteConfigService>() &&
@@ -294,6 +296,24 @@ class _DashboardPageState extends State<DashboardPage> {
                                 setState(() => _isAnnouncementDismissed = true),
                           ),
                         ],
+
+                        // B.1 Greeting & Location (Image 3)
+                        _buildGreetingSection(
+                          isDark: isDark,
+                          homeName: homeName,
+                          userFirstName: userFirstName,
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // B.2 Modern Villa Card & System Status (Image 3)
+                        _buildHouseIllustrationCard(
+                          isDark: isDark,
+                          totalRooms: rooms.length,
+                          totalDevices: devices.length,
+                        ),
+
+                        const SizedBox(height: 16),
 
                         // 1. NESTORA TYPOGRAPHY & HERO BANNER
                         _buildHeroBanner(
@@ -343,6 +363,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         const SizedBox(height: 28),
                       ],
                     ),
+                  ),
                   ),
                 ),
               ),
@@ -834,6 +855,158 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // B.1 Greeting & Location Section (Image 3)
+  Widget _buildGreetingSection({
+    required bool isDark,
+    required String homeName,
+    required String userFirstName,
+  }) {
+    final effectiveHomeName = homeName.trim().isNotEmpty ? homeName.trim() : "Aygen'in Evi";
+    final effectiveName = userFirstName.trim().isNotEmpty ? userFirstName.trim() : 'Aygen';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Location Badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.location_on_rounded,
+                size: 14,
+                color: AppColors.primaryContainer,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                effectiveHomeName,
+                style: AppTypography.badge(
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                ).copyWith(fontWeight: FontWeight.w600, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Merhaba, $effectiveName',
+          style: AppTypography.headlineLarge.copyWith(
+            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 26,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Evin bugün nasıl?',
+          style: AppTypography.bodyMedium.copyWith(
+            color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // B.2 Modern Villa Illustration Card & Status Bar (Image 3)
+  Widget _buildHouseIllustrationCard({
+    required bool isDark,
+    required int totalRooms,
+    required int totalDevices,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 1,
+        ),
+        boxShadow: AppColors.cardShadow,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Image.asset(
+              'assets/screens/modern_smart_house.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                child: const Center(
+                  child: Icon(Icons.home_work_rounded, size: 54, color: AppColors.secondary),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.darkCard : Colors.white).withValues(alpha: 0.90),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const PulsingGlowDot(
+                        color: Color(0xFF4CAF50),
+                        size: 7,
+                        glowRadius: 5,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tüm Sistemler Normal',
+                        style: AppTypography.badge(
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        ).copyWith(fontWeight: FontWeight.w700, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '$totalRooms Oda • $totalDevices Cihaz',
+                    style: AppTypography.caption.copyWith(
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // 1. Hero Banner: Home Name, Welcome Greeting, Status
   Widget _buildHeroBanner({
     required bool isDark,
@@ -900,23 +1073,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  // Home Name Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0x33FFFFFF),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      homeName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.badge(color: Colors.white).copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
                     ),
                   ),
                 ],

@@ -359,7 +359,9 @@ void main() {
       final switchFinder = find.byType(NestoraSwitch);
       expect(switchFinder, findsWidgets);
 
-      // Tap the first device switch
+      // Ensure first switch is visible in scrollable and tap it
+      await tester.ensureVisible(switchFinder.first);
+      await tester.pumpAndSettle();
       await tester.tap(switchFinder.first);
       await tester.pumpAndSettle();
 

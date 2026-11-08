@@ -79,11 +79,11 @@ graph TD
 - [x] **A.3:** `lib/app/router/app_router.dart` rota eşlemelerinin `/rooms` rotasını Shell tab olarak destekleyecek şekilde doğrulanması.
 
 ### Faz B: Dashboard — Karşılama, Villa Görseli ve Sistem Durumu
-- [ ] **B.1:** `DashboardPage` üst karşılama bloğunun (Image 3) inşası:
+- [x] **B.1:** `DashboardPage` üst karşılama bloğunun (Image 3) inşası:
   - Konum rozeti: `📍 ${profile.homeName}` (`Aygen'in Evi`)
   - Ana başlık: `Merhaba, $userFirstName`
   - Alt başlık: `Evin bugün nasıl?`
-- [ ] **B.2:** Modern Villa Görsel Kartı (`_buildHouseIllustrationCard`):
+- [x] **B.2:** Modern Villa Görsel Kartı (`_buildHouseIllustrationCard`):
   - `assets/screens/modern_smart_house.jpg` görselinin 20px yuvarlatılmış köşeli, zarif gölgeli kart olarak yerleştirilmesi.
   - Görselin alt kısmına entegre yarı-şeffaf durum çubuğu:
     - Sol: `● Tüm Sistemler Normal` (canlı yeşil `PulsingGlowDot` ile)

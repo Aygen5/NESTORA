@@ -455,4 +455,48 @@ void main() {
       expect(find.textContaining('Tebrikler! Bu hafta'), findsOneWidget);
     });
   });
+
+  group('Faz B: Dashboard Karşılama ve Modern Villa Görsel Kartı', () {
+    testWidgets('B.1: Renders location badge, greeting headline and subtitle correctly', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableWidget(const DashboardPage()));
+      await tester.pumpAndSettle();
+
+      // Check location badge with homeName
+      expect(find.text("Aygen'in Evi"), findsWidgets);
+
+      // Check greeting headline and subtitle
+      expect(find.text('Merhaba, Aygen'), findsOneWidget);
+      expect(find.text('Evin bugün nasıl?'), findsOneWidget);
+    });
+
+    testWidgets('B.2: Renders house illustration and dynamic system status pill', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableWidget(const DashboardPage()));
+      await tester.pumpAndSettle();
+
+      // Check villa image asset
+      final imageFinder = find.byWidgetPredicate(
+        (widget) => widget is Image && widget.image is AssetImage && (widget.image as AssetImage).assetName == 'assets/screens/modern_smart_house.jpg',
+      );
+      expect(imageFinder, findsOneWidget);
+
+      // Check system status bar
+      expect(find.text('Tüm Sistemler Normal'), findsOneWidget);
+      expect(find.textContaining('Oda •'), findsWidgets);
+      expect(find.textContaining('Cihaz'), findsWidgets);
+    });
+  });
 }
