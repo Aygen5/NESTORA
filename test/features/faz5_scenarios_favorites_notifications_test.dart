@@ -26,9 +26,12 @@ import 'package:nestora/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:nestora/features/profile/presentation/pages/profile_page.dart';
 import 'package:nestora/features/rooms/domain/entities/room.dart';
 import 'package:nestora/features/rooms/domain/repositories/rooms_repository.dart';
+import 'package:nestora/features/devices/presentation/pages/lamp_control_page.dart';
 import 'package:nestora/features/rooms/presentation/cubit/rooms_cubit.dart';
 import 'package:nestora/features/rooms/presentation/cubit/rooms_state.dart';
+import 'package:nestora/features/rooms/presentation/pages/add_edit_room_page.dart';
 import 'package:nestora/features/rooms/presentation/pages/room_detail_page.dart';
+import 'package:nestora/features/rooms/presentation/pages/rooms_page.dart';
 
 class FakeDevicesRepo implements DevicesRepository {
   final List<Device> devices = [];
@@ -665,6 +668,83 @@ void main() {
       // State updated in DevicesCubit
       final afterDev1On = (devicesCubit.state as DevicesLoaded).findDeviceById('dev-1')?.isPoweredOn ?? true;
       expect(afterDev1On, isFalse);
+    });
+  });
+
+  group('Faz E: Odalarım Sekmesi (RoomsPage) Dönüşümü (Image 4)', () {
+    testWidgets('E.1 & E.2 & E.3: Renders title, subtitle, + Oda Ekle button, and dynamic summary status pill', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableWidget(const RoomsPage()));
+      await tester.pumpAndSettle();
+
+      // Check title and subtitle
+      expect(find.byKey(const Key('rooms_page_title')), findsOneWidget);
+      expect(find.text('Odalarım'), findsWidgets);
+      expect(find.text('Evindeki alanları düzenle ve cihazlarını yönet.'), findsOneWidget);
+
+      // Check summary status pill
+      expect(find.byKey(const Key('rooms_summary_pill')), findsOneWidget);
+      expect(find.descendant(
+        of: find.byKey(const Key('rooms_summary_pill')),
+        matching: find.textContaining('Oda •'),
+      ), findsOneWidget);
+      expect(find.descendant(
+        of: find.byKey(const Key('rooms_summary_pill')),
+        matching: find.textContaining('Aktif'),
+      ), findsOneWidget);
+
+      // Check + Oda Ekle button
+      final addBtn = find.byKey(const Key('rooms_add_room_button'));
+      expect(addBtn, findsOneWidget);
+      await tester.tap(addBtn);
+      await tester.pumpAndSettle();
+      expect(find.byType(AddEditRoomPage), findsOneWidget);
+    });
+
+    testWidgets('E.4 & E.5: Vertical architectural cards, direct device chip control, and bottom callout card', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableWidget(const RoomsPage()));
+      await tester.pumpAndSettle();
+
+      // Check room cards existence
+      expect(find.byKey(const Key('rooms_room_card_room-1')), findsOneWidget);
+      expect(find.byKey(const Key('rooms_room_card_room-2')), findsOneWidget);
+
+      // Check device chips inside Salon card (e.g. Salon Lambası)
+      final deviceChipFinder = find.byKey(const Key('room_device_chip_dev-1'));
+      expect(deviceChipFinder, findsOneWidget);
+
+      // Tapping device chip navigates to LampControlPage
+      await tester.tap(deviceChipFinder);
+      await tester.pumpAndSettle();
+      expect(find.byType(LampControlPage), findsOneWidget);
+
+      // Pop back to RoomsPage
+      Navigator.pop(tester.element(find.byType(LampControlPage)));
+      await tester.pumpAndSettle();
+
+      // Check bottom callout card
+      final bottomCard = find.byKey(const Key('rooms_bottom_add_room_card'));
+      await tester.ensureVisible(bottomCard);
+      expect(bottomCard, findsOneWidget);
+      expect(find.text('Evini genişletmek için yeni oda tanımlayabilirsin.'), findsOneWidget);
+
+      // Tapping bottom card navigates to AddEditRoomPage
+      await tester.tap(bottomCard);
+      await tester.pumpAndSettle();
+      expect(find.byType(AddEditRoomPage), findsOneWidget);
     });
   });
 }

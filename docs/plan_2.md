@@ -117,16 +117,16 @@ graph TD
   - Salon Lambası, Televizyon, Akıllı Priz ve Masa Lambası 2 sütunlu kartları; anlık toggle ve ilgili kontrol sayfasına (`LampControlPage`, vb.) yönlendirme.
 
 ### Faz E: Odalarım Sekmesi (RoomsPage) Dönüşümü (Image 4)
-- [ ] **E.1:** Sayfa başlığı: `Odalarım`, alt başlık: `Evindeki alanları düzenle ve cihazlarını yönet.`
-- [ ] **E.2:** Sağ üstte koyu yeşil `+ Oda Ekle` butonu (`AddEditRoomPage(isEditing: false)` açar).
-- [ ] **E.3:** Özet bilgi hapı: `● $totalRooms Oda • $totalDevices Cihaz • $activeDevices Aktif`.
-- [ ] **E.4:** Dikey Mimari Oda Kartları:
+- [x] **E.1:** Sayfa başlığı: `Odalarım`, alt başlık: `Evindeki alanları düzenle ve cihazlarını yönet.`
+- [x] **E.2:** Sağ üstte koyu yeşil `+ Oda Ekle` butonu (`AddEditRoomPage(isEditing: false)` açar).
+- [x] **E.3:** Özet bilgi hapı: `● $totalRooms Oda • $totalDevices Cihaz • $activeDevices Aktif`.
+- [x] **E.4:** Dikey Mimari Oda Kartları:
   - Sol tarafta yuvarlatılmış mimari oda fotoğrafı thumbnail'i (`assets/rooms/...`) ve oda ikonu.
   - Oda adı + yeşil aktiflik noktası (`roomActiveCount > 0` ise).
   - Altında: `$roomDevicesCount Cihaz • $roomActiveCount Açık`.
   - Sağda: `>` ok butonu (`RoomDetailPage` açar).
   - Kart içi alt çipler: Odanın cihazları (`💡 Salon Lambası • Açık`, `🔌 Akıllı Priz • Açık`, `📺 Televizyon • Kapalı`). Tıklandığında o cihazın kontrol ekranına geçiş.
-- [ ] **E.5:** En altta çağrı kartı: `🏠+ Evini genişletmek için yeni oda tanımlayabilirsin.` (tıklandığında `AddEditRoomPage` açar).
+- [x] **E.5:** En altta çağrı kartı: `🏠+ Evini genişletmek için yeni oda tanımlayabilirsin.` (tıklandığında `AddEditRoomPage` açar).
 
 ### Faz F: Test Güvencesi & Regresyon Doğrulaması
 - [ ] **F.1:** Mevcut 428 testin `AppShell` 4-sekme ve yeni `DashboardPage` hiyerarşisiyle uyumlu hale getirilmesi.
