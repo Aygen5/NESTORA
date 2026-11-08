@@ -301,8 +301,8 @@ void main() {
       expect(find.text('Gece Modu'), findsOneWidget);
       expect(find.text('Dışarıda'), findsOneWidget);
 
-      // Rooms Carousel & Add Room button
-      expect(find.text('Odalar'), findsOneWidget);
+      // Rooms 2x2 Grid & Add Room button
+      expect(find.text('Odalarım'), findsOneWidget);
       expect(find.byKey(const Key('dashboard_add_room_button')), findsOneWidget);
       expect(find.text('Oda Ekle'), findsOneWidget);
       expect(find.text('Tümünü Gör'), findsOneWidget);

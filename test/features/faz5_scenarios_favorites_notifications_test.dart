@@ -28,6 +28,7 @@ import 'package:nestora/features/rooms/domain/entities/room.dart';
 import 'package:nestora/features/rooms/domain/repositories/rooms_repository.dart';
 import 'package:nestora/features/rooms/presentation/cubit/rooms_cubit.dart';
 import 'package:nestora/features/rooms/presentation/cubit/rooms_state.dart';
+import 'package:nestora/features/rooms/presentation/pages/room_detail_page.dart';
 
 class FakeDevicesRepo implements DevicesRepository {
   final List<Device> devices = [];
@@ -544,6 +545,126 @@ void main() {
       // The 'Oda' count dynamically increased!
       final newRoomsCount = initialRooms + 1;
       expect(find.descendant(of: find.byKey(const Key('stat_card_rooms')), matching: find.text('$newRoomsCount')), findsOneWidget);
+    });
+  });
+
+  group('Faz D: Dashboard Hızlı Eylemler, 2x2 Odalarım Izgarası ve Aktif Cihazlar', () {
+    testWidgets('D.1: Hızlı Eylemler bar renders all 4 scenarios and tap switches active scenario', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableWidget(const DashboardPage()));
+      await tester.pumpAndSettle();
+
+      // Check scenario chips
+      expect(find.byKey(const Key('scenario_chip_Evdeyim')), findsOneWidget);
+      expect(find.byKey(const Key('scenario_chip_Gündüz')), findsOneWidget);
+      expect(find.byKey(const Key('scenario_chip_Gece Modu')), findsOneWidget);
+      expect(find.byKey(const Key('scenario_chip_Dışarıda')), findsOneWidget);
+
+      // Initially 'Evdeyim' is active
+      expect(find.textContaining('Aktif Senaryo: Evdeyim'), findsOneWidget);
+
+      // Tap 'Gece Modu'
+      final geceChip = find.byKey(const Key('scenario_chip_Gece Modu'));
+      await tester.ensureVisible(geceChip);
+      await tester.tap(geceChip);
+      await tester.pumpAndSettle();
+
+      // Verifies active scenario updated to 'Gece Modu'
+      expect(find.textContaining('Aktif Senaryo: Gece Modu'), findsOneWidget);
+    });
+
+    testWidgets('D.2: Odalarım renders 2x2 grid, dynamic active device pill, and navigates via Tümünü Gör & Room Card', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      bool navigatedToRooms = false;
+      await tester.pumpWidget(buildTestableWidget(
+        DashboardPage(onNavigateToRooms: () => navigatedToRooms = true),
+      ));
+      await tester.pumpAndSettle();
+
+      // Check section header: Odalarım and Tümünü Gör
+      expect(find.text('Odalarım'), findsWidgets);
+      final viewAllBtn = find.byKey(const Key('dashboard_view_all_rooms_button'));
+      await tester.ensureVisible(viewAllBtn);
+      expect(viewAllBtn, findsOneWidget);
+
+      // Tap 'Tümünü Gör' invokes callback
+      await tester.tap(viewAllBtn);
+      await tester.pumpAndSettle();
+      expect(navigatedToRooms, isTrue);
+
+      // Check 2x2 Grid cards (Salon, Yatak Odası, Mutfak, Çalışma Odası)
+      expect(find.byKey(const Key('dashboard_room_card_room-1')), findsOneWidget);
+      expect(find.byKey(const Key('dashboard_room_card_room-2')), findsOneWidget);
+      expect(find.byKey(const Key('dashboard_room_card_room-3')), findsOneWidget);
+      expect(find.byKey(const Key('dashboard_room_card_room-4')), findsOneWidget);
+
+      // Salon initial active pill: '2 Açık'
+      expect(find.descendant(
+        of: find.byKey(const Key('dashboard_room_active_pill_room-1')),
+        matching: find.text('2 Açık'),
+      ), findsOneWidget);
+
+      // Turn off dev-1 (Salon Lambası)
+      await devicesCubit.toggleDevicePower('dev-1');
+      await tester.pumpAndSettle();
+
+      // Dynamic reactive check: Salon active pill dropped to '1 Açık'!
+      expect(find.descendant(
+        of: find.byKey(const Key('dashboard_room_active_pill_room-1')),
+        matching: find.text('1 Açık'),
+      ), findsOneWidget);
+
+      // Tap Salon room card navigates to RoomDetailPage
+      final salonCard = find.byKey(const Key('dashboard_room_card_room-1'));
+      await tester.ensureVisible(salonCard);
+      await tester.tap(salonCard);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RoomDetailPage), findsOneWidget);
+    });
+
+    testWidgets('D.3: Aktif Cihazlar renders device cards with power switches and toggles power dynamically', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableWidget(const DashboardPage()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Aktif Cihazlar'), findsOneWidget);
+      expect(find.textContaining('cihaz açık'), findsOneWidget);
+
+      // Find switch for dev-1 (Salon Lambası)
+      final switchFinder = find.byKey(const Key('compact_device_switch_dev-1'));
+      await tester.ensureVisible(switchFinder);
+      expect(switchFinder, findsOneWidget);
+
+      // Initially dev-1 is powered on
+      final initialDev1On = (devicesCubit.state as DevicesLoaded).findDeviceById('dev-1')?.isPoweredOn ?? false;
+      expect(initialDev1On, isTrue);
+
+      // Tap toggle switch
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      // State updated in DevicesCubit
+      final afterDev1On = (devicesCubit.state as DevicesLoaded).findDeviceById('dev-1')?.isPoweredOn ?? true;
+      expect(afterDev1On, isFalse);
     });
   });
 }

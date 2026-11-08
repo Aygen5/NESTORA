@@ -100,10 +100,10 @@ graph TD
   - *Doğrulama:* `DevicesCubit` veya `RoomsCubit` değiştiğinde anında tetiklenen reaktif yapı.
 
 ### Faz D: Dashboard — Hızlı Eylemler, 2x2 Odalarım Izgarası ve Aktif Cihazlar
-- [ ] **D.1:** Hızlı Eylemler Barı (Image 1):
+- [x] **D.1:** Hızlı Eylemler Barı (Image 1):
   - `Evdeyim`, `Gündüz`, `Gece Modu`, `Dışarıda` hap butonları.
   - Tıklandığında senaryonun uygulanması, `GlowingToast` bildirimi ve cihazların senkronizasyonu.
-- [ ] **D.2:** 2x2 Odalarım Izgarası (Image 3):
+- [x] **D.2:** 2x2 Odalarım Izgarası (Image 3):
   - Başlık: `Odalarım`
   - Sağda: `Tümünü Gör` butonu $\rightarrow$ Tıklandığında `onNavigateToRooms()` ile Tab 1 (`Odalar`) sekmesine geçiş.
   - 2 sütun x 2 satır grid (ilk 4 oda: Salon, Yatak Odası, Mutfak, Çalışma Odası):
@@ -112,7 +112,7 @@ graph TD
     - Sol altta: Oda Adı (kalın)
     - Altında: `$roomDevicesCount Cihaz`
     - Karta tıklandığında: `RoomDetailPage` sayfasına geçiş.
-- [ ] **D.3:** Aktif Cihazlar Bölümü (Image 2):
+- [x] **D.3:** Aktif Cihazlar Bölümü (Image 2):
   - Başlık: `Aktif Cihazlar` ve `$activeDeviceCount cihaz açık` rozeti.
   - Salon Lambası, Televizyon, Akıllı Priz ve Masa Lambası 2 sütunlu kartları; anlık toggle ve ilgili kontrol sayfasına (`LampControlPage`, vb.) yönlendirme.
 

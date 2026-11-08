@@ -1594,7 +1594,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // 4. Rooms Horizontal Carousel
+  // 4. Odalarım 2x2 Grid (Image 3)
   Widget _buildRoomsSection({
     required BuildContext context,
     required bool isDark,
@@ -1602,6 +1602,8 @@ class _DashboardPageState extends State<DashboardPage> {
     required List<DeviceModel> devices,
     required String tempUnit,
   }) {
+    final displayedRooms = rooms.take(4).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1609,7 +1611,8 @@ class _DashboardPageState extends State<DashboardPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Odalar',
+              'Odalarım',
+              key: const Key('dashboard_rooms_title'),
               style: AppTypography.sectionTitle(
                 color: isDark
                     ? AppColors.darkTextPrimary
@@ -1653,6 +1656,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
+                  key: const Key('dashboard_view_all_rooms_button'),
                   onTap: _navigateToRooms,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -1660,7 +1664,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       'Tümünü Gör',
                       style: AppTypography.buttonText(
                         color: AppColors.primaryContainer,
-                      ).copyWith(fontSize: 13),
+                      ).copyWith(fontSize: 13, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -1668,101 +1672,162 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: rooms.map((room) {
-              final roomDevicesCount = devices
-                  .where((d) => d.room == room.name || d.id.startsWith(room.id))
-                  .length;
-              final effectiveDeviceCount =
-                  roomDevicesCount > 0 ? roomDevicesCount : room.deviceCount;
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final childAspectRatio = constraints.maxWidth > 600
+                ? 2.2
+                : (constraints.maxWidth > 400 ? 1.5 : 1.3);
 
-              return GestureDetector(
-                onTap: () => _navigateToRoomDetail(room),
-                child: Container(
-                  width: 155,
-                  margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorder
-                          : AppColors.lightBorder,
-                    ),
-                    boxShadow: AppColors.cardShadow,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: const BoxDecoration(
-                              color: AppColors.secondaryContainer,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              room.icon,
-                              size: 16,
-                              color: AppColors.primaryContainer,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkCardSecondary
-                                  : AppColors.lightCardSecondary,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              TemperatureFormatter.format(room.temperature, unit: tempUnit),
-                              style: AppTypography.badge(
-                                color: isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.lightTextPrimary,
-                              ).copyWith(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        room.name,
-                        style: AppTypography.cardTitle(
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.lightTextPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$effectiveDeviceCount Cihaz',
-                        style: AppTypography.description(
-                          color: AppColors.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displayedRooms.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: childAspectRatio,
+              ),
+              itemBuilder: (context, index) {
+                final room = displayedRooms[index];
+                final roomDevices = devices
+                    .where((d) => d.roomId == room.id || d.room == room.name)
+                    .toList();
+                final roomActiveCount =
+                    roomDevices.where((d) => d.isPoweredOn).length;
+                final roomDeviceCount =
+                    roomDevices.isNotEmpty ? roomDevices.length : room.deviceCount;
+
+                return _buildRoomGridCard(
+                  context: context,
+                  room: room,
+                  roomActiveCount: roomActiveCount,
+                  roomDeviceCount: roomDeviceCount,
+                  isDark: isDark,
+                );
+              },
+            );
+          },
         ),
       ],
+    );
+  }
+
+  Widget _buildRoomGridCard({
+    required BuildContext context,
+    required RoomModel room,
+    required int roomActiveCount,
+    required int roomDeviceCount,
+    required bool isDark,
+  }) {
+    final hasActive = roomActiveCount > 0;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: Key('dashboard_room_card_${room.id}'),
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _navigateToRoomDetail(room),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : AppColors.lightCard,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              width: 1,
+            ),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Top Row: Icon container + Active Pill
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkCardSecondary
+                          : AppColors.secondaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      room.icon,
+                      size: 19,
+                      color: AppColors.primaryContainer,
+                    ),
+                  ),
+                  Container(
+                    key: Key('dashboard_room_active_pill_${room.id}'),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: hasActive
+                          ? AppColors.primaryContainer.withValues(alpha: 0.12)
+                          : (isDark
+                              ? AppColors.darkCardSecondary
+                              : AppColors.lightCardSecondary),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: hasActive
+                            ? AppColors.primaryContainer.withValues(alpha: 0.25)
+                            : (isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      '$roomActiveCount Açık',
+                      style: AppTypography.badge(
+                        color: hasActive
+                            ? AppColors.primaryContainer
+                            : (isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.secondary),
+                      ).copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
+              // Bottom: Room Name and Device Count
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    room.name,
+                    style: AppTypography.cardTitle(
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
+                    ).copyWith(fontSize: 16, fontWeight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$roomDeviceCount Cihaz',
+                    style: AppTypography.caption.copyWith(
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.secondary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1855,6 +1920,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     return GestureDetector(
+      key: Key('compact_device_card_${device.id}'),
       onTap: () => _navigateToDevice(device),
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -1907,6 +1973,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     const SizedBox(width: 4),
                     NestoraSwitch(
+                      key: Key('compact_device_switch_${device.id}'),
                       value: device.isPoweredOn,
                       onChanged: (_) {
                         final willBeOn = !device.isPoweredOn;
