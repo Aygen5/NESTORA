@@ -291,7 +291,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 
 > **Amaç:** Projenin tüm kabul kriterlerini eksiksiz karşıladığını doğrulamak.
 
-### Adım 9.1: Unit Testler
+### Adım 9.1: [x] Unit Testler
 - Veri modelleri, DTO parsing (`fromFirestore` / `toFirestore`).
 - `AuthCubit`, `RoomsCubit`, `DevicesCubit`, `NotificationsCubit`, `ProfileCubit` durum geçiş testleri.
 - Şifre ve e-posta doğrulama kuralları testleri.
