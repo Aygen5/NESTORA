@@ -462,7 +462,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Profil Fotoğrafı Seç'), findsOneWidget);
-      expect(find.text('Fotoğraf Seç / Yükle'), findsOneWidget);
+      expect(find.text('Galeriden Seç'), findsOneWidget);
       expect(find.text('Varsayılan Profil Avatarına Dön'), findsOneWidget);
     });
 

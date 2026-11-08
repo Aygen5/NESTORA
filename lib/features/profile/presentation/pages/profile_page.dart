@@ -111,7 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: const Icon(Icons.photo_library_rounded, color: AppColors.primaryContainer),
                       ),
                       title: Text(
-                        'Fotoğraf Seç / Yükle',
+                        'Galeriden Seç',
                         style: AppTypography.labelLarge.copyWith(
                           color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                           fontWeight: FontWeight.bold,
