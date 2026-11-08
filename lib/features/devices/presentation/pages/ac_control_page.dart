@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
+import '../../../../core/utils/temperature_formatter.dart';
+import '../../../../core/widgets/glowing_toast.dart';
 import '../../../../core/widgets/nestora_button.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
 import '../../../../core/widgets/nestora_switch.dart';
@@ -86,13 +88,6 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
     context.read<DevicesCubit>().setAcTemp(ac.id, clean);
   }
 
-  String _formatTemp(double temp) {
-    if (temp == temp.truncateToDouble()) {
-      return temp.toInt().toString();
-    }
-    return temp.toStringAsFixed(1);
-  }
-
   void _showDeleteDialog(BuildContext context, DeviceModel ac) {
     showNestoraDeleteDialog(
       context: context,
@@ -114,13 +109,16 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
     final devicesCubit = context.watch<DevicesCubit>();
     final devicesState = devicesCubit.state;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tempUnit = TemperatureFormatter.currentUnit(context);
 
     final devices = (devicesState is DevicesLoaded)
         ? devicesState.devices.map(SeedData.deviceToModel).toList()
         : SeedData.defaultDeviceModels;
 
     final ac = devices.firstWhere(
-      (d) => d.id == widget.deviceId || d.id == 'dev-5',
+      (d) => widget.deviceId != null && widget.deviceId!.isNotEmpty
+          ? d.id == widget.deviceId
+          : d.type == DeviceType.ac,
       orElse: () => devices.firstWhere(
         (d) => d.type == DeviceType.ac,
         orElse: () => devices.first,
@@ -165,12 +163,23 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
         ),
         actions: [
           IconButton(
+            tooltip: ac.isFavorite ? 'Favorilerden Çıkar' : 'Favorilere Ekle',
             icon: Icon(
               ac.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
               color: ac.isFavorite ? AppColors.warmAmber : AppColors.secondary,
               size: 22,
             ),
-            onPressed: () => context.read<DevicesCubit>().toggleDeviceFavorite(ac.id),
+            onPressed: () {
+              final newFav = !ac.isFavorite;
+              context.read<DevicesCubit>().toggleDeviceFavorite(ac.id);
+              showGlowingToast(
+                context,
+                message: newFav
+                    ? '${ac.name} favorilere eklendi.'
+                    : '${ac.name} favorilerden çıkarıldı.',
+                icon: newFav ? Icons.star_rounded : Icons.star_border_rounded,
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 22),
@@ -309,7 +318,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              isPowered ? 'Aktif • ${_formatTemp(currentTemp)}°C' : 'Standby',
+                              isPowered ? 'Aktif • ${TemperatureFormatter.format(currentTemp, unit: tempUnit)}' : 'Standby',
                               style: AppTypography.caption.copyWith(
                                 color: isPowered ? AppColors.primaryContainer : AppColors.secondary,
                                 fontWeight: FontWeight.bold,
@@ -349,7 +358,9 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    isPowered ? '${_formatTemp(currentTemp)}°C' : '--°C',
+                                    isPowered
+                                        ? TemperatureFormatter.format(currentTemp, unit: tempUnit)
+                                        : '--${TemperatureFormatter.unitSymbol(unit: tempUnit)}',
                                     style: AppTypography.labelMedium.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: isPowered ? AppColors.primaryContainer : AppColors.secondary,
@@ -444,7 +455,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                           ),
                           Flexible(
                             child: Text(
-                              '16.0°C - 30.0°C',
+                              '${TemperatureFormatter.format(16.0, unit: tempUnit)} - ${TemperatureFormatter.format(30.0, unit: tempUnit)}',
                               style: AppTypography.caption.copyWith(color: AppColors.secondary),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -483,7 +494,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        _formatTemp(currentTemp),
+                                        TemperatureFormatter.formatValue(currentTemp, unit: tempUnit),
                                         style: AppTypography.displayLarge.copyWith(
                                           color: isPowered ? AppColors.primaryContainer : AppColors.secondary,
                                           fontWeight: FontWeight.w800,
@@ -492,7 +503,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                                         ),
                                       ),
                                       Text(
-                                        '°C',
+                                        TemperatureFormatter.unitSymbol(unit: tempUnit),
                                         style: AppTypography.headlineMedium.copyWith(
                                           color: AppColors.secondary,
                                           fontWeight: FontWeight.bold,
@@ -524,7 +535,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                                       const Icon(Icons.thermostat_rounded, size: 12, color: AppColors.secondary),
                                       const SizedBox(width: 2),
                                       Text(
-                                        'Oda: ${_formatTemp(ambientTemp)}°C',
+                                        'Oda: ${TemperatureFormatter.format(ambientTemp, unit: tempUnit)}',
                                         style: AppTypography.caption.copyWith(
                                           color: AppColors.secondary,
                                           fontWeight: FontWeight.bold,
@@ -604,7 +615,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                       Row(
                         children: [
                           _buildPresetButton(
-                            label: '20°C Serin',
+                            label: '${TemperatureFormatter.format(20.0, unit: tempUnit)} Serin',
                             temp: 20.0,
                             currentTemp: currentTemp,
                             onTap: () => context.read<DevicesCubit>().setAcTemp(ac.id, 20.0),
@@ -612,7 +623,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                           ),
                           const SizedBox(width: 6),
                           _buildPresetButton(
-                            label: '22°C Dengeli',
+                            label: '${TemperatureFormatter.format(22.0, unit: tempUnit)} Dengeli',
                             temp: 22.0,
                             currentTemp: currentTemp,
                             onTap: () => context.read<DevicesCubit>().setAcTemp(ac.id, 22.0),
@@ -620,7 +631,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                           ),
                           const SizedBox(width: 6),
                           _buildPresetButton(
-                            label: '24°C Konfor',
+                            label: '${TemperatureFormatter.format(24.0, unit: tempUnit)} Konfor',
                             temp: 24.0,
                             currentTemp: currentTemp,
                             onTap: () => context.read<DevicesCubit>().setAcTemp(ac.id, 24.0),
@@ -628,7 +639,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                           ),
                           const SizedBox(width: 6),
                           _buildPresetButton(
-                            label: '26°C Eko',
+                            label: '${TemperatureFormatter.format(26.0, unit: tempUnit)} Eko',
                             temp: 26.0,
                             currentTemp: currentTemp,
                             onTap: () => context.read<DevicesCubit>().setAcTemp(ac.id, 26.0),
@@ -807,7 +818,7 @@ class _AcControlPageState extends State<AcControlPage> with SingleTickerProvider
                               ),
                             ),
                             Text(
-                              '24°C ve üzeri hedef sıcaklık %18 daha az enerji harcar',
+                              '${TemperatureFormatter.format(24.0, unit: tempUnit)} ve üzeri hedef sıcaklık %18 daha az enerji harcar',
                               style: AppTypography.caption.copyWith(color: AppColors.secondary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
+import '../../../../core/utils/temperature_formatter.dart';
 import '../../../../core/widgets/nestora_button.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
 import '../../../../core/widgets/nestora_input.dart';
@@ -63,6 +64,9 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
   String _tvMode = 'Standart';
   bool _securityMotionAlert = true;
 
+  // Smart keyword auto-matching
+  String? _autoDetectedMatch;
+
   // Smart Pairing Simulation
   late AnimationController _radarController;
   bool _isScanning = false;
@@ -114,6 +118,220 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
       'isPoweredOn': true,
     },
   ];
+
+  static const List<Map<String, dynamic>> _smartTemplates = [
+    {
+      'name': 'Salon Lambası',
+      'type': DeviceType.bulb,
+      'room': 'Salon',
+      'brightness': 85.0,
+      'color': 'Sıcak Günışığı (2700K)',
+      'isFavorite': true,
+      'isPoweredOn': true,
+    },
+    {
+      'name': 'Salon Kliması',
+      'type': DeviceType.ac,
+      'room': 'Salon',
+      'temp': 22.0,
+      'mode': AcMode.auto,
+      'fanSpeed': FanSpeed.mid,
+      'isFavorite': true,
+      'isPoweredOn': true,
+    },
+    {
+      'name': 'Mutfak Spot Işık',
+      'type': DeviceType.bulb,
+      'room': 'Mutfak',
+      'brightness': 90.0,
+      'color': 'Doğal Beyaz (4000K)',
+      'isFavorite': false,
+      'isPoweredOn': true,
+    },
+    {
+      'name': 'Mutfak Kahve Prizi',
+      'type': DeviceType.plug,
+      'room': 'Mutfak',
+      'relay': true,
+      'isFavorite': false,
+      'isPoweredOn': true,
+    },
+    {
+      'name': 'Yatak Odası Lambası',
+      'type': DeviceType.bulb,
+      'room': 'Yatak Odası',
+      'brightness': 60.0,
+      'color': 'Sıcak Günışığı (2700K)',
+      'isFavorite': true,
+      'isPoweredOn': true,
+    },
+    {
+      'name': 'Yatak Odası Kliması',
+      'type': DeviceType.ac,
+      'room': 'Yatak Odası',
+      'temp': 23.0,
+      'mode': AcMode.cool,
+      'fanSpeed': FanSpeed.low,
+      'isFavorite': false,
+      'isPoweredOn': true,
+    },
+    {
+      'name': 'Çalışma Masası Prizi',
+      'type': DeviceType.plug,
+      'room': 'Çalışma Odası',
+      'relay': true,
+      'isFavorite': false,
+      'isPoweredOn': true,
+    },
+    {
+      'name': 'Çalışma Hava Sirkülatörü',
+      'type': DeviceType.fan,
+      'room': 'Çalışma Odası',
+      'fanSpeed': 'Orta',
+      'isFavorite': false,
+      'isPoweredOn': true,
+    },
+    {
+      'name': 'Salon Televizyonu',
+      'type': DeviceType.tv,
+      'room': 'Salon',
+      'isFavorite': true,
+      'isPoweredOn': true,
+    },
+    {
+      'name': 'Giriş Güvenlik Kamerası',
+      'type': DeviceType.security,
+      'room': 'Giriş / Dış',
+      'motion': true,
+      'isFavorite': true,
+      'isPoweredOn': true,
+    },
+  ];
+
+  String _getTypeName(DeviceType type) {
+    switch (type) {
+      case DeviceType.bulb:
+        return 'Ampul / Aydınlatma';
+      case DeviceType.ac:
+        return 'Klima (AC)';
+      case DeviceType.plug:
+        return 'Akıllı Priz';
+      case DeviceType.fan:
+        return 'Vantilatör / Fan';
+      case DeviceType.tv:
+        return 'Televizyon (TV)';
+      case DeviceType.security:
+        return 'Güvenlik Kamerası';
+    }
+  }
+
+  IconData _getIconForType(DeviceType type) {
+    switch (type) {
+      case DeviceType.bulb:
+        return Icons.lightbulb_rounded;
+      case DeviceType.plug:
+        return Icons.power_rounded;
+      case DeviceType.ac:
+        return Icons.ac_unit_rounded;
+      case DeviceType.fan:
+        return Icons.air_rounded;
+      case DeviceType.tv:
+        return Icons.tv_rounded;
+      case DeviceType.security:
+        return Icons.videocam_rounded;
+    }
+  }
+
+  void _onNameChanged(String val) {
+    if (_nameError != null) {
+      setState(() => _nameError = null);
+    }
+    final query = val.trim().toLowerCase();
+    if (query.isEmpty) {
+      setState(() => _autoDetectedMatch = null);
+      return;
+    }
+
+    DeviceType? matchedType;
+    if (query.contains('lamba') ||
+        query.contains('ampul') ||
+        query.contains('ışık') ||
+        query.contains('led') ||
+        query.contains('avize') ||
+        query.contains('spot')) {
+      matchedType = DeviceType.bulb;
+    } else if (query.contains('klima') ||
+        query.contains('ac') ||
+        query.contains('iklim') ||
+        query.contains('soğut') ||
+        query.contains('ısıt')) {
+      matchedType = DeviceType.ac;
+    } else if (query.contains('priz') ||
+        query.contains('fiş') ||
+        query.contains('şarj') ||
+        query.contains('röle')) {
+      matchedType = DeviceType.plug;
+    } else if (query.contains('fan') ||
+        query.contains('vantilatör') ||
+        query.contains('sirkülatör') ||
+        query.contains('hava')) {
+      matchedType = DeviceType.fan;
+    } else if (query.contains('tv') ||
+        query.contains('televizyon') ||
+        query.contains('ekran')) {
+      matchedType = DeviceType.tv;
+    } else if (query.contains('kamera') ||
+        query.contains('güvenlik') ||
+        query.contains('alarm') ||
+        query.contains('sensör')) {
+      matchedType = DeviceType.security;
+    }
+
+    String? matchedRoom;
+    if (query.contains('salon') || query.contains('oturma')) {
+      matchedRoom = 'Salon';
+    } else if (query.contains('yatak')) {
+      matchedRoom = 'Yatak Odası';
+    } else if (query.contains('mutfak')) {
+      matchedRoom = 'Mutfak';
+    } else if (query.contains('çalışma') || query.contains('ofis')) {
+      matchedRoom = 'Çalışma Odası';
+    } else if (query.contains('banyo')) {
+      matchedRoom = 'Banyo';
+    } else if (query.contains('giriş') || query.contains('antre') || query.contains('hol')) {
+      matchedRoom = 'Giriş / Dış';
+    }
+
+    setState(() {
+      if (matchedType != null) {
+        _selectedType = matchedType;
+      }
+      if (matchedRoom != null) {
+        _selectedRoom = matchedRoom;
+      }
+      if (matchedType != null || matchedRoom != null) {
+        final typeName = matchedType != null ? _getTypeName(matchedType) : '';
+        final roomName = matchedRoom ?? '';
+        _autoDetectedMatch = [typeName, roomName].where((s) => s.isNotEmpty).join(' • ');
+      } else {
+        _autoDetectedMatch = null;
+      }
+    });
+  }
+
+  List<Map<String, dynamic>> get _filteredSuggestions {
+    final query = _nameController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      return _smartTemplates.take(5).toList();
+    }
+    final matches = _smartTemplates.where((t) {
+      final name = (t['name'] as String).toLowerCase();
+      final room = (t['room'] as String).toLowerCase();
+      final type = (t['type'] as DeviceType).name.toLowerCase();
+      return name.contains(query) || room.contains(query) || type.contains(query);
+    }).toList();
+    return matches.isNotEmpty ? matches : _smartTemplates.take(4).toList();
+  }
 
   @override
   void initState() {
@@ -231,6 +449,7 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
         _securityMotionAlert = item['motion'] as bool;
       }
       _nameError = null;
+      _autoDetectedMatch = '${_getTypeName(_selectedType)} • $_selectedRoom';
     });
 
     showNestoraSnackbar(
@@ -363,6 +582,7 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tempUnit = TemperatureFormatter.currentUnit(context);
 
     final roomsState = context.watch<RoomsCubit>().state;
     final List<String> roomOptions = (roomsState is RoomsLoaded && roomsState.rooms.isNotEmpty)
@@ -401,95 +621,7 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Mode Switcher Segmented Control
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() {
-                            _isAddMode = true;
-                            _targetDevice = null;
-                            _nameController.clear();
-                            _nameError = null;
-                          }),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _isAddMode ? AppColors.primaryContainer : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: _isAddMode ? AppColors.subtleShadow : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_circle_outline_rounded,
-                                  size: 18,
-                                  color: _isAddMode ? Colors.white : AppColors.secondary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Yeni Cihaz Ekle',
-                                  style: AppTypography.labelMedium.copyWith(
-                                    color: _isAddMode ? Colors.white : AppColors.secondary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isAddMode = false;
-                              if (_targetDevice == null && existingDevices.isNotEmpty) {
-                                _loadDeviceValues(existingDevices.first);
-                              }
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: !_isAddMode ? AppColors.primaryContainer : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: !_isAddMode ? AppColors.subtleShadow : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.tune_rounded,
-                                  size: 18,
-                                  color: !_isAddMode ? Colors.white : AppColors.secondary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Cihazı Düzenle',
-                                  style: AppTypography.labelMedium.copyWith(
-                                    color: !_isAddMode ? Colors.white : AppColors.secondary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Device Selection Chip Bar (When in Edit Mode)
+                // Device Selection Chip Bar (When in Edit Mode and devices exist)
                 if (!_isAddMode && existingDevices.isNotEmpty) ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -556,157 +688,159 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
                   const SizedBox(height: 16),
                 ],
 
-                // 2. Smart Pairing Hero Banner & Scanning Flow
-                GestureDetector(
-                  onTap: _startSmartPairingScan,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _isScanning
-                            ? AppColors.primaryContainer
-                            : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                // 1. Smart Pairing Hero Banner (Dedicated to Add Mode Only)
+                if (_isAddMode) ...[
+                  GestureDetector(
+                    onTap: _startSmartPairingScan,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _isScanning
+                              ? AppColors.primaryContainer
+                              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                        ),
+                        boxShadow: AppColors.cardShadow,
                       ),
-                      boxShadow: AppColors.cardShadow,
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            RotationTransition(
-                              turns: _radarController,
-                              child: Container(
-                                width: 48,
-                                height: 48,
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              RotationTransition(
+                                turns: _radarController,
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.secondaryContainer,
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Icon(
+                                    _isScanning ? Icons.radar_rounded : Icons.sensors_rounded,
+                                    color: AppColors.primaryContainer,
+                                    size: 26,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'SANAL EŞLEŞTİRME',
+                                          style: AppTypography.caption.copyWith(
+                                            color: AppColors.primaryContainer,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _isScanning ? 'Nestora Hub Ağı Taranıyor...' : 'Sanal Cihaz Arama & Eşleştirme',
+                                      style: AppTypography.headlineSmall.copyWith(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      _isScanning
+                                          ? 'Yerel simülasyon mesh sinyalleri taranıyor'
+                                          : 'Ağdaki yeni cihazları keşfetmek için dokunun',
+                                      style: AppTypography.caption.copyWith(color: AppColors.secondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppColors.secondaryContainer,
-                                  borderRadius: BorderRadius.circular(14),
+                                  color: _isScanning ? AppColors.primaryContainer : (isDark ? AppColors.darkCard : Colors.white),
+                                  shape: BoxShape.circle,
                                 ),
                                 child: Icon(
-                                  _isScanning ? Icons.radar_rounded : Icons.sensors_rounded,
-                                  color: AppColors.primaryContainer,
-                                  size: 26,
+                                  _isScanning ? Icons.hourglass_top_rounded : Icons.wifi_find_rounded,
+                                  size: 18,
+                                  color: _isScanning ? Colors.white : AppColors.primaryContainer,
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        'SANAL EŞLEŞTİRME',
-                                        style: AppTypography.caption.copyWith(
-                                          color: AppColors.primaryContainer,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.0,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _isScanning ? 'Nestora Hub Ağı Taranıyor...' : 'Sanal Cihaz Arama & Eşleştirme',
-                                    style: AppTypography.headlineSmall.copyWith(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                                    ),
-                                  ),
-                                  Text(
-                                    _isScanning
-                                        ? 'Yerel simülasyon mesh sinyalleri taranıyor'
-                                        : 'Ağdaki yeni cihazları keşfetmek için dokunun',
-                                    style: AppTypography.caption.copyWith(color: AppColors.secondary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: _isScanning ? AppColors.primaryContainer : (isDark ? AppColors.darkCard : Colors.white),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                _isScanning ? Icons.hourglass_top_rounded : Icons.wifi_find_rounded,
-                                size: 18,
-                                color: _isScanning ? Colors.white : AppColors.primaryContainer,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // Discovered Devices List
-                        if (_hasScanned) ...[
-                          const SizedBox(height: 14),
-                          const Divider(height: 1),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  'Keşfedilen Cihazlar',
-                                  style: AppTypography.labelSmall.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primaryContainer,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${_discoveredDevices.length} Bulundu',
-                                style: AppTypography.caption.copyWith(color: AppColors.secondary),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: _discoveredDevices.map((item) {
-                              return InkWell(
-                                onTap: () => _applyDiscoveredDevice(item),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? AppColors.darkCard : Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.5)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.add_link_rounded, size: 14, color: AppColors.primaryContainer),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        item['name'] as String,
-                                        style: AppTypography.caption.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                                        ),
-                                      ),
-                                    ],
+
+                          // Discovered Devices List
+                          if (_hasScanned) ...[
+                            const SizedBox(height: 14),
+                            const Divider(height: 1),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    'Keşfedilen Cihazlar',
+                                    style: AppTypography.labelSmall.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primaryContainer,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              );
-                            }).toList(),
-                          ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_discoveredDevices.length} Bulundu',
+                                  style: AppTypography.caption.copyWith(color: AppColors.secondary),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _discoveredDevices.map((item) {
+                                return InkWell(
+                                  onTap: () => _applyDiscoveredDevice(item),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? AppColors.darkCard : Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.5)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.add_link_rounded, size: 14, color: AppColors.primaryContainer),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          item['name'] as String,
+                                          style: AppTypography.caption.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
+                ],
 
-                // 3. Cihaz Adı Section
+                // 2. Cihaz Adı & Akıllı Arama / Eşleştirme Section
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -723,12 +857,100 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
                 const SizedBox(height: 8),
                 NestoraInput(
                   controller: _nameController,
-                  hintText: 'Örn: Salon Lambası, Çalışma Prizi',
-                  prefixIcon: Icons.edit_note_rounded,
-                  onChanged: (_) {
-                    if (_nameError != null) setState(() => _nameError = null);
-                  },
+                  hintText: 'Örn: Salon Lambası, Yatak Odası Kliması',
+                  prefixIcon: Icons.search_rounded,
+                  onChanged: _onNameChanged,
                 ),
+                if (_autoDetectedMatch != null) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondaryContainer.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.auto_awesome_rounded, size: 14, color: AppColors.primaryContainer),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'Akıllı Eşleşti: $_autoDetectedMatch',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.primaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (_isAddMode) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Akıllı Cihaz Şablonları',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.secondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        'Hızlı Doldur',
+                        style: AppTypography.caption.copyWith(color: AppColors.primaryContainer),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: _filteredSuggestions.map((tpl) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: InkWell(
+                            onTap: () => _applyDiscoveredDevice(tpl),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.primaryContainer.withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _getIconForType(tpl['type'] as DeviceType),
+                                    size: 14,
+                                    color: AppColors.primaryContainer,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    tpl['name'] as String,
+                                    style: AppTypography.caption.copyWith(
+                                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
                 if (_nameError != null) ...[
                   const SizedBox(height: 4),
                   Padding(
@@ -931,7 +1153,7 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
                               ),
                             ),
                             Text(
-                              '${_acTemp.toStringAsFixed(1)}°C',
+                              TemperatureFormatter.format(_acTemp, unit: tempUnit),
                               style: AppTypography.headlineSmall.copyWith(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

@@ -17,6 +17,7 @@ class DeviceModel {
   AcMode acMode;
   FanSpeed fanSpeed;
   bool isFavorite;
+  double currentPowerWatts;
 
   DeviceModel({
     required this.id,
@@ -32,6 +33,7 @@ class DeviceModel {
     this.acMode = AcMode.auto,
     this.fanSpeed = FanSpeed.mid,
     this.isFavorite = false,
+    this.currentPowerWatts = 0.0,
   });
 
   DeviceModel copyWith({
@@ -47,6 +49,7 @@ class DeviceModel {
     AcMode? acMode,
     FanSpeed? fanSpeed,
     bool? isFavorite,
+    double? currentPowerWatts,
   }) {
     return DeviceModel(
       id: id,
@@ -62,6 +65,7 @@ class DeviceModel {
       acMode: acMode ?? this.acMode,
       fanSpeed: fanSpeed ?? this.fanSpeed,
       isFavorite: isFavorite ?? this.isFavorite,
+      currentPowerWatts: currentPowerWatts ?? this.currentPowerWatts,
     );
   }
 
@@ -79,6 +83,7 @@ class DeviceModel {
       acMode: acMode,
       fanSpeed: fanSpeed,
       isFavorite: isFavorite,
+      currentPowerWatts: currentPowerWatts,
     );
   }
 

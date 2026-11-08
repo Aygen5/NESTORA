@@ -4,8 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
+import '../../../../core/utils/temperature_formatter.dart';
+import '../../../../core/widgets/glowing_toast.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 import '../../../../core/widgets/nestora_switch.dart';
+import '../../../../core/widgets/pulsing_glow_dot.dart';
+import '../../../notifications/presentation/cubit/notifications_cubit.dart';
+import '../../../notifications/presentation/cubit/notifications_state.dart';
+import '../../../notifications/presentation/pages/notifications_page.dart';
 import '../../../rooms/presentation/cubit/rooms_cubit.dart';
 import '../../../rooms/presentation/cubit/rooms_state.dart';
 import '../../domain/device_model.dart';
@@ -13,7 +19,10 @@ import '../cubit/devices_cubit.dart';
 import '../cubit/devices_state.dart';
 import 'ac_control_page.dart';
 import 'add_edit_device_page.dart';
+import 'coffee_machine_control_page.dart';
 import 'lamp_control_page.dart';
+import 'plug_control_page.dart';
+import 'tv_control_page.dart';
 
 /// The 5 main device category tabs required by Nestora smart home specs:
 /// Tümü, Aydınlatma, İklimlendirme, Güvenlik, Prizler
@@ -42,8 +51,13 @@ enum DeviceStatusFilter {
 
 class DevicesPage extends StatefulWidget {
   final VoidCallback? onNavigateToProfile;
+  final DeviceStatusFilter? initialStatusFilter;
 
-  const DevicesPage({super.key, this.onNavigateToProfile});
+  const DevicesPage({
+    super.key,
+    this.onNavigateToProfile,
+    this.initialStatusFilter,
+  });
 
   @override
   State<DevicesPage> createState() => _DevicesPageState();
@@ -51,9 +65,32 @@ class DevicesPage extends StatefulWidget {
 
 class _DevicesPageState extends State<DevicesPage> {
   DeviceCategoryTab _selectedCategory = DeviceCategoryTab.all;
-  DeviceStatusFilter _selectedStatus = DeviceStatusFilter.all;
+  late DeviceStatusFilter _selectedStatus;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedStatus = widget.initialStatusFilter ?? DeviceStatusFilter.all;
+    if (_selectedStatus == DeviceStatusFilter.favorites) {
+      _selectedCategory = DeviceCategoryTab.all;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant DevicesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialStatusFilter != null &&
+        widget.initialStatusFilter != oldWidget.initialStatusFilter) {
+      setState(() {
+        _selectedStatus = widget.initialStatusFilter!;
+        if (_selectedStatus == DeviceStatusFilter.favorites) {
+          _selectedCategory = DeviceCategoryTab.all;
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -178,8 +215,12 @@ class _DevicesPageState extends State<DevicesPage> {
   }
 
   void _navigateToDeviceDetail(BuildContext context, DeviceModel device) {
-    final isBulb = device.type == DeviceType.bulb || device.name.toLowerCase().contains('lamba');
-    final isAc = device.type == DeviceType.ac || device.name.toLowerCase().contains('klima');
+    final lower = device.name.toLowerCase();
+    final isBulb = device.type == DeviceType.bulb || lower.contains('lamba');
+    final isAc = device.type == DeviceType.ac || lower.contains('klima');
+    final isTv = device.type == DeviceType.tv || lower.contains('televizyon') || lower.contains('tv');
+    final isCoffee = (lower.contains('kahve') || lower.contains('coffee'));
+    final isPlug = device.type == DeviceType.plug || lower.contains('priz');
 
     if (isBulb) {
       try {
@@ -187,7 +228,7 @@ class _DevicesPageState extends State<DevicesPage> {
       } catch (_) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const LampControlPage()),
+          MaterialPageRoute(builder: (_) => LampControlPage(deviceId: device.id)),
         );
       }
     } else if (isAc) {
@@ -196,16 +237,50 @@ class _DevicesPageState extends State<DevicesPage> {
       } catch (_) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const AcControlPage()),
+          MaterialPageRoute(builder: (_) => AcControlPage(deviceId: device.id)),
+        );
+      }
+    } else if (isTv) {
+      try {
+        context.push('/devices/tv/${device.id}');
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => TvControlPage(deviceId: device.id)),
+        );
+      }
+    } else if (isCoffee) {
+      try {
+        context.push('/devices/coffee/${device.id}');
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => CoffeeMachineControlPage(deviceId: device.id)),
+        );
+      }
+    } else if (isPlug) {
+      try {
+        context.push('/devices/plug/${device.id}');
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => PlugControlPage(deviceId: device.id)),
         );
       }
     } else {
       try {
-        context.push('/devices/add-edit');
+        context.push(
+          '/devices/add-edit',
+          extra: {
+            'isEditing': true,
+            'device': device,
+            'deviceId': device.id,
+          },
+        );
       } catch (_) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const AddEditDevicePage()),
+          MaterialPageRoute(builder: (_) => AddEditDevicePage(device: device, isEditing: true)),
         );
       }
     }
@@ -237,6 +312,14 @@ class _DevicesPageState extends State<DevicesPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    int unreadCount = 0;
+    try {
+      final notificationsState = context.watch<NotificationsCubit>().state;
+      if (notificationsState is NotificationsLoaded) {
+        unreadCount = notificationsState.unreadCount;
+      }
+    } catch (_) {}
+
     final devicesCubit = context.watch<DevicesCubit>();
     final devicesState = devicesCubit.state;
 
@@ -247,6 +330,8 @@ class _DevicesPageState extends State<DevicesPage> {
     final totalCount = allDevices.length;
     final activeCount = allDevices.where((d) => d.isPoweredOn).length;
     final inactiveCount = totalCount - activeCount;
+    final favoriteCount = allDevices.where((d) => d.isFavorite).length;
+    final isFavoritesFilterActive = _selectedStatus == DeviceStatusFilter.favorites;
 
     // Filter devices based on Category, Status, and Search Query
     final filteredDevices = allDevices.where((d) {
@@ -275,10 +360,11 @@ class _DevicesPageState extends State<DevicesPage> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(64),
+        preferredSize: const Size.fromHeight(76),
         child: Container(
+          height: 76,
           decoration: BoxDecoration(
-            color: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.92),
+            color: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.95),
             border: Border(
               bottom: BorderSide(
                 color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
@@ -295,14 +381,13 @@ class _DevicesPageState extends State<DevicesPage> {
                 children: [
                   Row(
                     children: [
-                      const NestoraLogo(size: 28, enableNavigation: true),
-                      const SizedBox(width: 8),
+                      const NestoraLogo(size: 34, enableNavigation: true),
+                      const SizedBox(width: 10),
                       Text(
                         'Nestora',
-                        style: AppTypography.headlineSmall.copyWith(
+                        style: AppTypography.cardTitle(
                           color: AppColors.primaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        ).copyWith(fontWeight: FontWeight.w800, fontSize: 20),
                       ),
                       const SizedBox(width: 8),
                       Container(
@@ -322,23 +407,172 @@ class _DevicesPageState extends State<DevicesPage> {
                       ),
                     ],
                   ),
-                  GestureDetector(
-                    onTap: () => _navigateToProfile(context),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.secondaryContainer,
-                          width: 2,
-                        ),
-                        image: const DecorationImage(
-                          image: AssetImage('assets/screens/nestora_profil_ve_ayarlar.png'),
-                          fit: BoxFit.cover,
+                  Row(
+                    children: [
+                      // Favorites Toggle Filter Button with count badge & hover effect
+                      Tooltip(
+                        message: isFavoritesFilterActive
+                            ? 'Tüm Cihazları Göster'
+                            : 'Favori Cihazları Filtrele ($favoriteCount)',
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            hoverColor: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : AppColors.primaryContainer.withValues(alpha: 0.08),
+                            splashColor: AppColors.primaryContainer.withValues(alpha: 0.12),
+                            onTap: () {
+                              setState(() {
+                                if (isFavoritesFilterActive) {
+                                  _selectedStatus = DeviceStatusFilter.all;
+                                  showGlowingToast(
+                                    context,
+                                    message: 'Tüm cihazlar listeleniyor.',
+                                  );
+                                } else {
+                                  _selectedStatus = DeviceStatusFilter.favorites;
+                                  showGlowingToast(
+                                    context,
+                                    message: 'Favori cihazlar filtrelendi ($favoriteCount cihaz).',
+                                    icon: Icons.star_rounded,
+                                  );
+                                }
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: isFavoritesFilterActive
+                                  ? BoxDecoration(
+                                      color: AppColors.warmAmber.withValues(alpha: 0.18),
+                                      borderRadius: BorderRadius.circular(12),
+                                    )
+                                  : null,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Icon(
+                                    isFavoritesFilterActive
+                                        ? Icons.star_rounded
+                                        : (favoriteCount > 0
+                                            ? Icons.star_rounded
+                                            : Icons.star_border_rounded),
+                                    size: 24,
+                                    color: (isFavoritesFilterActive || favoriteCount > 0)
+                                        ? AppColors.warmAmber
+                                        : (isDark
+                                            ? AppColors.darkTextPrimary
+                                            : AppColors.lightTextPrimary),
+                                  ),
+                                  if (favoriteCount > 0)
+                                    Positioned(
+                                      right: -4,
+                                      top: -3,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.warmAmber,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                        child: Text(
+                                          favoriteCount > 9 ? '9+' : '$favoriteCount',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      // Notifications Bell Button with unread count badge & hover effect
+                      Tooltip(
+                        message: 'Bildirimler',
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            hoverColor: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : AppColors.primaryContainer.withValues(alpha: 0.08),
+                            splashColor: AppColors.primaryContainer.withValues(alpha: 0.12),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const NotificationsPage()),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Icon(
+                                    Icons.notifications_none_rounded,
+                                    size: 24,
+                                    color: isDark
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.lightTextPrimary,
+                                  ),
+                                  if (unreadCount > 0)
+                                    Positioned(
+                                      right: -4,
+                                      top: -3,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.error,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                        child: Text(
+                                          unreadCount > 9 ? '9+' : '$unreadCount',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Profile Avatar
+                      GestureDetector(
+                        onTap: () => _navigateToProfile(context),
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.secondaryContainer,
+                              width: 2,
+                            ),
+                            image: const DecorationImage(
+                              image: AssetImage('assets/screens/nestora_profil_ve_ayarlar.png'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -391,13 +625,10 @@ class _DevicesPageState extends State<DevicesPage> {
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primaryContainer,
-                            ),
+                          const PulsingGlowDot(
+                            color: AppColors.primaryContainer,
+                            size: 8,
+                            glowRadius: 6,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -468,6 +699,40 @@ class _DevicesPageState extends State<DevicesPage> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Quick Toggle All Button
+                      TextButton.icon(
+                        onPressed: totalCount == 0
+                            ? null
+                            : () {
+                                final allOn = activeCount == totalCount;
+                                context.read<DevicesCubit>().toggleAllDevices(!allOn);
+                              },
+                        icon: Icon(
+                          activeCount == totalCount
+                              ? Icons.power_settings_new_rounded
+                              : Icons.power_settings_new_outlined,
+                          size: 16,
+                          color: activeCount == totalCount ? AppColors.error : AppColors.primaryContainer,
+                        ),
+                        label: Text(
+                          activeCount == totalCount ? 'Tümünü Kapat' : 'Tümünü Aç',
+                          style: AppTypography.labelSmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: activeCount == totalCount ? AppColors.error : AppColors.primaryContainer,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -651,7 +916,12 @@ class _DevicesPageState extends State<DevicesPage> {
                           selected: isSelected,
                           onSelected: (selected) {
                             if (selected) {
-                              setState(() => _selectedStatus = status);
+                              setState(() {
+                                _selectedStatus = status;
+                                if (status == DeviceStatusFilter.favorites) {
+                                  _selectedCategory = DeviceCategoryTab.all;
+                                }
+                              });
                             }
                           },
                           avatar: status == DeviceStatusFilter.favorites
@@ -789,6 +1059,7 @@ class _DevicesPageState extends State<DevicesPage> {
     final roomName = _resolveRoomName(context, device.roomId, device.room);
     final typeLabel = _getDeviceTypeLabel(device.type);
     final deviceWatts = _formatDevicePower(device);
+    final tempUnit = TemperatureFormatter.currentUnit(context);
 
     return GestureDetector(
       onTap: () => _navigateToDeviceDetail(context, device),
@@ -831,7 +1102,17 @@ class _DevicesPageState extends State<DevicesPage> {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () => context.read<DevicesCubit>().toggleDeviceFavorite(device.id),
+                      onTap: () {
+                        final newFav = !device.isFavorite;
+                        context.read<DevicesCubit>().toggleDeviceFavorite(device.id);
+                        showGlowingToast(
+                          context,
+                          message: newFav
+                              ? '${device.name} favorilere eklendi.'
+                              : '${device.name} favorilerden çıkarıldı.',
+                          icon: newFav ? Icons.star_rounded : Icons.star_border_rounded,
+                        );
+                      },
                       child: Padding(
                         padding: const EdgeInsets.all(4.0),
                         child: Icon(
@@ -844,7 +1125,16 @@ class _DevicesPageState extends State<DevicesPage> {
                     const SizedBox(width: 4),
                     NestoraSwitch(
                       value: device.isPoweredOn,
-                      onChanged: (_) => context.read<DevicesCubit>().toggleDevicePower(device.id),
+                      onChanged: (_) {
+                        final willBeOn = !device.isPoweredOn;
+                        context.read<DevicesCubit>().toggleDevicePower(device.id);
+                        showGlowingToast(
+                          context,
+                          message: willBeOn
+                              ? '${device.name} açıldı.'
+                              : '${device.name} kapatıldı.',
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -902,7 +1192,7 @@ class _DevicesPageState extends State<DevicesPage> {
                               ? (device.type == DeviceType.bulb
                                   ? 'Açık (%${device.brightness})'
                                   : (device.type == DeviceType.ac
-                                      ? 'Açık (${device.targetTemp}°C)'
+                                      ? 'Açık (${TemperatureFormatter.format(device.targetTemp, unit: tempUnit)})'
                                       : 'Açık'))
                               : 'Kapalı',
                           style: AppTypography.caption.copyWith(
