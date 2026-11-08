@@ -34,6 +34,7 @@ class Room {
     int? activeDeviceCount,
     int? humidity,
     String? imageAsset,
+    bool clearImageAsset = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -45,7 +46,7 @@ class Room {
       deviceCount: deviceCount ?? this.deviceCount,
       activeDeviceCount: activeDeviceCount ?? this.activeDeviceCount,
       humidity: humidity ?? this.humidity,
-      imageAsset: imageAsset ?? this.imageAsset,
+      imageAsset: clearImageAsset ? null : (imageAsset ?? this.imageAsset),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

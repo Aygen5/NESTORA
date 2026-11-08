@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/seed_data.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/crashlytics_service.dart';
+import '../../../../core/services/local_cache_service.dart';
 import '../../../../core/services/spark_quota_service.dart';
 import '../../../devices/domain/repositories/devices_repository.dart';
 import '../../domain/entities/room.dart';
@@ -19,6 +22,7 @@ class RoomsCubit extends Cubit<RoomsState> {
   final AnalyticsService? analyticsService;
   final CrashlyticsService? crashlyticsService;
   final SparkQuotaService? quotaService;
+  final LocalCacheService? localCacheService;
 
   StreamSubscription<List<Room>>? _roomsSubscription;
   String? _currentUserId;
@@ -29,42 +33,58 @@ class RoomsCubit extends Cubit<RoomsState> {
     this.analyticsService,
     this.crashlyticsService,
     this.quotaService,
-  }) : super(const RoomsInitial());
+    this.localCacheService,
+  }) : super(RoomsLoaded(
+          rooms: localCacheService?.loadRooms() ?? SeedData.defaultRooms,
+        ));
+
+  RoomsLoaded _ensureLoaded() {
+    if (state is RoomsLoaded) {
+      return state as RoomsLoaded;
+    }
+    final defaultList = localCacheService?.loadRooms() ?? SeedData.defaultRooms;
+    final loaded = RoomsLoaded(rooms: defaultList);
+    emit(loaded);
+    return loaded;
+  }
 
   /// Loads and listens to real-time updates for all rooms belonging to [userId].
   void loadRooms(String userId) {
     final cleanUid = userId.trim();
     if (cleanUid.isEmpty) {
-      emit(const RoomsError('Geçersiz kullanıcı kimliği.'));
       return;
     }
     _currentUserId = cleanUid;
 
-    if (state is! RoomsLoaded) {
-      emit(const RoomsLoading());
-    }
+    _ensureLoaded();
 
     _roomsSubscription?.cancel();
     quotaService?.registerListener('RoomsCubit_$cleanUid');
 
-    _roomsSubscription = roomsRepository.watchRooms(cleanUid).listen(
-      (rooms) {
-        if (state is RoomsLoaded) {
-          final current = state as RoomsLoaded;
-          emit(current.copyWith(rooms: rooms, isSaving: false));
-        } else {
-          emit(RoomsLoaded(rooms: rooms));
-        }
-      },
-      onError: (error, stack) {
-        crashlyticsService?.recordError(
-          error,
-          stack,
-          reason: 'Rooms watchRooms stream error for user: $cleanUid',
-        );
-        emit(RoomsError('Odalar yüklenirken bir hata oluştu: $error'));
-      },
-    );
+    try {
+      _roomsSubscription = roomsRepository.watchRooms(cleanUid).listen(
+        (rooms) {
+          if (rooms.isEmpty) return;
+          localCacheService?.saveRooms(rooms);
+          if (state is RoomsLoaded) {
+            final current = state as RoomsLoaded;
+            emit(current.copyWith(rooms: rooms, isSaving: false));
+          } else {
+            emit(RoomsLoaded(rooms: rooms));
+          }
+        },
+        onError: (error, stack) {
+          crashlyticsService?.recordError(
+            error,
+            stack,
+            reason: 'Rooms watchRooms stream notice for user: $cleanUid',
+          );
+          debugPrint('RoomsCubit: Stream notice ($error). Using local active rooms.');
+        },
+      );
+    } catch (e) {
+      debugPrint('RoomsCubit: watchRooms initialization notice: $e');
+    }
   }
 
   /// Creates a new room in the user's home.
@@ -82,21 +102,13 @@ class RoomsCubit extends Cubit<RoomsState> {
       return;
     }
 
-    final cleanUid = userId.trim();
-    if (cleanUid.isEmpty) {
-      _emitErrorMessage('Geçersiz kullanıcı kimliği.');
-      return;
-    }
-
-    final currentRooms = state is RoomsLoaded ? (state as RoomsLoaded).rooms : <Room>[];
-    if (quotaService != null && !quotaService!.canCreateRoom(currentRooms.length)) {
+    final current = _ensureLoaded();
+    if (quotaService != null && !quotaService!.canCreateRoom(current.rooms.length)) {
       _emitErrorMessage(
         'Maksimum oda sınırına (${quotaService!.maxRoomsPerUser}) ulaşıldı. Spark planı kotası gereği daha fazla oda eklenemez.',
       );
       return;
     }
-
-    _setSaving(true);
 
     final roomId = 'room-${DateTime.now().millisecondsSinceEpoch}';
     final room = Room(
@@ -110,19 +122,17 @@ class RoomsCubit extends Cubit<RoomsState> {
       updatedAt: DateTime.now(),
     );
 
-    final result = await roomsRepository.createRoom(cleanUid, room);
-
-    if (result.isSuccess) {
-      analyticsService?.logRoomCreated(roomType: room.iconName);
-      _emitSuccessMessage('Oda başarıyla eklendi.');
-    } else {
-      crashlyticsService?.recordError(
-        result.failure,
-        null,
-        reason: 'createRoom failure: ${result.failure.message}',
-      );
-      _emitErrorMessage(result.failure.message);
+    final cleanUid = userId.trim().isEmpty ? 'demo-user' : userId.trim();
+    final res = await roomsRepository.createRoom(cleanUid, room);
+    if (res.isFailure) {
+      _emitErrorMessage(res.failure.message);
+      return;
     }
+
+    final updated = [...current.rooms, room];
+    emit(current.copyWith(rooms: updated, isSaving: false, feedbackMessage: 'Oda başarıyla eklendi.'));
+    localCacheService?.saveRooms(updated);
+    analyticsService?.logRoomCreated(roomType: room.iconName);
   }
 
   /// Updates an existing room's details.
@@ -136,31 +146,22 @@ class RoomsCubit extends Cubit<RoomsState> {
       return;
     }
 
-    final cleanUid = userId.trim();
-    if (cleanUid.isEmpty) {
-      _emitErrorMessage('Geçersiz kullanıcı kimliği.');
-      return;
-    }
-
-    _setSaving(true);
-
     final updatedRoom = room.copyWith(
       name: cleanName,
       updatedAt: DateTime.now(),
     );
 
-    final result = await roomsRepository.updateRoom(cleanUid, updatedRoom);
-
-    if (result.isSuccess) {
-      _emitSuccessMessage('Oda başarıyla güncellendi.');
-    } else {
-      crashlyticsService?.recordError(
-        result.failure,
-        null,
-        reason: 'updateRoom failure: ${result.failure.message}',
-      );
-      _emitErrorMessage(result.failure.message);
+    final cleanUid = userId.trim().isEmpty ? 'demo-user' : userId.trim();
+    final res = await roomsRepository.updateRoom(cleanUid, updatedRoom);
+    if (res.isFailure) {
+      _emitErrorMessage(res.failure.message);
+      return;
     }
+
+    final current = _ensureLoaded();
+    final updated = current.rooms.map((r) => r.id == room.id ? updatedRoom : r).toList();
+    emit(current.copyWith(rooms: updated, isSaving: false, feedbackMessage: 'Oda başarıyla güncellendi.'));
+    localCacheService?.saveRooms(updated);
   }
 
   /// Deletes a room.
@@ -172,17 +173,13 @@ class RoomsCubit extends Cubit<RoomsState> {
     required String roomId,
     String? moveToRoomId,
   }) async {
-    final cleanUid = userId.trim();
     final cleanRoomId = roomId.trim();
-
-    if (cleanUid.isEmpty || cleanRoomId.isEmpty) {
+    if (cleanRoomId.isEmpty) {
       _emitErrorMessage('Geçersiz silme isteği.');
       return;
     }
 
-    _setSaving(true);
-
-    // 1. Handle associated devices safely
+    final cleanUid = userId.trim().isEmpty ? 'demo-user' : userId.trim();
     if (moveToRoomId != null && moveToRoomId.trim().isNotEmpty) {
       final moveRes = await devicesRepository.moveDevicesToRoom(
         cleanUid,
@@ -190,51 +187,37 @@ class RoomsCubit extends Cubit<RoomsState> {
         moveToRoomId.trim(),
       );
       if (moveRes.isFailure) {
-        crashlyticsService?.recordError(
-          moveRes.failure,
-          null,
-          reason: 'deleteRoom moveDevicesToRoom failure',
-        );
-        _emitErrorMessage(
-          'Cihazlar taşınamadığı için oda silinemedi: ${moveRes.failure.message}',
-        );
+        _emitErrorMessage('Cihazlar taşınamadığı için oda silme işlemi iptal edildi.');
         return;
       }
     } else {
-      final deleteDevicesRes = await devicesRepository.deleteDevicesByRoom(
+      final deleteDevsRes = await devicesRepository.deleteDevicesByRoom(
         cleanUid,
         cleanRoomId,
       );
-      if (deleteDevicesRes.isFailure) {
-        crashlyticsService?.recordError(
-          deleteDevicesRes.failure,
-          null,
-          reason: 'deleteRoom deleteDevicesByRoom failure',
-        );
-        _emitErrorMessage(
-          'Oda cihazları silinemediği için işlem durduruldu: ${deleteDevicesRes.failure.message}',
-        );
+      if (deleteDevsRes.isFailure) {
+        _emitErrorMessage('Oda cihazları silinemediği için oda silme işlemi iptal edildi.');
         return;
       }
     }
 
-    // 2. Delete room document
     final deleteRoomRes = await roomsRepository.deleteRoom(cleanUid, cleanRoomId);
-
-    if (deleteRoomRes.isSuccess) {
-      analyticsService?.logRoomDeleted(roomId: cleanRoomId);
-      final msg = moveToRoomId != null && moveToRoomId.trim().isNotEmpty
-          ? 'Oda silindi ve cihazlar başarıyla aktarıldı.'
-          : 'Oda ve ilişkili cihazlar başarıyla silindi.';
-      _emitSuccessMessage(msg);
-    } else {
-      crashlyticsService?.recordError(
-        deleteRoomRes.failure,
-        null,
-        reason: 'deleteRoom failure: ${deleteRoomRes.failure.message}',
-      );
+    if (deleteRoomRes.isFailure) {
       _emitErrorMessage(deleteRoomRes.failure.message);
+      return;
     }
+
+    final current = _ensureLoaded();
+    final updated = current.rooms.where((r) => r.id != cleanRoomId).toList();
+    emit(current.copyWith(
+      rooms: updated,
+      isSaving: false,
+      feedbackMessage: moveToRoomId != null && moveToRoomId.trim().isNotEmpty
+          ? 'Oda silindi ve cihazlar başarıyla aktarıldı.'
+          : 'Oda ve ilişkili cihazlar başarıyla silindi.',
+    ));
+    localCacheService?.saveRooms(updated);
+    analyticsService?.logRoomDeleted(roomId: cleanRoomId);
   }
 
   /// Updates search query for filtering room lists in the UI.
@@ -261,27 +244,6 @@ class RoomsCubit extends Cubit<RoomsState> {
     if (state is RoomsLoaded) {
       final current = state as RoomsLoaded;
       emit(current.copyWith(clearFeedback: true, clearError: true));
-    }
-  }
-
-  void _setSaving(bool isSaving) {
-    if (state is RoomsLoaded) {
-      final current = state as RoomsLoaded;
-      emit(current.copyWith(
-        isSaving: isSaving,
-        clearFeedback: true,
-        clearError: true,
-      ));
-    }
-  }
-
-  void _emitSuccessMessage(String message) {
-    if (state is RoomsLoaded) {
-      final current = state as RoomsLoaded;
-      emit(current.copyWith(
-        isSaving: false,
-        feedbackMessage: message,
-      ));
     }
   }
 
@@ -315,6 +277,7 @@ class RoomsCubit extends Cubit<RoomsState> {
       iconName: room.iconName,
       targetTemperature: room.targetTemperature,
       humidity: room.humidity,
+      imageAsset: room.imageAsset,
     );
   }
 
@@ -324,6 +287,18 @@ class RoomsCubit extends Cubit<RoomsState> {
       userId: userId ?? _currentUserId ?? 'demo-user',
       room: room,
     );
+  }
+
+  /// Updates the image asset or local file path of a room and persists it.
+  Future<void> updateRoomImage(String roomId, String? imagePath, {String? userId}) async {
+    final current = _ensureLoaded();
+    final target = current.rooms.where((r) => r.id == roomId).firstOrNull;
+    if (target == null) return;
+    final updatedRoom = target.copyWith(
+      imageAsset: imagePath,
+      clearImageAsset: imagePath == null,
+    );
+    await updateRoom(userId: userId ?? _currentUserId ?? 'demo-user', room: updatedRoom);
   }
 
   @override

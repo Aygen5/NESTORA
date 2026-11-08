@@ -5,9 +5,13 @@ import '../../../../app/router/app_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
+import '../../../../core/utils/temperature_formatter.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 import '../../../devices/presentation/cubit/devices_cubit.dart';
 import '../../../devices/presentation/cubit/devices_state.dart';
+import '../../../notifications/presentation/cubit/notifications_cubit.dart';
+import '../../../notifications/presentation/cubit/notifications_state.dart';
+import '../../../notifications/presentation/pages/notifications_page.dart';
 import '../cubit/rooms_cubit.dart';
 import '../cubit/rooms_state.dart';
 import '../../domain/room_model.dart';
@@ -98,41 +102,125 @@ class _RoomsPageState extends State<RoomsPage> {
     final totalDevices = devices.length;
     final activeDevices = devices.where((d) => d.isPoweredOn).length;
     final searchQuery = (roomsState is RoomsLoaded) ? roomsState.searchQuery : '';
+    final tempUnit = TemperatureFormatter.currentUnit(context);
+    int unreadNotificationCount = 0;
+    try {
+      final notificationsState = context.watch<NotificationsCubit>().state;
+      if (notificationsState is NotificationsLoaded) {
+        unreadNotificationCount = notificationsState.unreadCount;
+      }
+    } catch (_) {}
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
-      appBar: AppBar(
-        backgroundColor: (isDark ? AppColors.darkCard : AppColors.lightScaffold)
-            .withValues(alpha: 0.9),
-        elevation: 0,
-        leading: Navigator.canPop(context)
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                onPressed: () => Navigator.pop(context),
-              )
-            : null,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const NestoraLogo(size: 24, enableNavigation: true),
-            const SizedBox(width: 8),
-            Text(
-              'Odalarım',
-              style: AppTypography.headlineSmall.copyWith(
-                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                fontWeight: FontWeight.bold,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(76),
+        child: Container(
+          height: 76,
+          decoration: BoxDecoration(
+            color: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.95),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                width: 1,
               ),
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_rounded, size: 24),
-            tooltip: 'Yeni Oda Ekle',
-            onPressed: _navigateToAddRoom,
           ),
-          const SizedBox(width: 8),
-        ],
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      if (Navigator.canPop(context))
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      const NestoraLogo(size: 34, enableNavigation: true),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Odalarım',
+                        style: AppTypography.cardTitle(
+                          color: AppColors.primaryContainer,
+                        ).copyWith(fontWeight: FontWeight.w800, fontSize: 20),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.add_rounded, size: 26),
+                        tooltip: 'Yeni Oda Ekle',
+                        onPressed: _navigateToAddRoom,
+                      ),
+                      Tooltip(
+                        message: 'Bildirimler',
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            hoverColor: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : AppColors.primaryContainer.withValues(alpha: 0.08),
+                            splashColor: AppColors.primaryContainer.withValues(alpha: 0.12),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const NotificationsPage()),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Icon(
+                                    Icons.notifications_none_rounded,
+                                    size: 24,
+                                    color: isDark
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.lightTextPrimary,
+                                  ),
+                                  if (unreadNotificationCount > 0)
+                                    Positioned(
+                                      right: -4,
+                                      top: -3,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.error,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                        child: Text(
+                                          unreadNotificationCount > 9 ? '9+' : '$unreadNotificationCount',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -405,7 +493,7 @@ class _RoomsPageState extends State<RoomsPage> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          '${roomDevices.length} Cihaz • $roomActiveCount Açık • ${room.temperature.toStringAsFixed(1).replaceAll('.0', '')}°C',
+                                          '${roomDevices.length} Cihaz • $roomActiveCount Açık • ${TemperatureFormatter.format(room.temperature, unit: tempUnit)}',
                                           style: AppTypography.bodySmall.copyWith(
                                             color: AppColors.secondary,
                                           ),
