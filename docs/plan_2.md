@@ -90,10 +90,10 @@ graph TD
     - Sağ: `$totalRooms Oda • $totalDevices Cihaz` dinamik sayaçları.
 
 ### Faz C: Dashboard — Aktif Senaryo & 3'lü Canlı İstatistik Rozetleri
-- [ ] **C.1:** Aktif Senaryo Kartı (Image 1):
+- [x] **C.1:** Aktif Senaryo Kartı (Image 1):
   - `Aktif Senaryo: $activeScenario` ve yanında `[$activeDeviceCount açık]` hapı.
   - Seçilen senaryonun açıklaması ve renk ikonu (`_getScenarioAccentColor`, `_getScenarioIcon`).
-- [ ] **C.2:** 3'lü Yuvarlak İstatistik Rozetleri (Image 3):
+- [x] **C.2:** 3'lü Yuvarlak İstatistik Rozetleri (Image 3):
   - Kart 1: Cihaz ikonu (`Icons.devices_other_rounded`), kalın `$totalDevices` rakamı, `Cihaz` alt yazısı.
   - Kart 2: Priz ikonu (`Icons.power_rounded`), kalın `$activeDeviceCount` rakamı (yanında yeşil/kehribar canlı nokta), `Açık` alt yazısı.
   - Kart 3: Kapı/oda ikonu (`Icons.door_sliding_rounded`), kalın `$totalRooms` rakamı, `Oda` alt yazısı.

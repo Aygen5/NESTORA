@@ -27,6 +27,7 @@ import 'package:nestora/features/profile/presentation/pages/profile_page.dart';
 import 'package:nestora/features/rooms/domain/entities/room.dart';
 import 'package:nestora/features/rooms/domain/repositories/rooms_repository.dart';
 import 'package:nestora/features/rooms/presentation/cubit/rooms_cubit.dart';
+import 'package:nestora/features/rooms/presentation/cubit/rooms_state.dart';
 
 class FakeDevicesRepo implements DevicesRepository {
   final List<Device> devices = [];
@@ -497,6 +498,52 @@ void main() {
       expect(find.text('Tüm Sistemler Normal'), findsOneWidget);
       expect(find.textContaining('Oda •'), findsWidgets);
       expect(find.textContaining('Cihaz'), findsWidgets);
+    });
+  });
+
+  group('Faz C: Dashboard Aktif Senaryo & 3lü Canlı İstatistik Rozetleri', () {
+    testWidgets('C.1 & C.2: Renders 3 summary stat cards and reacts dynamically to device toggling and room additions', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableWidget(const DashboardPage()));
+      await tester.pumpAndSettle();
+
+      // Check existence of all 3 cards
+      expect(find.byKey(const Key('stat_card_devices')), findsOneWidget);
+      expect(find.byKey(const Key('stat_card_active')), findsOneWidget);
+      expect(find.byKey(const Key('stat_card_rooms')), findsOneWidget);
+
+      final initialActive = (devicesCubit.state as DevicesLoaded).activeCount;
+      final initialRooms = (roomsCubit.state as RoomsLoaded).rooms.length;
+
+      expect(find.descendant(of: find.byKey(const Key('stat_card_active')), matching: find.text('$initialActive')), findsOneWidget);
+      expect(find.descendant(of: find.byKey(const Key('stat_card_rooms')), matching: find.text('$initialRooms')), findsOneWidget);
+
+      // Turn off an active device
+      final activeDevice = (devicesCubit.state as DevicesLoaded).devices.firstWhere((d) => d.isPoweredOn);
+      await devicesCubit.toggleDevicePower(activeDevice.id);
+      await tester.pumpAndSettle();
+
+      // The 'Açık' count dynamically dropped!
+      final newActive = initialActive - 1;
+      expect(find.descendant(of: find.byKey(const Key('stat_card_active')), matching: find.text('$newActive')), findsOneWidget);
+
+      // Add a new room
+      await roomsCubit.createRoom(
+        userId: 'test-user',
+        name: 'Kış Bahçesi',
+        iconName: 'yard',
+      );
+      await tester.pumpAndSettle();
+
+      // The 'Oda' count dynamically increased!
+      final newRoomsCount = initialRooms + 1;
+      expect(find.descendant(of: find.byKey(const Key('stat_card_rooms')), matching: find.text('$newRoomsCount')), findsOneWidget);
     });
   });
 }

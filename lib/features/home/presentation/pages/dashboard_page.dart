@@ -313,9 +313,19 @@ class _DashboardPageState extends State<DashboardPage> {
                           totalDevices: devices.length,
                         ),
 
+                        const SizedBox(height: 14),
+
+                        // C.2 3'lü Canlı İstatistik Rozetleri (Image 3)
+                        _buildSummaryStatsRow(
+                          isDark: isDark,
+                          totalDevices: devices.length,
+                          activeDeviceCount: activeDeviceCount,
+                          totalRooms: rooms.length,
+                        ),
+
                         const SizedBox(height: 16),
 
-                        // 1. NESTORA TYPOGRAPHY & HERO BANNER
+                        // 1. NESTORA TYPOGRAPHY & HERO BANNER (Active Scenario - Image 1)
                         _buildHeroBanner(
                           isDark: isDark,
                           homeName: homeName,
@@ -1000,6 +1010,142 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // C.2 3'lü Canlı İstatistik Rozetleri (Image 3)
+  Widget _buildSummaryStatsRow({
+    required bool isDark,
+    required int totalDevices,
+    required int activeDeviceCount,
+    required int totalRooms,
+  }) {
+    return Row(
+      children: [
+        // 1. Toplam Cihaz
+        Expanded(
+          child: _buildSummaryStatCard(
+            key: const Key('stat_card_devices'),
+            isDark: isDark,
+            icon: Icons.devices_other_rounded,
+            value: '$totalDevices',
+            label: 'Cihaz',
+            hasDot: false,
+          ),
+        ),
+        const SizedBox(width: 10),
+        // 2. Açık Cihaz
+        Expanded(
+          child: _buildSummaryStatCard(
+            key: const Key('stat_card_active'),
+            isDark: isDark,
+            icon: Icons.power_rounded,
+            value: '$activeDeviceCount',
+            label: 'Açık',
+            hasDot: true,
+            dotColor: const Color(0xFFC5A880), // Warm amber / natural stone accent
+          ),
+        ),
+        const SizedBox(width: 10),
+        // 3. Oda Sayısı
+        Expanded(
+          child: _buildSummaryStatCard(
+            key: const Key('stat_card_rooms'),
+            isDark: isDark,
+            icon: Icons.door_sliding_outlined,
+            value: '$totalRooms',
+            label: 'Oda',
+            hasDot: false,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryStatCard({
+    Key? key,
+    required bool isDark,
+    required IconData icon,
+    required String value,
+    required String label,
+    required bool hasDot,
+    Color? dotColor,
+  }) {
+    return Container(
+      key: key,
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 1,
+        ),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Circular Icon Container
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkCardSecondary
+                  : AppColors.secondaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 19,
+              color: AppColors.primaryContainer,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Value (with optional warm dot)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                value,
+                style: AppTypography.headlineSmall.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.lightTextPrimary,
+                ),
+              ),
+              if (hasDot) ...[
+                const SizedBox(width: 4),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: dotColor ?? const Color(0xFFC5A880),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 2),
+          // Label
+          Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.secondary,
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
             ),
           ),
         ],
