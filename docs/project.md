@@ -412,12 +412,12 @@ Firebase Spark planı korunacaktır.
 2. [x] Mevcut tasarımın, widget'ların ve navigasyonun korunması.
 3. [x] Tema, tipografi ve responsive düzenin iyileştirilmesi.
 4. [x] Auth ve ilk kullanım akışının tamamlanması.
-5. [ ] Veri modelleri ve Firestore yapısının oluşturulması.
-6. [ ] Oda ve cihaz CRUD işlemleri.
-7. [ ] Sanal cihaz kontrol state'leri.
-8. [ ] Dashboard ve senaryo etkileşimleri.
-9. [ ] Bildirimler ve profil ayarları.
-10. [ ] Hata yönetimi, güvenlik, testler ve performans kontrolü.
+5. [x] Veri modelleri ve Firestore yapısının oluşturulması.
+6. [x] Oda ve cihaz CRUD işlemleri.
+7. [x] Sanal cihaz kontrol state'leri.
+8. [x] Dashboard ve senaryo etkileşimleri.
+9. [x] Bildirimler ve profil ayarları.
+10. [x] Hata yönetimi, güvenlik, testler ve performans kontrolü.
 
 Her aşama sonunda çalışan uygulama test edilmelidir. Büyük değişiklikler tek seferde ve kontrolsüz biçimde yapılmamalıdır.
 
