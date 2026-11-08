@@ -22,8 +22,11 @@ import '../../features/components_preview/presentation/pages/components_preview_
 import '../../features/devices/domain/device_model.dart';
 import '../../features/devices/presentation/pages/ac_control_page.dart';
 import '../../features/devices/presentation/pages/add_edit_device_page.dart';
+import '../../features/devices/presentation/pages/coffee_machine_control_page.dart';
 import '../../features/devices/presentation/pages/devices_page.dart';
 import '../../features/devices/presentation/pages/lamp_control_page.dart';
+import '../../features/devices/presentation/pages/plug_control_page.dart';
+import '../../features/devices/presentation/pages/tv_control_page.dart';
 import '../../features/home/presentation/pages/dashboard_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
@@ -56,6 +59,9 @@ abstract class AppRoutePaths {
   static const String addEditRoom = '/rooms/add-edit';
   static const String lampControl = '/devices/lamp/:deviceId';
   static const String climateControl = '/devices/climate/:deviceId';
+  static const String tvControl = '/devices/tv/:deviceId';
+  static const String plugControl = '/devices/plug/:deviceId';
+  static const String coffeeControl = '/devices/coffee/:deviceId';
   static const String addEditDevice = '/devices/add-edit';
   static const String notifications = '/notifications';
 
@@ -83,6 +89,9 @@ abstract class AppRouteNames {
   static const String addEditRoom = 'add-edit-room';
   static const String lampControl = 'lamp-control';
   static const String climateControl = 'climate-control';
+  static const String tvControl = 'tv-control';
+  static const String plugControl = 'plug-control';
+  static const String coffeeControl = 'coffee-control';
   static const String addEditDevice = 'add-edit-device';
   static const String notifications = 'notifications';
 
@@ -244,7 +253,7 @@ GoRouter createAppRouter({
             path: AppRoutePaths.dashboard,
             name: AppRouteNames.dashboard,
             builder: (context, state) => DashboardPage(
-              onNavigateToDevices: () => context.go(AppRoutePaths.devices),
+              onNavigateToDevices: ({status}) => context.go(AppRoutePaths.devices),
               onNavigateToProfile: () => context.go(AppRoutePaths.profile),
             ),
           ),
@@ -343,6 +352,36 @@ GoRouter createAppRouter({
         ),
       ),
 
+      // TV Control (/devices/tv/:deviceId)
+      GoRoute(
+        path: AppRoutePaths.tvControl,
+        name: AppRouteNames.tvControl,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => TvControlPage(
+          deviceId: state.pathParameters['deviceId'],
+        ),
+      ),
+
+      // Plug Control (/devices/plug/:deviceId)
+      GoRoute(
+        path: AppRoutePaths.plugControl,
+        name: AppRouteNames.plugControl,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => PlugControlPage(
+          deviceId: state.pathParameters['deviceId'],
+        ),
+      ),
+
+      // Coffee Machine Control (/devices/coffee/:deviceId)
+      GoRoute(
+        path: AppRoutePaths.coffeeControl,
+        name: AppRouteNames.coffeeControl,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => CoffeeMachineControlPage(
+          deviceId: state.pathParameters['deviceId'],
+        ),
+      ),
+
       // 13. Add / Edit Device (/devices/add-edit)
       GoRoute(
         path: AppRoutePaths.addEditDevice,
@@ -410,6 +449,12 @@ extension NestoraNavigationExtension on BuildContext {
       push('/devices/lamp/$deviceId');
   void goToClimateControl(String deviceId) =>
       push('/devices/climate/$deviceId');
+  void goToTvControl(String deviceId) =>
+      push('/devices/tv/$deviceId');
+  void goToPlugControl(String deviceId) =>
+      push('/devices/plug/$deviceId');
+  void goToCoffeeControl(String deviceId) =>
+      push('/devices/coffee/$deviceId');
   void goToAddEditDevice({
     String? initialRoom,
     bool isEditing = false,
