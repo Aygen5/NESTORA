@@ -8,8 +8,10 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/crashlytics_service.dart';
+import '../../core/services/local_cache_service.dart';
 import '../../core/services/performance_service.dart';
 import '../../core/services/remote_config_service.dart';
+import '../../core/services/secure_image_service.dart';
 import '../../core/services/spark_quota_service.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/datasources/demo_config_service.dart';
@@ -161,6 +163,15 @@ Future<void> initDependencies({
   if (!sl.isRegistered<SharedPreferences>()) {
     final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
     sl.registerSingleton<SharedPreferences>(prefs);
+  }
+
+  // 1.1 Local Cache Service (Resilient Offline & Demo Simulation Persistence)
+  if (!sl.isRegistered<LocalCacheService>()) {
+    sl.registerSingleton<LocalCacheService>(
+      LocalCacheService(
+        prefs: sl.isRegistered<SharedPreferences>() ? sl<SharedPreferences>() : null,
+      ),
+    );
   }
 
   // 2. Firebase Services (Registered safely with optional test overrides)
@@ -462,7 +473,13 @@ Future<void> initDependencies({
     );
   }
 
-  // 9. Profile Photo Service & Profile Cubit
+  // 9. Profile Photo Service, Secure Image Service & Profile Cubit
+  if (!sl.isRegistered<SecureImageService>()) {
+    sl.registerLazySingleton<SecureImageService>(
+      () => SecureImageService(),
+    );
+  }
+
   if (!sl.isRegistered<ProfilePhotoService>()) {
     sl.registerLazySingleton<ProfilePhotoService>(
       () => ProfilePhotoServiceImpl(),
@@ -478,6 +495,8 @@ Future<void> initDependencies({
             sl.isRegistered<SharedPreferences>() ? sl<SharedPreferences>() : null,
         quotaService:
             sl.isRegistered<SparkQuotaService>() ? sl<SparkQuotaService>() : null,
+        localCacheService:
+            sl.isRegistered<LocalCacheService>() ? sl<LocalCacheService>() : null,
       ),
     );
   }
@@ -494,6 +513,8 @@ Future<void> initDependencies({
             sl.isRegistered<CrashlyticsService>() ? sl<CrashlyticsService>() : null,
         quotaService:
             sl.isRegistered<SparkQuotaService>() ? sl<SparkQuotaService>() : null,
+        localCacheService:
+            sl.isRegistered<LocalCacheService>() ? sl<LocalCacheService>() : null,
       ),
     );
   }
@@ -509,6 +530,8 @@ Future<void> initDependencies({
             sl.isRegistered<CrashlyticsService>() ? sl<CrashlyticsService>() : null,
         quotaService:
             sl.isRegistered<SparkQuotaService>() ? sl<SparkQuotaService>() : null,
+        localCacheService:
+            sl.isRegistered<LocalCacheService>() ? sl<LocalCacheService>() : null,
       ),
     );
   }
@@ -520,6 +543,8 @@ Future<void> initDependencies({
         notificationsRepository: sl<NotificationsRepository>(),
         quotaService:
             sl.isRegistered<SparkQuotaService>() ? sl<SparkQuotaService>() : null,
+        localCacheService:
+            sl.isRegistered<LocalCacheService>() ? sl<LocalCacheService>() : null,
       ),
     );
   }

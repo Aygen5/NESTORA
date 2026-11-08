@@ -16,6 +16,8 @@ abstract class SeedData {
     displayName: 'Aygen Yıldırım',
     email: 'aygenyildirim27@gmail.com',
     homeName: "Aygen'in Evi",
+    roleTitle: 'Ev Sahibi',
+    photoPath: 'assets/profile/user_avatar.jpg',
     preferences: const UserPreferences(
       notificationsEnabled: true,
       ecoModeEnabled: true,
@@ -33,7 +35,7 @@ abstract class SeedData {
       deviceCount: 3,
       activeDeviceCount: 2,
       humidity: 48,
-      imageAsset: 'assets/screens/nestora_salon_oda_detay.png',
+      imageAsset: 'assets/rooms/salon.jpg',
     ),
     const Room(
       id: 'room-2',
@@ -43,7 +45,7 @@ abstract class SeedData {
       deviceCount: 2,
       activeDeviceCount: 1,
       humidity: 50,
-      imageAsset: 'assets/screens/nestora_yatak_odas_klima_kontrol.png',
+      imageAsset: 'assets/rooms/yatak_odasi.jpg',
     ),
     const Room(
       id: 'room-3',
@@ -53,7 +55,7 @@ abstract class SeedData {
       deviceCount: 1,
       activeDeviceCount: 0,
       humidity: 52,
-      imageAsset: 'assets/screens/nestora_odalar_m.png',
+      imageAsset: 'assets/rooms/mutfak.jpg',
     ),
     const Room(
       id: 'room-4',
@@ -63,9 +65,24 @@ abstract class SeedData {
       deviceCount: 1,
       activeDeviceCount: 1,
       humidity: 45,
-      imageAsset: 'assets/screens/nestora_ana_sayfa_dashboard.png',
+      imageAsset: 'assets/rooms/calisma_odasi.jpg',
     ),
   ];
+
+  /// Returns a curated modern room photography asset matching the given room name,
+  /// or null if it is a completely novel custom room.
+  static String? getSmartRoomAsset(String roomName) {
+    final lower = roomName.toLowerCase();
+    if (lower.contains('salon') || lower.contains('oturma')) return 'assets/rooms/salon.jpg';
+    if (lower.contains('yatak')) return 'assets/rooms/yatak_odasi.jpg';
+    if (lower.contains('mutfak')) return 'assets/rooms/mutfak.jpg';
+    if (lower.contains('çalışma') || lower.contains('calisma') || lower.contains('ofis')) {
+      return 'assets/rooms/calisma_odasi.jpg';
+    }
+    if (lower.contains('banyo')) return 'assets/rooms/banyo.jpg';
+    if (lower.contains('balkon') || lower.contains('teras')) return 'assets/rooms/balkon.jpg';
+    return null;
+  }
 
   static final List<Device> defaultDevices = [
     const Device(
@@ -285,6 +302,7 @@ abstract class SeedData {
       acMode: device.acMode,
       fanSpeed: device.fanSpeed,
       isFavorite: device.isFavorite,
+      currentPowerWatts: device.currentPowerWatts,
     );
   }
 
