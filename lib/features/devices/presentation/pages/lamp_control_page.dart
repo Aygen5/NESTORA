@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
+import '../../../../core/widgets/glowing_toast.dart';
 import '../../../../core/widgets/nestora_button.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
 import '../../../../core/widgets/nestora_switch.dart';
@@ -94,25 +95,25 @@ class _LampControlPageState extends State<LampControlPage> {
       'name': 'Doğal Beyaz (4000K)',
       'hex': '#EAF0E6',
       'color': const Color(0xFFEAF0E6),
-      'glow': const Color(0xFFF5FBF2),
+      'glow': const Color(0xFFFFFFFF),
     },
     {
-      'name': 'Soğuk Beyaz (6500K)',
-      'hex': '#D3E8D5',
-      'color': const Color(0xFFD3E8D5),
-      'glow': const Color(0xFFE8F5E9),
+      'name': 'Sıcak Sarı (3000K)',
+      'hex': '#FFD54F',
+      'color': const Color(0xFFFFD54F),
+      'glow': const Color(0xFFFFF9C4),
     },
     {
-      'name': 'Soft Adaçayı Yeşili',
-      'hex': '#506354',
-      'color': const Color(0xFF506354),
-      'glow': const Color(0xFFDCE5D7),
+      'name': 'Yumuşak Yeşil',
+      'hex': '#81C784',
+      'color': const Color(0xFF81C784),
+      'glow': const Color(0xFFC8E6C9),
     },
     {
-      'name': 'Gece Modu (Köz)',
-      'hex': '#533E25',
-      'color': const Color(0xFF533E25),
-      'glow': const Color(0xFFFAF3EB),
+      'name': 'Gece Mavisi',
+      'hex': '#64B5F6',
+      'color': const Color(0xFF64B5F6),
+      'glow': const Color(0xFFBBDEFB),
     },
   ];
 
@@ -128,14 +129,10 @@ class _LampControlPageState extends State<LampControlPage> {
       hex: mode.colorHex,
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${mode.title} modu uygulandı (%${mode.brightness})'),
-        duration: const Duration(seconds: 2),
-        backgroundColor: AppColors.primaryContainer,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+    showGlowingToast(
+      context,
+      message: '${mode.title} modu uygulandı (%${mode.brightness})',
+      icon: mode.icon,
     );
   }
 
@@ -145,14 +142,10 @@ class _LampControlPageState extends State<LampControlPage> {
         ? 'Lamba $minutes dakika sonra otomatik olarak kapatılacak.'
         : 'Zamanlayıcı iptal edildi.';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-        backgroundColor: AppColors.primaryContainer,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+    showGlowingToast(
+      context,
+      message: message,
+      icon: minutes > 0 ? Icons.timer_rounded : Icons.timer_off_rounded,
     );
   }
 
@@ -183,7 +176,9 @@ class _LampControlPageState extends State<LampControlPage> {
         : SeedData.defaultDeviceModels;
 
     final lamp = devices.firstWhere(
-      (d) => d.id == widget.deviceId || d.id == 'dev-1',
+      (d) => widget.deviceId != null && widget.deviceId!.isNotEmpty
+          ? d.id == widget.deviceId
+          : d.type == DeviceType.bulb,
       orElse: () => devices.firstWhere(
         (d) => d.type == DeviceType.bulb,
         orElse: () => devices.first,
@@ -196,7 +191,17 @@ class _LampControlPageState extends State<LampControlPage> {
     // Active color swatch
     final activeSwatch = _colorSwatches.firstWhere(
       (swatch) => swatch['hex'] == lamp.colorHex,
-      orElse: () => _colorSwatches.first,
+      orElse: () {
+        if (lamp.colorHex == '#533E25') {
+          return {
+            'name': 'Gece Modu (Köz)',
+            'hex': '#533E25',
+            'color': const Color(0xFF533E25),
+            'glow': const Color(0xFFFAF3EB),
+          };
+        }
+        return _colorSwatches.first;
+      },
     );
     final bulbColor = activeSwatch['color'] as Color;
     final glowColor = activeSwatch['glow'] as Color;
@@ -221,12 +226,23 @@ class _LampControlPageState extends State<LampControlPage> {
         ),
         actions: [
           IconButton(
+            tooltip: lamp.isFavorite ? 'Favorilerden Çıkar' : 'Favorilere Ekle',
             icon: Icon(
               lamp.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
               color: lamp.isFavorite ? AppColors.warmAmber : AppColors.secondary,
               size: 22,
             ),
-            onPressed: () => context.read<DevicesCubit>().toggleDeviceFavorite(lamp.id),
+            onPressed: () {
+              final newFav = !lamp.isFavorite;
+              context.read<DevicesCubit>().toggleDeviceFavorite(lamp.id);
+              showGlowingToast(
+                context,
+                message: newFav
+                    ? '${lamp.name} favorilere eklendi.'
+                    : '${lamp.name} favorilerden çıkarıldı.',
+                icon: newFav ? Icons.star_rounded : Icons.star_border_rounded,
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 22),
@@ -266,38 +282,51 @@ class _LampControlPageState extends State<LampControlPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isDark ? AppColors.darkCard : Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.chair_rounded,
-                                  size: 14,
-                                  color: AppColors.primaryContainer,
+                      Expanded(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppColors.darkCard : Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  lamp.room,
-                                  style: AppTypography.labelSmall.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.chair_rounded,
+                                      size: 14,
+                                      color: AppColors.primaryContainer,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        lamp.room,
+                                        style: AppTypography.labelSmall.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Akıllı Ampul',
-                            style: AppTypography.bodySmall.copyWith(color: AppColors.secondary),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Akıllı Ampul',
+                                style: AppTypography.bodySmall.copyWith(color: AppColors.secondary),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
@@ -335,16 +364,35 @@ class _LampControlPageState extends State<LampControlPage> {
                 const SizedBox(height: 20),
 
                 // 2. Radiant Bulb Centerpiece & Dynamic Glow
-                Container(
+                AnimatedContainer(
+                  duration: glowDuration,
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                    color: isPowered && brightness > 0
+                        ? Color.alphaBlend(
+                            bulbColor.withValues(alpha: 0.08 + (brightness / 100) * 0.16),
+                            isDark ? AppColors.darkCard : AppColors.lightCard,
+                          )
+                        : (isDark ? AppColors.darkCard : AppColors.lightCard),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color: isPowered && brightness > 0
+                          ? bulbColor.withValues(alpha: 0.35 + (brightness / 100) * 0.45)
+                          : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                      width: isPowered && brightness > 0 ? 2.0 : 1.0,
                     ),
-                    boxShadow: AppColors.cardShadow,
+                    boxShadow: isPowered && brightness > 0
+                        ? [
+                            BoxShadow(
+                              color: bulbColor.withValues(
+                                alpha: (brightness / 100) * 0.4,
+                              ),
+                              blurRadius: 28 + (brightness * 0.35),
+                              spreadRadius: 2 + (brightness * 0.1),
+                            ),
+                          ]
+                        : AppColors.cardShadow,
                   ),
                   child: Column(
                     children: [
@@ -359,21 +407,21 @@ class _LampControlPageState extends State<LampControlPage> {
                             AnimatedContainer(
                               duration: glowDuration,
                               curve: Curves.easeOutCubic,
-                              width: isPowered ? (90 + brightness * 1.1) : 0,
-                              height: isPowered ? (90 + brightness * 1.1) : 0,
+                              width: isPowered ? (100 + brightness * 1.2) : 0,
+                              height: isPowered ? (100 + brightness * 1.2) : 0,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: glowColor.withValues(
-                                  alpha: isPowered ? (0.15 + (brightness / 100) * 0.45) : 0,
+                                  alpha: isPowered ? (0.2 + (brightness / 100) * 0.5) : 0,
                                 ),
                                 boxShadow: isPowered && brightness > 0
                                     ? [
                                         BoxShadow(
                                           color: bulbColor.withValues(
-                                            alpha: (brightness / 100) * 0.6,
+                                            alpha: (brightness / 100) * 0.7,
                                           ),
-                                          blurRadius: 30 + (brightness * 0.5),
-                                          spreadRadius: 8 + (brightness * 0.25),
+                                          blurRadius: 36 + (brightness * 0.55),
+                                          spreadRadius: 10 + (brightness * 0.3),
                                         ),
                                       ]
                                     : [],
@@ -633,6 +681,11 @@ class _LampControlPageState extends State<LampControlPage> {
                                 lamp.id,
                                 name: swatch['name'] as String,
                                 hex: swatch['hex'] as String,
+                              );
+                              showGlowingToast(
+                                context,
+                                message: '${swatch['name']} tonuna geçildi.',
+                                icon: Icons.palette_rounded,
                               );
                             },
                             child: Container(
