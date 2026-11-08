@@ -8,14 +8,21 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
 import '../../../../core/services/remote_config_service.dart';
+import '../../../../core/utils/temperature_formatter.dart';
+import '../../../../core/widgets/glowing_toast.dart';
 import '../../../../core/widgets/nestora_announcement_banner.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 import '../../../../core/widgets/nestora_switch.dart';
+import '../../../../core/widgets/pulsing_glow_dot.dart';
 import '../../../devices/domain/device_model.dart';
 import '../../../devices/presentation/cubit/devices_cubit.dart';
 import '../../../devices/presentation/cubit/devices_state.dart';
 import '../../../devices/presentation/pages/ac_control_page.dart';
+import '../../../devices/presentation/pages/coffee_machine_control_page.dart';
 import '../../../devices/presentation/pages/lamp_control_page.dart';
+import '../../../devices/presentation/pages/plug_control_page.dart';
+import '../../../devices/presentation/pages/tv_control_page.dart';
+import '../../../devices/presentation/pages/devices_page.dart';
 import '../../../notifications/presentation/cubit/notifications_cubit.dart';
 import '../../../notifications/presentation/cubit/notifications_state.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
@@ -24,6 +31,7 @@ import '../../../profile/presentation/cubit/profile_state.dart';
 import '../../../rooms/domain/room_model.dart';
 import '../../../rooms/presentation/cubit/rooms_cubit.dart';
 import '../../../rooms/presentation/cubit/rooms_state.dart';
+import '../../../rooms/presentation/pages/add_edit_room_page.dart';
 import '../../../rooms/presentation/pages/room_detail_page.dart';
 import '../../../rooms/presentation/pages/rooms_page.dart';
 
@@ -31,7 +39,7 @@ import '../../../rooms/presentation/pages/rooms_page.dart';
 /// Connects dynamically to [ProfileCubit], [NotificationsCubit], [RoomsCubit],
 /// and [DevicesCubit] as the single sources of truth.
 class DashboardPage extends StatefulWidget {
-  final VoidCallback? onNavigateToDevices;
+  final void Function({DeviceStatusFilter? status})? onNavigateToDevices;
   final VoidCallback? onNavigateToProfile;
 
   const DashboardPage({
@@ -101,6 +109,15 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  void _navigateToAddRoom() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AddEditRoomPage(isEditing: false),
+      ),
+    );
+  }
+
   void _navigateToRoomDetail(RoomModel room) {
     try {
       context.goToRoomDetail(room.id, room: room);
@@ -113,26 +130,59 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _navigateToDevice(DeviceModel device) {
-    if (device.name == 'Salon Lambası' || device.type == DeviceType.bulb) {
+    final lower = device.name.toLowerCase();
+    final isBulb = device.type == DeviceType.bulb || lower.contains('lamba');
+    final isAc = device.type == DeviceType.ac || lower.contains('klima');
+    final isTv = device.type == DeviceType.tv || lower.contains('televizyon') || lower.contains('tv');
+    final isCoffee = (lower.contains('kahve') || lower.contains('coffee'));
+    final isPlug = device.type == DeviceType.plug || lower.contains('priz');
+
+    if (isBulb) {
       try {
         context.goToLampControl(device.id);
       } catch (_) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const LampControlPage()),
+          MaterialPageRoute(builder: (_) => LampControlPage(deviceId: device.id)),
         );
       }
-    } else if (device.type == DeviceType.ac) {
+    } else if (isAc) {
       try {
         context.goToClimateControl(device.id);
       } catch (_) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const AcControlPage()),
+          MaterialPageRoute(builder: (_) => AcControlPage(deviceId: device.id)),
+        );
+      }
+    } else if (isTv) {
+      try {
+        context.goToTvControl(device.id);
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => TvControlPage(deviceId: device.id)),
+        );
+      }
+    } else if (isCoffee) {
+      try {
+        context.goToCoffeeControl(device.id);
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => CoffeeMachineControlPage(deviceId: device.id)),
+        );
+      }
+    } else if (isPlug) {
+      try {
+        context.goToPlugControl(device.id);
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => PlugControlPage(deviceId: device.id)),
         );
       }
     } else {
-      // Toggle power directly for other devices (plug, etc.)
       context.read<DevicesCubit>().toggleDevicePower(device.id);
     }
   }
@@ -160,6 +210,10 @@ class _DashboardPageState extends State<DashboardPage> {
     final unreadNotificationCount = (notificationsState is NotificationsLoaded)
         ? notificationsState.unreadCount
         : 0;
+
+    final tempUnit = (profileState is ProfileLoaded)
+        ? profileState.profile.preferences.temperatureUnit
+        : 'C';
 
     // Rooms data
     final rooms = (roomsState is RoomsLoaded)
@@ -196,18 +250,7 @@ class _DashboardPageState extends State<DashboardPage> {
       },
       listener: (context, state) {
         if (state is DevicesLoaded && state.feedbackMessage != null) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.feedbackMessage!),
-              duration: const Duration(milliseconds: 1800),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              backgroundColor: isDark ? AppColors.darkCard : AppColors.primaryContainer,
-            ),
-          );
+          showGlowingToast(context, message: state.feedbackMessage!);
         }
       },
       child: SizedBox.expand(
@@ -215,11 +258,12 @@ class _DashboardPageState extends State<DashboardPage> {
           color: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
           child: Column(
             children: [
-              // Fixed Top Bar / Header
+              // Fixed Top Bar / Header (76px Height)
               _buildHeader(
                 context: context,
                 isDark: isDark,
                 unreadNotificationCount: unreadNotificationCount,
+                favoriteDevices: devices.where((d) => d.isFavorite).toList(),
                 photoPath: photoPath,
                 displayName: displayName,
               ),
@@ -252,6 +296,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           greeting: greeting,
                           userFirstName: userFirstName,
                           activeDeviceCount: activeDeviceCount,
+                          activeScenario: _activeScenario,
                         ),
 
                         const SizedBox(height: 18),
@@ -275,6 +320,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           isDark: isDark,
                           rooms: rooms,
                           devices: devices,
+                          tempUnit: tempUnit,
                         ),
 
                         const SizedBox(height: 26),
@@ -285,6 +331,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           isDark: isDark,
                           devices: devices,
                           activeDeviceCount: activeDeviceCount,
+                          tempUnit: tempUnit,
                         ),
 
                         const SizedBox(height: 28),
@@ -300,20 +347,17 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // Top Header: Logo, Nestora branding, Notifications Bell with Badge, Profile Avatar
+  // Top Header: Expanded 76px Height, Logo 34px, Favorites with Modal, Notifications, Profile
   Widget _buildHeader({
     required BuildContext context,
     required bool isDark,
     required int unreadNotificationCount,
+    required List<DeviceModel> favoriteDevices,
     required String? photoPath,
     required String displayName,
   }) {
-    final bool hasLocalPhoto = photoPath != null &&
-        photoPath.trim().isNotEmpty &&
-        File(photoPath.trim()).existsSync();
-
     return Container(
-      height: 64,
+      height: 76,
       decoration: BoxDecoration(
         color: (isDark ? AppColors.darkCard : AppColors.lightScaffold)
             .withValues(alpha: 0.95),
@@ -331,91 +375,67 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Logo & Nestora Typography
               Row(
                 children: [
-                  const NestoraLogo(size: 28, enableNavigation: true),
-                  const SizedBox(width: 8),
+                  const NestoraLogo(size: 34, enableNavigation: true),
+                  const SizedBox(width: 10),
                   Text(
                     'Nestora',
                     style: AppTypography.cardTitle(
                       color: AppColors.primaryContainer,
-                    ).copyWith(fontWeight: FontWeight.w700, fontSize: 18),
+                    ).copyWith(fontWeight: FontWeight.w800, fontSize: 20),
                   ),
                 ],
               ),
+              // Action Buttons: Favoriler, Bildirimler, Profil
               Row(
                 children: [
-                  // Notifications Button with dynamic badge
-                  IconButton(
-                    tooltip: 'Bildirimler',
-                    onPressed: _navigateToNotifications,
-                    icon: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Icon(
-                          Icons.notifications_none_rounded,
-                          size: 22,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.lightTextPrimary,
-                        ),
-                        if (unreadNotificationCount > 0)
-                          Positioned(
-                            right: -2,
-                            top: -2,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 1,
-                              ),
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.warmAmber,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 14,
-                                minHeight: 14,
-                              ),
-                              child: Text(
-                                unreadNotificationCount > 9
-                                    ? '9+'
-                                    : '$unreadNotificationCount',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                  // Favoriler Butonu (With count badge and hover effect)
+                  _buildHeaderButton(
+                    tooltip: 'Favorilerim',
+                    icon: favoriteDevices.isNotEmpty
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
+                    iconColor: favoriteDevices.isNotEmpty
+                        ? AppColors.warmAmber
+                        : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                    badgeCount: favoriteDevices.length,
+                    badgeColor: AppColors.warmAmber,
+                    onTap: () => _showFavoritesSheet(context, favoriteDevices),
+                    isDark: isDark,
                   ),
                   const SizedBox(width: 4),
-                  // Profile Avatar (local photo or user initial)
+                  // Bildirimler Butonu (With unread count badge and hover effect)
+                  _buildHeaderButton(
+                    tooltip: 'Bildirimler',
+                    icon: Icons.notifications_none_rounded,
+                    iconColor: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                    badgeCount: unreadNotificationCount,
+                    badgeColor: AppColors.error,
+                    onTap: _navigateToNotifications,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 8),
+                  // Profile Avatar (local photo, asset portrait or user initial)
                   GestureDetector(
+                    key: const Key('dashboard_profile_avatar'),
                     onTap: _navigateToProfile,
                     child: Container(
-                      width: 36,
-                      height: 36,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.secondaryContainer,
                         border: Border.all(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.3),
-                          width: 1.5,
+                          color: AppColors.primaryContainer.withValues(alpha: 0.35),
+                          width: 1.8,
                         ),
                       ),
                       child: ClipOval(
-                        child: hasLocalPhoto
-                            ? Image.file(
-                                File(photoPath.trim()),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    _buildFallbackAvatar(displayName),
-                              )
-                            : _buildFallbackAvatar(displayName),
+                        child: _buildHeaderAvatar(photoPath, displayName),
                       ),
                     ),
                   ),
@@ -424,6 +444,370 @@ class _DashboardPageState extends State<DashboardPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderAvatar(String? photoPath, String displayName) {
+    if (photoPath != null && photoPath.trim().isNotEmpty) {
+      final trimmed = photoPath.trim();
+      if (trimmed.startsWith('assets/')) {
+        return Image.asset(
+          trimmed,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildFallbackAvatar(displayName),
+        );
+      }
+      final file = File(trimmed);
+      if (file.existsSync()) {
+        return Image.file(
+          file,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildFallbackAvatar(displayName),
+        );
+      }
+    }
+    return Image.asset(
+      'assets/profile/user_avatar.jpg',
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => _buildFallbackAvatar(displayName),
+    );
+  }
+
+  Widget _buildHeaderButton({
+    required String tooltip,
+    required IconData icon,
+    required Color iconColor,
+    required int badgeCount,
+    required Color badgeColor,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          hoverColor: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.primaryContainer.withValues(alpha: 0.08),
+          splashColor: AppColors.primaryContainer.withValues(alpha: 0.12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(icon, size: 24, color: iconColor),
+                if (badgeCount > 0)
+                  Positioned(
+                    right: -4,
+                    top: -3,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: badgeColor,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        badgeCount > 9 ? '9+' : '$badgeCount',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showFavoritesSheet(BuildContext context, List<DeviceModel> initialFavorites) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) {
+        return BlocBuilder<DevicesCubit, DevicesState>(
+          builder: (context, state) {
+            final liveFavorites = (state is DevicesLoaded)
+                ? state.favoriteDevices.map(SeedData.deviceToModel).toList()
+                : initialFavorites;
+
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.75,
+                maxWidth: 600,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 24,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Sheet pull handle
+                    Center(
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 12, bottom: 8),
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white24 : Colors.black12,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    // Sheet Title & Close
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.secondaryContainer,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.star_rounded,
+                                  color: AppColors.warmAmber,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Favori Cihazlarım',
+                                    style: AppTypography.headlineSmall.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: isDark
+                                          ? AppColors.darkTextPrimary
+                                          : AppColors.lightTextPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${liveFavorites.length} cihaz favorilerde',
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.secondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () => Navigator.pop(modalContext),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    // Favorites Content List
+                    if (liveFavorites.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: const BoxDecoration(
+                                color: AppColors.secondaryContainer,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.star_outline_rounded,
+                                size: 30,
+                                color: AppColors.secondary,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              'Henüz favori cihazınız yok',
+                              style: AppTypography.cardTitle(
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Cihaz kartlarındaki yıldız simgesine dokunarak favorilerinize cihaz ekleyebilirsiniz.',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.description(color: AppColors.secondary),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Flexible(
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
+                          itemCount: liveFavorites.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 10),
+                          itemBuilder: (ctx, index) {
+                            final d = liveFavorites[index];
+                            return _buildFavoriteTile(ctx, d, isDark, modalContext);
+                          },
+                        ),
+                      ),
+                    // Bottom Navigation Button
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryContainer,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          icon: const Icon(Icons.tune_rounded, size: 18),
+                          label: const Text('Tüm Favorileri Cihazlar Sayfasında Aç'),
+                          onPressed: () {
+                            Navigator.pop(modalContext);
+                            if (widget.onNavigateToDevices != null) {
+                              widget.onNavigateToDevices!(status: DeviceStatusFilter.favorites);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFavoriteTile(
+    BuildContext context,
+    DeviceModel device,
+    bool isDark,
+    BuildContext modalContext,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Device Icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: device.isPoweredOn
+                  ? AppColors.primaryContainer
+                  : (isDark ? Colors.white12 : Colors.black12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              device.icon,
+              size: 20,
+              color: device.isPoweredOn ? Colors.white : AppColors.secondary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Info & Detail Navigation on Tap
+          Expanded(
+            child: InkWell(
+              onTap: () {
+                Navigator.pop(modalContext);
+                _navigateToDevice(device);
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    device.name,
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    device.isPoweredOn ? 'Açık • Dokunarak Yönet' : 'Kapalı • Dokunarak Yönet',
+                    style: AppTypography.caption.copyWith(
+                      color: device.isPoweredOn ? AppColors.primaryContainer : AppColors.secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Star un-favorite button
+          IconButton(
+            tooltip: 'Favorilerden Çıkar',
+            icon: const Icon(Icons.star_rounded, color: AppColors.warmAmber, size: 22),
+            onPressed: () {
+              context.read<DevicesCubit>().toggleDeviceFavorite(device.id);
+              showGlowingToast(
+                context,
+                message: '${device.name} favorilerden çıkarıldı.',
+                icon: Icons.star_border_rounded,
+              );
+            },
+          ),
+          // Power switch
+          NestoraSwitch(
+            value: device.isPoweredOn,
+            onChanged: (_) {
+              final willBeOn = !device.isPoweredOn;
+              context.read<DevicesCubit>().toggleDevicePower(device.id);
+              showGlowingToast(
+                context,
+                message: willBeOn
+                    ? '${device.name} açıldı.'
+                    : '${device.name} kapatıldı.',
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -455,6 +839,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required String greeting,
     required String userFirstName,
     required int activeDeviceCount,
+    required String activeScenario,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -486,22 +871,53 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0x33FFFFFF),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    homeName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.badge(color: Colors.white).copyWith(
-                      fontWeight: FontWeight.w600,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Live Sync Badge with Pulsing Glow Dot
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0x22FFFFFF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const PulsingGlowDot(
+                          color: Color(0xFF6BD88A),
+                          size: 7,
+                          glowRadius: 5,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Canlı',
+                          style: AppTypography.badge(color: Colors.white).copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  // Home Name Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0x33FFFFFF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      homeName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.badge(color: Colors.white).copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -521,9 +937,127 @@ class _DashboardPageState extends State<DashboardPage> {
               color: const Color(0xFFDCE5D7),
             ),
           ),
+          const SizedBox(height: 12),
+          Container(
+            key: const Key('dashboard_hero_active_scenario_badge'),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.18),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: _getScenarioAccentColor(activeScenario),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _getScenarioIcon(activeScenario),
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'Aktif Senaryo: $activeScenario',
+                              style: AppTypography.badge(color: Colors.white).copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '$activeDeviceCount açık',
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getScenarioDescription(activeScenario),
+                        style: const TextStyle(
+                          color: Color(0xFFDCE5D7),
+                          fontSize: 11,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Color _getScenarioAccentColor(String scenario) {
+    switch (scenario) {
+      case 'Evdeyim':
+        return const Color(0xFF4CAF50);
+      case 'Gündüz':
+        return const Color(0xFFFFB300);
+      case 'Gece Modu':
+        return const Color(0xFF5C6BC0);
+      case 'Dışarıda':
+        return const Color(0xFFEF5350);
+      default:
+        return AppColors.primaryContainer;
+    }
+  }
+
+  IconData _getScenarioIcon(String scenario) {
+    switch (scenario) {
+      case 'Evdeyim':
+        return Icons.roofing_rounded;
+      case 'Gündüz':
+        return Icons.wb_sunny_rounded;
+      case 'Gece Modu':
+        return Icons.bedtime_rounded;
+      case 'Dışarıda':
+        return Icons.exit_to_app_rounded;
+      default:
+        return Icons.tune_rounded;
+    }
+  }
+
+  String _getScenarioDescription(String scenario) {
+    switch (scenario) {
+      case 'Evdeyim':
+        return 'Yaşam alanları aktif. Konfor sıcaklığı ve aydınlatma devrede.';
+      case 'Gündüz':
+        return 'Doğal gün ışığı devrede. Gereksiz lambalar kapalı, eko-klima aktif.';
+      case 'Gece Modu':
+        return 'Gece modu devrede. Yalnızca gece aydınlatması açık, klima sessiz modda.';
+      case 'Dışarıda':
+        return 'Ev boş modunda. Tüm lamba ve prizler kapalı, maksimum tasarruf devrede.';
+      default:
+        return 'Akıllı ev senaryosu devrede.';
+    }
   }
 
   // 2. Energy Overview Card
@@ -713,6 +1247,8 @@ class _DashboardPageState extends State<DashboardPage> {
     final animDuration = disableAnimations ? Duration.zero : const Duration(milliseconds: 200);
 
     return GestureDetector(
+      key: Key('scenario_chip_$label'),
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: AnimatedContainer(
         duration: animDuration,
@@ -760,6 +1296,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required bool isDark,
     required List<RoomModel> rooms,
     required List<DeviceModel> devices,
+    required String tempUnit,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -775,14 +1312,55 @@ class _DashboardPageState extends State<DashboardPage> {
                     : AppColors.lightTextPrimary,
               ),
             ),
-            GestureDetector(
-              onTap: _navigateToRooms,
-              child: Text(
-                'Tümünü Gör',
-                style: AppTypography.buttonText(
-                  color: AppColors.primaryContainer,
-                ).copyWith(fontSize: 13),
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  key: const Key('dashboard_add_room_button'),
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: _navigateToAddRoom,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primaryContainer.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.add_rounded,
+                          size: 15,
+                          color: AppColors.primaryContainer,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Oda Ekle',
+                          style: AppTypography.buttonText(
+                            color: AppColors.primaryContainer,
+                          ).copyWith(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _navigateToRooms,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Text(
+                      'Tümünü Gör',
+                      style: AppTypography.buttonText(
+                        color: AppColors.primaryContainer,
+                      ).copyWith(fontSize: 13),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -845,7 +1423,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              '${room.temperature.toStringAsFixed(1).replaceAll('.0', '')}°C',
+                              TemperatureFormatter.format(room.temperature, unit: tempUnit),
                               style: AppTypography.badge(
                                 color: isDark
                                     ? AppColors.darkTextPrimary
@@ -890,6 +1468,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required bool isDark,
     required List<DeviceModel> devices,
     required int activeDeviceCount,
+    required String tempUnit,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -941,6 +1520,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   context: context,
                   device: device,
                   isDark: isDark,
+                  tempUnit: tempUnit,
                 );
               },
             );
@@ -954,6 +1534,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required BuildContext context,
     required DeviceModel device,
     required bool isDark,
+    required String tempUnit,
   }) {
     String valueText = device.isPoweredOn ? 'Açık' : 'Kapalı';
     String valueLabel = 'Durum';
@@ -962,7 +1543,7 @@ class _DashboardPageState extends State<DashboardPage> {
       valueText = '%${device.brightness}';
       valueLabel = 'Parlaklık';
     } else if (device.type == DeviceType.ac) {
-      valueText = '${device.targetTemp}°';
+      valueText = TemperatureFormatter.format(device.targetTemp, unit: tempUnit);
       valueLabel = 'Hedef sıcaklık';
     } else if (device.type == DeviceType.plug) {
       valueText = device.isPoweredOn ? '240 W' : '0 W';
@@ -995,11 +1576,48 @@ class _DashboardPageState extends State<DashboardPage> {
                       ? AppColors.primaryContainer
                       : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                 ),
-                NestoraSwitch(
-                  value: device.isPoweredOn,
-                  onChanged: (_) => context
-                      .read<DevicesCubit>()
-                      .toggleDevicePower(device.id),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        final newFav = !device.isFavorite;
+                        context.read<DevicesCubit>().toggleDeviceFavorite(device.id);
+                        showGlowingToast(
+                          context,
+                          message: newFav
+                              ? '${device.name} favorilere eklendi.'
+                              : '${device.name} favorilerden çıkarıldı.',
+                          icon: newFav ? Icons.star_rounded : Icons.star_border_rounded,
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Icon(
+                          device.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+                          size: 20,
+                          color: device.isFavorite
+                              ? AppColors.warmAmber
+                              : (isDark ? Colors.white38 : Colors.black26),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    NestoraSwitch(
+                      value: device.isPoweredOn,
+                      onChanged: (_) {
+                        final willBeOn = !device.isPoweredOn;
+                        context
+                            .read<DevicesCubit>()
+                            .toggleDevicePower(device.id);
+                        showGlowingToast(
+                          context,
+                          message: willBeOn
+                              ? '${device.name} açıldı.'
+                              : '${device.name} kapatıldı.',
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../../../../core/services/local_cache_service.dart';
 import '../../../../core/services/spark_quota_service.dart';
 import '../../domain/entities/app_notification.dart';
 import '../../domain/repositories/notifications_repository.dart';
@@ -10,6 +12,7 @@ import 'notifications_state.dart';
 class NotificationsCubit extends Cubit<NotificationsState> {
   final NotificationsRepository notificationsRepository;
   final SparkQuotaService? quotaService;
+  final LocalCacheService? localCacheService;
 
   StreamSubscription<List<AppNotification>>? _subscription;
   String? _currentUserId;
@@ -17,7 +20,13 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   NotificationsCubit({
     required this.notificationsRepository,
     this.quotaService,
-  }) : super(const NotificationsInitial());
+    this.localCacheService,
+  }) : super(
+          NotificationsLoaded(
+            notifications: localCacheService?.loadNotifications() ??
+                List<AppNotification>.from(SeedData.defaultNotifications),
+          ),
+        );
 
   /// Loads and listens to real-time notification updates for [userId].
   void loadNotifications(String userId) {
@@ -28,7 +37,10 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
     _currentUserId = cleanUid;
 
-    if (state is! NotificationsLoaded) {
+    final cached = localCacheService?.loadNotifications();
+    if (cached != null && cached.isNotEmpty) {
+      emit(NotificationsLoaded(notifications: cached));
+    } else if (state is! NotificationsLoaded) {
       emit(const NotificationsLoading());
     }
 
@@ -37,6 +49,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
     _subscription = notificationsRepository.watchNotifications(cleanUid).listen(
       (notifications) {
+        localCacheService?.saveNotifications(notifications);
         if (state is NotificationsLoaded) {
           final current = state as NotificationsLoaded;
           emit(current.copyWith(
@@ -48,7 +61,11 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         }
       },
       onError: (error) {
-        emit(NotificationsError('Bildirimler dinlenirken hata: $error'));
+        if (state is! NotificationsLoaded) {
+          final fallback = localCacheService?.loadNotifications() ??
+              List<AppNotification>.from(SeedData.defaultNotifications);
+          emit(NotificationsLoaded(notifications: fallback));
+        }
       },
     );
   }
@@ -61,24 +78,35 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     final cleanNotifId = notificationId.trim();
     if (state is! NotificationsLoaded || cleanNotifId.isEmpty) return;
     final current = state as NotificationsLoaded;
+    final previousList = current.notifications;
 
     // Optimistic in-memory update
     final updatedList = current.notifications.map((n) {
       return n.id == cleanNotifId ? n.copyWith(isRead: true) : n;
     }).toList();
 
+    await localCacheService?.saveNotifications(updatedList);
     emit(current.copyWith(notifications: updatedList));
 
-    final result = await notificationsRepository.markAsRead(
-      userId.trim(),
-      cleanNotifId,
-    );
-
-    if (result.isFailure) {
-      // Revert if failed
+    try {
+      final result = await notificationsRepository.markAsRead(
+        userId.trim(),
+        cleanNotifId,
+      );
+      if (result.isFailure) {
+        final msg = result.failureOrNull?.message ?? 'Güncellenemedi';
+        emit(current.copyWith(
+          notifications: previousList,
+          errorMessage: msg.isNotEmpty ? msg : 'Güncellenemedi',
+        ));
+      }
+    } catch (e) {
+      final msg = e.toString().contains('Exception:')
+          ? e.toString().replaceAll('Exception: ', '').trim()
+          : 'Güncellenemedi';
       emit(current.copyWith(
-        notifications: current.notifications,
-        errorMessage: result.failure.message,
+        notifications: previousList,
+        errorMessage: msg.isNotEmpty ? msg : 'Güncellenemedi',
       ));
     }
   }
@@ -92,30 +120,19 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
     if (current.unreadCount == 0) return;
 
-    _setProcessing(true);
-
     // Optimistic in-memory update
     final updatedList = current.notifications.map((n) {
       return n.isRead ? n : n.copyWith(isRead: true);
     }).toList();
 
-    emit(current.copyWith(notifications: updatedList, isProcessing: true));
+    await localCacheService?.saveNotifications(updatedList);
+    emit(current.copyWith(
+      notifications: updatedList,
+      isProcessing: false,
+      feedbackMessage: 'Tüm bildirimler okundu olarak işaretlendi.',
+    ));
 
-    final result = await notificationsRepository.markAllAsRead(userId.trim());
-
-    if (result.isSuccess) {
-      emit(current.copyWith(
-        notifications: updatedList,
-        isProcessing: false,
-        feedbackMessage: 'Tüm bildirimler okundu olarak işaretlendi.',
-      ));
-    } else {
-      emit(current.copyWith(
-        notifications: current.notifications,
-        isProcessing: false,
-        errorMessage: result.failure.message,
-      ));
-    }
+    await notificationsRepository.markAllAsRead(userId.trim());
   }
 
   /// Deletes a specific notification with optimistic UI removal.
@@ -127,33 +144,36 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     if (state is! NotificationsLoaded || cleanNotifId.isEmpty) return;
     final current = state as NotificationsLoaded;
 
-    _setProcessing(true);
-
     // Optimistic in-memory removal
     final updatedList = current.notifications
         .where((n) => n.id != cleanNotifId)
         .toList();
 
-    emit(current.copyWith(notifications: updatedList, isProcessing: true));
+    await localCacheService?.saveNotifications(updatedList);
+    emit(current.copyWith(
+      notifications: updatedList,
+      isProcessing: false,
+      feedbackMessage: 'Bildirim silindi.',
+    ));
 
-    final result = await notificationsRepository.deleteNotification(
+    await notificationsRepository.deleteNotification(
       userId.trim(),
       cleanNotifId,
     );
+  }
 
-    if (result.isSuccess) {
-      emit(current.copyWith(
-        notifications: updatedList,
-        isProcessing: false,
-        feedbackMessage: 'Bildirim silindi.',
-      ));
-    } else {
-      emit(current.copyWith(
-        notifications: current.notifications,
-        isProcessing: false,
-        errorMessage: result.failure.message,
-      ));
-    }
+  /// Adds a local notification immediately and saves to cache.
+  Future<void> addNotification(AppNotification notification) async {
+    final current = state is NotificationsLoaded
+        ? state as NotificationsLoaded
+        : NotificationsLoaded(
+            notifications: localCacheService?.loadNotifications() ??
+                List<AppNotification>.from(SeedData.defaultNotifications),
+          );
+
+    final updatedList = [notification, ...current.notifications];
+    await localCacheService?.saveNotifications(updatedList);
+    emit(current.copyWith(notifications: updatedList));
   }
 
   /// Creates and dispatches a new in-app notification.
@@ -169,8 +189,6 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     final cleanMsg = message.trim();
     if (cleanTitle.isEmpty || cleanMsg.isEmpty) return;
 
-    _setProcessing(true);
-
     final notifId = 'notif-${DateTime.now().millisecondsSinceEpoch}';
     final newNotif = AppNotification(
       id: notifId,
@@ -183,16 +201,19 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       createdAt: DateTime.now(),
     );
 
-    final result = await notificationsRepository.createNotification(
-      userId.trim(),
-      newNotif,
-    );
-
-    if (result.isSuccess) {
-      _emitSuccess('Bildirim oluşturuldu.');
-    } else {
-      _emitError(result.failure.message);
+    await addNotification(newNotif);
+    if (state is NotificationsLoaded) {
+      emit((state as NotificationsLoaded).copyWith(
+        feedbackMessage: 'Bildirim oluşturuldu.',
+      ));
     }
+
+    try {
+      await notificationsRepository.createNotification(
+        userId.trim(),
+        newNotif,
+      );
+    } catch (_) {}
   }
 
   /// Clears any transient feedback or error messages.
@@ -210,26 +231,6 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         isProcessing: isProcessing,
         clearFeedback: true,
         clearError: true,
-      ));
-    }
-  }
-
-  void _emitSuccess(String message) {
-    if (state is NotificationsLoaded) {
-      final current = state as NotificationsLoaded;
-      emit(current.copyWith(
-        isProcessing: false,
-        feedbackMessage: message,
-      ));
-    }
-  }
-
-  void _emitError(String message) {
-    if (state is NotificationsLoaded) {
-      final current = state as NotificationsLoaded;
-      emit(current.copyWith(
-        isProcessing: false,
-        errorMessage: message,
       ));
     }
   }
@@ -270,6 +271,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     final user = userId ?? _currentUserId ?? 'demo-user';
     final notifsToDelete = List<AppNotification>.from(current.notifications);
 
+    await localCacheService?.saveNotifications(const []);
     emit(current.copyWith(notifications: const [], isProcessing: true));
 
     for (final notif in notifsToDelete) {
