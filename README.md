@@ -31,7 +31,6 @@
 - [🚀 Kurulum ve Çalıştırma](#-kurulum-ve-çalıştırma)
 - [🔒 Güvenlik & Ortam Değişkenleri](#-güvenlik--ortam-değişkenleri)
 - [🧪 Testler & Kalite Güvencesi](#-testler--kalite-güvencesi)
-- [📸 Gerçek Uygulama Ekran Görüntüleri](#-gerçek-uygulama-ekran-görüntüleri)
 - [📄 Lisans](#-lisans)
 
 ---
@@ -226,26 +225,6 @@ flutter analyze
 00:23 +428: All tests passed!
 No issues found! (ran in 3.4s)
 ```
-
----
-
-## 📸 Gerçek Uygulama Ekran Görüntüleri
-
-Aşağıdaki görüntüler, uygulamanın kod tabanında yer alan orijinal ekran tasarımlarıdır:
-
-<div align="center">
-
-| 1. Karşılama Ekranı | 2. Ana Dashboard | 3. Odalarım |
-| :---: | :---: | :---: |
-| <img src="assets/screens/nestora_kar_lama_welcome.png" width="230" /> | <img src="assets/screens/nestora_ana_sayfa_dashboard.png" width="230" /> | <img src="assets/screens/nestora_odalar_m.png" width="230" /> |
-
-<br/>
-
-| 4. Salon Lambası Kontrolü | 5. Klima Kontrolü | 6. Profil ve Ayarlar |
-| :---: | :---: | :---: |
-| <img src="assets/screens/nestora_salon_lambas_kontrol.png" width="230" /> | <img src="assets/screens/nestora_yatak_odas_klima_kontrol.png" width="230" /> | <img src="assets/screens/nestora_profil_ve_ayarlar.png" width="230" /> |
-
-</div>
 
 ---
 
