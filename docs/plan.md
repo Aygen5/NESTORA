@@ -10,7 +10,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 
 > **Amaç:** Projenin ihtiyaç duyduğu resmi kütüphaneleri `pubspec.yaml`'a eklemek, çekirdek hata ve sonuç mekanizmalarını kurmak, Firebase ve bağımlılık enjeksiyon altyapısını hazırlamak.
 
-### Adım 1.1: Bağımlılıkların (`pubspec.yaml`) Yapılandırılması
+### Adım 1.1: [x] Bağımlılıkların (`pubspec.yaml`) Yapılandırılması
 - `firebase_core`, `firebase_auth`, `cloud_firestore` paketlerinin eklenmesi.
 - `firebase_analytics`, `firebase_crashlytics`, `firebase_performance`, `firebase_remote_config` paketlerinin eklenmesi.
 - `go_router` (rotalama ve korumalı yönlendirmeler için) eklenmesi.
@@ -19,7 +19,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - `flutter_bloc`, `shared_preferences`, `google_fonts`, `intl`, `cupertino_icons` sürümlerinin uyumluluk denetimi.
 - `flutter pub get` ve statik analiz doğrulaması.
 
-### Adım 1.2: Core Katmanı — Hata, Başarı ve Temel Tipler
+### Adım 1.2: [x] Core Katmanı — Hata, Başarı ve Temel Tipler
 - `lib/core/errors/failures.dart`: `Failure`, `AuthFailure`, `ServerFailure`, `CacheFailure`, `ValidationFailure` sınıflarının oluşturulması.
 - `lib/core/errors/exceptions.dart`: Veri katmanında fırlatılacak özel exception sınıfları.
 - `lib/core/utils/result.dart`: `Result<T>` veya temiz başarı/hata dönüş tipi (gereksiz ağır functional programming paketleri olmadan).
@@ -34,7 +34,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 >   1. Firebase Console'da yeni proje açmak (ücretsiz **Spark** planı).
 >   2. Flutter uygulamasını bu projeye bağlamak (`google-services.json` / `GoogleService-Info.plist` / `firebase_options.dart`).
 
-### Adım 1.3: Firebase Başlangıç Yapılandırması
+### Adım 1.3: [x] Firebase Başlangıç Yapılandırması
 - `lib/firebase_options.dart` yapılandırmasının oluşturulması/entegrasyonu.
 - `lib/main.dart` dosyasının yalnızca Flutter binding, Firebase initialization, yerel SharedPreferences başlatma ve Root App çağrısına odaklanacak şekilde sadeleştirilmesi (iş mantığından ve sayfa kodlarından arındırılması).
 

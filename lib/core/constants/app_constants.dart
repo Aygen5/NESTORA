@@ -40,3 +40,4 @@ class AppConstants {
   static final RegExp digitRegex = RegExp(r'[0-9]');
   static final RegExp specialCharRegex = RegExp(r'[!@#\$%^&*(),.?":{}|<>]');
 }
+

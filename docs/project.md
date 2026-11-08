@@ -408,16 +408,16 @@ Firebase Spark planı korunacaktır.
 
 ## 11. Uygulama Geliştirme Sırası
 
-1. Mevcut Flutter projesinin ve 16 ekranın incelenmesi.
-2. Mevcut tasarımın, widget'ların ve navigasyonun korunması.
-3. Tema, tipografi ve responsive düzenin iyileştirilmesi.
-4. Auth ve ilk kullanım akışının tamamlanması.
-5. Veri modelleri ve Firestore yapısının oluşturulması.
-6. Oda ve cihaz CRUD işlemleri.
-7. Sanal cihaz kontrol state'leri.
-8. Dashboard ve senaryo etkileşimleri.
-9. Bildirimler ve profil ayarları.
-10. Hata yönetimi, güvenlik, testler ve performans kontrolü.
+1. [x] Mevcut Flutter projesinin ve 16 ekranın incelenmesi.
+2. [x] Mevcut tasarımın, widget'ların ve navigasyonun korunması.
+3. [x] Tema, tipografi ve responsive düzenin iyileştirilmesi.
+4. [ ] Auth ve ilk kullanım akışının tamamlanması.
+5. [ ] Veri modelleri ve Firestore yapısının oluşturulması.
+6. [ ] Oda ve cihaz CRUD işlemleri.
+7. [ ] Sanal cihaz kontrol state'leri.
+8. [ ] Dashboard ve senaryo etkileşimleri.
+9. [ ] Bildirimler ve profil ayarları.
+10. [ ] Hata yönetimi, güvenlik, testler ve performans kontrolü.
 
 Her aşama sonunda çalışan uygulama test edilmelidir. Büyük değişiklikler tek seferde ve kontrolsüz biçimde yapılmamalıdır.
 

@@ -47,3 +47,4 @@ class ValidationFailure extends Failure {
 class DeviceFailure extends Failure {
   const DeviceFailure(super.message, {super.code});
 }
+
