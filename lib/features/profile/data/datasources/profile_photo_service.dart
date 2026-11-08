@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
+import '../../../../core/services/secure_image_service.dart';
 
 /// Contract for managing local profile photos without requiring Cloud Storage.
 /// Spark tier compliant: photos remain on the user's local device sandbox.
@@ -18,41 +18,28 @@ abstract class ProfilePhotoService {
   Future<void> deleteLocalImage(String? path);
 }
 
-/// Production implementation using [ImagePicker] and [path_provider].
+/// Production implementation using [SecureImageService].
 class ProfilePhotoServiceImpl implements ProfilePhotoService {
-  final ImagePicker? imagePicker;
+  final SecureImageService secureImageService;
 
   ProfilePhotoServiceImpl({
+    SecureImageService? secureImageService,
     ImagePicker? imagePicker,
-  }) : imagePicker = imagePicker ?? ImagePicker();
+  }) : secureImageService = secureImageService ?? SecureImageService(picker: imagePicker);
 
   @override
   Future<String?> pickAndSaveImage({
     ImageSource source = ImageSource.gallery,
     String? userId,
   }) async {
-    try {
-      final picker = imagePicker ?? ImagePicker();
-      final pickedFile = await picker.pickImage(
-        source: source,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
-      );
-
-      if (pickedFile == null) return null;
-
-      final appDir = await getApplicationDocumentsDirectory();
-      final suffix = userId != null && userId.isNotEmpty ? '_$userId' : '';
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'nestora_avatar$suffix$timestamp.png';
-      final savedFile = await File(pickedFile.path).copy('${appDir.path}/$fileName');
-
-      return savedFile.path;
-    } catch (e) {
-      debugPrint('ProfilePhotoService: Error picking or saving photo: $e');
-      return null;
+    final result = await secureImageService.pickAndSaveImage(
+      source: source,
+      targetPrefix: 'avatar_${userId ?? "usr"}',
+    );
+    if (result.isSuccess) {
+      return result.savedPath;
     }
+    return null;
   }
 
   @override

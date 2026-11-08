@@ -49,6 +49,7 @@ class UserProfile {
   final String email;
   final String displayName;
   final String homeName;
+  final String roleTitle;
   final String? photoPath;
   final UserPreferences preferences;
   final DateTime? createdAt;
@@ -59,6 +60,7 @@ class UserProfile {
     required this.email,
     required this.displayName,
     required this.homeName,
+    this.roleTitle = 'Ev Sahibi',
     this.photoPath,
     this.preferences = const UserPreferences(),
     this.createdAt,
@@ -85,6 +87,7 @@ class UserProfile {
     String? email,
     String? displayName,
     String? homeName,
+    String? roleTitle,
     String? photoPath,
     bool clearPhotoPath = false,
     UserPreferences? preferences,
@@ -96,6 +99,7 @@ class UserProfile {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       homeName: homeName ?? this.homeName,
+      roleTitle: roleTitle ?? this.roleTitle,
       photoPath: clearPhotoPath ? null : (photoPath ?? this.photoPath),
       preferences: preferences ?? this.preferences,
       createdAt: createdAt ?? this.createdAt,
@@ -111,6 +115,7 @@ class UserProfile {
           email == other.email &&
           displayName == other.displayName &&
           homeName == other.homeName &&
+          roleTitle == other.roleTitle &&
           photoPath == other.photoPath &&
           preferences == other.preferences &&
           createdAt == other.createdAt &&
@@ -122,6 +127,7 @@ class UserProfile {
       email.hashCode ^
       displayName.hashCode ^
       homeName.hashCode ^
+      roleTitle.hashCode ^
       photoPath.hashCode ^
       preferences.hashCode ^
       createdAt.hashCode ^

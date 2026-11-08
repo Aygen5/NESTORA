@@ -9,6 +9,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../app/theme/theme_cubit.dart';
 import '../../../../core/constants/seed_data.dart';
+import '../../../../core/widgets/glowing_toast.dart';
 import '../../../../core/widgets/nestora_button.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
 import '../../../../core/widgets/nestora_input.dart';
@@ -18,6 +19,9 @@ import '../../../../core/widgets/nestora_switch.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../devices/presentation/cubit/devices_cubit.dart';
 import '../../../devices/presentation/cubit/devices_state.dart';
+import '../../../notifications/domain/entities/app_notification.dart';
+import '../../../notifications/presentation/cubit/notifications_cubit.dart';
+import '../../../notifications/presentation/cubit/notifications_state.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
 import '../../../rooms/presentation/cubit/rooms_cubit.dart';
 import '../../../rooms/presentation/cubit/rooms_state.dart';
@@ -42,81 +46,318 @@ class _ProfilePageState extends State<ProfilePage> {
 
   ImageProvider _resolveAvatarImage(String? photoPath) {
     if (photoPath != null && photoPath.isNotEmpty) {
+      if (photoPath.startsWith('assets/')) {
+        return AssetImage(photoPath);
+      }
       final file = File(photoPath);
       if (file.existsSync()) {
         return FileImage(file);
       }
     }
-    return const AssetImage('assets/screens/nestora_profil_ve_ayarlar.png');
+    return const AssetImage('assets/profile/user_avatar.jpg');
   }
 
-  void _pickPhoto(BuildContext context) async {
-    await context.read<ProfileCubit>().pickAndSavePhoto(source: ImageSource.gallery);
-    if (context.mounted) {
-      showNestoraSnackbar(context, message: 'Profil fotoğrafı güncellendi.');
-    }
+  void _showPhotoOptionsModal(BuildContext context, String? currentPhotoPath) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (modalCtx) {
+        return Material(
+          color: isDark ? AppColors.darkCard : AppColors.lightCard,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Profil Fotoğrafı Seç',
+                      style: AppTypography.headlineSmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Yalnızca JPG ve PNG formatında yüksek kaliteli görseller kabul edilir (< 5 MB).',
+                      style: AppTypography.caption.copyWith(color: AppColors.secondary),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.photo_library_rounded, color: AppColors.primaryContainer),
+                      ),
+                      title: Text(
+                        'Galeriden Seç',
+                        style: AppTypography.labelLarge.copyWith(
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text('Cihazınızdaki fotoğraflardan seçin'),
+                      onTap: () async {
+                        Navigator.pop(modalCtx);
+                        await context.read<ProfileCubit>().pickAndSavePhoto(source: ImageSource.gallery);
+                        if (context.mounted) {
+                          showGlowingToast(
+                            context,
+                            message: 'Profil fotoğrafı güncellendi.',
+                            icon: Icons.face_rounded,
+                          );
+                        }
+                      },
+                    ),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.camera_alt_rounded, color: AppColors.primaryContainer),
+                      ),
+                      title: Text(
+                        'Kamera ile Çek',
+                        style: AppTypography.labelLarge.copyWith(
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text('Yeni bir portre fotoğrafı çekin'),
+                      onTap: () async {
+                        Navigator.pop(modalCtx);
+                        await context.read<ProfileCubit>().pickAndSavePhoto(source: ImageSource.camera);
+                        if (context.mounted) {
+                          showGlowingToast(
+                            context,
+                            message: 'Profil fotoğrafı güncellendi.',
+                            icon: Icons.face_rounded,
+                          );
+                        }
+                      },
+                    ),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: AppColors.secondaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.face_retouching_natural_rounded, color: AppColors.primaryContainer),
+                      ),
+                      title: Text(
+                        'Varsayılan Kadın Portresine Dön',
+                        style: AppTypography.labelLarge.copyWith(
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text('Nestora şık kadın profil avatarı'),
+                      onTap: () async {
+                        Navigator.pop(modalCtx);
+                        await context.read<ProfileCubit>().setPhotoPath('assets/profile/user_avatar.jpg');
+                        if (context.mounted) {
+                          showGlowingToast(
+                            context,
+                            message: 'Varsayılan kadın portresi uygulandı.',
+                            icon: Icons.face_rounded,
+                          );
+                        }
+                      },
+                    ),
+                    if (currentPhotoPath != null && currentPhotoPath.isNotEmpty) ...[
+                      const Divider(),
+                      ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+                        ),
+                        title: const Text(
+                          'Fotoğrafı Kaldır',
+                          style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text('Profil resmini kaldırıp varsayılan görünüme dönün'),
+                        onTap: () async {
+                          Navigator.pop(modalCtx);
+                          await context.read<ProfileCubit>().removePhoto();
+                          if (context.mounted) {
+                            showGlowingToast(
+                              context,
+                              message: 'Profil fotoğrafı kaldırıldı.',
+                              icon: Icons.delete_sweep_rounded,
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
-  void _showEditProfileDialog(BuildContext context, String currentName, String currentHome) {
+  void _showEditProfileDialog(
+    BuildContext context,
+    String currentName,
+    String currentEmail,
+    String currentRole,
+    String currentHome,
+  ) {
     final nameController = TextEditingController(text: currentName);
+    final emailController = TextEditingController(text: currentEmail);
+    final roleController = TextEditingController(text: currentRole.isNotEmpty ? currentRole : 'Ev Sahibi');
     final homeController = TextEditingController(text: currentHome);
+    String? emailError;
 
     showDialog(
       context: context,
       builder: (dialogContext) {
-        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
-        return AlertDialog(
-          backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            'Profili Düzenle',
-            style: AppTypography.headlineSmall.copyWith(
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Kullanıcı Adı', style: AppTypography.labelSmall),
-              const SizedBox(height: 6),
-              NestoraInput(
-                controller: nameController,
-                hintText: 'Adınız ve soyadınız',
-                prefixIcon: Icons.person_outline_rounded,
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+            return AlertDialog(
+              backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: AppColors.secondaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.manage_accounts_rounded, color: AppColors.primaryContainer, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Profili Düzenle',
+                    style: AppTypography.headlineSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
-              Text('Ev Adı', style: AppTypography.labelSmall),
-              const SizedBox(height: 6),
-              NestoraInput(
-                controller: homeController,
-                hintText: 'Örn: Doğa Evi',
-                prefixIcon: Icons.cottage_rounded,
+              content: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Kullanıcı Adı (Ad Soyad)', style: AppTypography.labelSmall),
+                      const SizedBox(height: 6),
+                      NestoraInput(
+                        controller: nameController,
+                        hintText: 'Adınız ve soyadınız',
+                        prefixIcon: Icons.person_outline_rounded,
+                      ),
+                      const SizedBox(height: 14),
+                      Text('E-posta Adresi', style: AppTypography.labelSmall),
+                      const SizedBox(height: 6),
+                      NestoraInput(
+                        controller: emailController,
+                        hintText: 'ornek@nestora.com',
+                        prefixIcon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        onChanged: (val) {
+                          if (emailError != null) {
+                            setDialogState(() => emailError = null);
+                          }
+                        },
+                      ),
+                      if (emailError != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          emailError!,
+                          style: const TextStyle(color: AppColors.error, fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                      const SizedBox(height: 14),
+                      Text('Rol / Başlık', style: AppTypography.labelSmall),
+                      const SizedBox(height: 6),
+                      NestoraInput(
+                        controller: roleController,
+                        hintText: 'Örn: Ev Sahibi, Aile Bireyi, Yönetici',
+                        prefixIcon: Icons.verified_user_outlined,
+                      ),
+                      const SizedBox(height: 14),
+                      Text('Ev Adı', style: AppTypography.labelSmall),
+                      const SizedBox(height: 6),
+                      NestoraInput(
+                        controller: homeController,
+                        hintText: 'Örn: Aygen\'in Evi',
+                        prefixIcon: Icons.cottage_rounded,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('İptal'),
-            ),
-            NestoraButton(
-              text: 'Kaydet',
-              onPressed: () {
-                final newName = nameController.text.trim();
-                final newHome = homeController.text.trim();
-                if (newName.isNotEmpty) {
-                  context.read<ProfileCubit>().updateDisplayName(newName);
-                }
-                if (newHome.isNotEmpty) {
-                  context.read<ProfileCubit>().updateHomeName(newHome);
-                }
-                Navigator.pop(dialogContext);
-                showNestoraSnackbar(context, message: 'Profil başarıyla güncellendi.');
-              },
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('İptal'),
+                ),
+                NestoraButton(
+                  text: 'Kaydet',
+                  onPressed: () {
+                    final newName = nameController.text.trim();
+                    final newEmail = emailController.text.trim();
+                    final newRole = roleController.text.trim();
+                    final newHome = homeController.text.trim();
+
+                    if (newEmail.isNotEmpty && !newEmail.contains('@')) {
+                      setDialogState(() => emailError = 'Lütfen geçerli bir e-posta adresi girin.');
+                      return;
+                    }
+
+                    context.read<ProfileCubit>().updateProfileDetails(
+                      displayName: newName.isNotEmpty ? newName : null,
+                      email: newEmail.isNotEmpty ? newEmail : null,
+                      roleTitle: newRole.isNotEmpty ? newRole : null,
+                      homeName: newHome.isNotEmpty ? newHome : null,
+                    );
+                    Navigator.pop(dialogContext);
+                    showGlowingToast(
+                      context,
+                      message: 'Profil başarıyla güncellendi.',
+                      icon: Icons.check_circle_outline_rounded,
+                    );
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -162,6 +403,9 @@ class _ProfilePageState extends State<ProfilePage> {
     final userEmail = profileState is ProfileLoaded
         ? profileState.profile.email
         : SeedData.defaultProfile.email;
+    final userRole = profileState is ProfileLoaded
+        ? profileState.profile.roleTitle
+        : SeedData.defaultProfile.roleTitle;
     final homeName = profileState is ProfileLoaded
         ? profileState.profile.homeName
         : SeedData.defaultProfile.homeName;
@@ -181,36 +425,110 @@ class _ProfilePageState extends State<ProfilePage> {
         ? profileState.profile.preferences.ecoModeEnabled
         : true;
 
+    int unreadNotificationCount = 0;
+    try {
+      final notificationsState = context.watch<NotificationsCubit>().state;
+      if (notificationsState is NotificationsLoaded) {
+        unreadNotificationCount = notificationsState.unreadCount;
+      }
+    } catch (_) {}
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightScaffold,
-      appBar: AppBar(
-        backgroundColor: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.9),
-        elevation: 0,
-        title: Row(
-          children: [
-            const NestoraLogo(size: 24, enableNavigation: true),
-            const SizedBox(width: 8),
-            Text(
-              'Profil',
-              style: AppTypography.headlineSmall.copyWith(
-                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                fontWeight: FontWeight.bold,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(76),
+        child: Container(
+          height: 76,
+          decoration: BoxDecoration(
+            color: (isDark ? AppColors.darkCard : AppColors.lightScaffold).withValues(alpha: 0.95),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                width: 1,
               ),
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, size: 22),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationsPage()),
-              );
-            },
           ),
-          const SizedBox(width: 8),
-        ],
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const NestoraLogo(size: 34, enableNavigation: true),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Profil',
+                        style: AppTypography.cardTitle(
+                          color: AppColors.primaryContainer,
+                        ).copyWith(fontWeight: FontWeight.w800, fontSize: 20),
+                      ),
+                    ],
+                  ),
+                  Tooltip(
+                    message: 'Bildirimler',
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        hoverColor: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : AppColors.primaryContainer.withValues(alpha: 0.08),
+                        splashColor: AppColors.primaryContainer.withValues(alpha: 0.12),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const NotificationsPage()),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(
+                                Icons.notifications_none_rounded,
+                                size: 24,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
+                              ),
+                              if (unreadNotificationCount > 0)
+                                Positioned(
+                                  right: -4,
+                                  top: -3,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                    child: Text(
+                                      unreadNotificationCount > 9 ? '9+' : '$unreadNotificationCount',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -236,7 +554,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       // Avatar with Gallery Photo Picker Trigger
                       GestureDetector(
-                        onTap: () => _pickPhoto(context),
+                        key: const Key('profile_avatar_picker'),
+                        onTap: () => _showPhotoOptionsModal(context, photoPath),
                         child: Stack(
                           alignment: Alignment.bottomRight,
                           children: [
@@ -292,7 +611,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Owner Role Badge (Ev Sahibi)
+                      // Owner Role Badge (Ev Sahibi / Dinamik Rol)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
@@ -306,7 +625,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             const Icon(Icons.verified_rounded, size: 14, color: AppColors.primaryContainer),
                             const SizedBox(width: 4),
                             Text(
-                              'Ev Sahibi',
+                              userRole.isNotEmpty ? userRole : 'Ev Sahibi',
                               style: AppTypography.caption.copyWith(
                                 color: AppColors.primaryContainer,
                                 fontWeight: FontWeight.bold,
@@ -357,7 +676,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       // Edit Profile Button
                       OutlinedButton.icon(
-                        onPressed: () => _showEditProfileDialog(context, userName, homeName),
+                        key: const Key('profile_edit_button'),
+                        onPressed: () => _showEditProfileDialog(
+                          context,
+                          userName,
+                          userEmail,
+                          userRole,
+                          homeName,
+                        ),
                         icon: const Icon(Icons.edit_outlined, size: 16),
                         label: const Text('Profili Düzenle'),
                         style: OutlinedButton.styleFrom(
@@ -384,7 +710,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       title: 'Profil Bilgilerim',
                       subtitle: userName,
                       trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.secondary),
-                      onTap: () => _showEditProfileDialog(context, userName, homeName),
+                      onTap: () => _showEditProfileDialog(
+                        context,
+                        userName,
+                        userEmail,
+                        userRole,
+                        homeName,
+                      ),
                       isDark: isDark,
                     ),
                     const Divider(height: 1),
@@ -402,6 +734,13 @@ class _ProfilePageState extends State<ProfilePage> {
                           const Icon(Icons.check_circle_outline_rounded, size: 16, color: AppColors.primaryContainer),
                         ],
                       ),
+                      onTap: () => _showEditProfileDialog(
+                        context,
+                        userName,
+                        userEmail,
+                        userRole,
+                        homeName,
+                      ),
                       isDark: isDark,
                     ),
                     const Divider(height: 1),
@@ -415,12 +754,19 @@ class _ProfilePageState extends State<ProfilePage> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          'Ev Sahibi (Yönetici)',
+                          userRole.isNotEmpty ? '$userRole (Yönetici)' : 'Ev Sahibi (Yönetici)',
                           style: AppTypography.caption.copyWith(
                             color: AppColors.primaryContainer,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                      ),
+                      onTap: () => _showEditProfileDialog(
+                        context,
+                        userName,
+                        userEmail,
+                        userRole,
+                        homeName,
                       ),
                       isDark: isDark,
                     ),
@@ -467,19 +813,40 @@ class _ProfilePageState extends State<ProfilePage> {
                                   label: 'Açık',
                                   mode: ThemeMode.light,
                                   current: currentThemeMode,
-                                  onTap: () => themeCubit.setTheme(ThemeMode.light),
+                                  onTap: () {
+                                    themeCubit.setTheme(ThemeMode.light);
+                                    showGlowingToast(
+                                      context,
+                                      message: 'Aydınlık Mod etkinleştirildi.',
+                                      icon: Icons.light_mode_rounded,
+                                    );
+                                  },
                                 ),
                                 _buildThemeOption(
                                   label: 'Koyu',
                                   mode: ThemeMode.dark,
                                   current: currentThemeMode,
-                                  onTap: () => themeCubit.setTheme(ThemeMode.dark),
+                                  onTap: () {
+                                    themeCubit.setTheme(ThemeMode.dark);
+                                    showGlowingToast(
+                                      context,
+                                      message: 'Karanlık Mod etkinleştirildi.',
+                                      icon: Icons.dark_mode_rounded,
+                                    );
+                                  },
                                 ),
                                 _buildThemeOption(
                                   label: 'Sistem',
                                   mode: ThemeMode.system,
                                   current: currentThemeMode,
-                                  onTap: () => themeCubit.setTheme(ThemeMode.system),
+                                  onTap: () {
+                                    themeCubit.setTheme(ThemeMode.system);
+                                    showGlowingToast(
+                                      context,
+                                      message: 'Sistem Teması etkinleştirildi.',
+                                      icon: Icons.settings_brightness_rounded,
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -523,7 +890,15 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               NestoraSwitch(
                                 value: _deviceStatusNotif,
-                                onChanged: (v) => setState(() => _deviceStatusNotif = v),
+                                onChanged: (v) {
+                                  setState(() => _deviceStatusNotif = v);
+                                  showGlowingToast(
+                                    context,
+                                    message: v
+                                        ? 'Cihaz durum bildirimleri açıldı.'
+                                        : 'Cihaz durum bildirimleri kapatıldı.',
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -542,7 +917,15 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               NestoraSwitch(
                                 value: _roomStatusNotif,
-                                onChanged: (v) => setState(() => _roomStatusNotif = v),
+                                onChanged: (v) {
+                                  setState(() => _roomStatusNotif = v);
+                                  showGlowingToast(
+                                    context,
+                                    message: v
+                                        ? 'Oda güncelleme bildirimleri açıldı.'
+                                        : 'Oda güncelleme bildirimleri kapatıldı.',
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -560,8 +943,32 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                               ),
                               NestoraSwitch(
+                                key: const Key('profile_weekly_report_switch'),
                                 value: _weeklyReportNotif,
-                                onChanged: (v) => setState(() => _weeklyReportNotif = v),
+                                onChanged: (v) {
+                                  setState(() => _weeklyReportNotif = v);
+                                  if (v) {
+                                    final userId = (profileState is ProfileLoaded)
+                                        ? profileState.profile.uid
+                                        : 'demo-user';
+                                    context.read<NotificationsCubit>().createNotification(
+                                      userId: userId,
+                                      title: 'Haftalık Enerji & Tüketim Raporu',
+                                      message: 'Tebrikler! Bu hafta eviniz %14 daha az enerji tüketti. Detaylı analiz hazır.',
+                                      type: NotificationType.eco,
+                                    );
+                                    showGlowingToast(
+                                      context,
+                                      message: 'Haftalık özet raporu etkinleştirildi. Yeni rapor bildiriminize eklendi.',
+                                      icon: Icons.insights_rounded,
+                                    );
+                                  } else {
+                                    showGlowingToast(
+                                      context,
+                                      message: 'Haftalık özet raporu bildirimleri kapatıldı.',
+                                    );
+                                  }
+                                },
                               ),
                             ],
                           ),
@@ -598,7 +1005,14 @@ class _ProfilePageState extends State<ProfilePage> {
                             child: Row(
                               children: [
                                 GestureDetector(
-                                  onTap: () => context.read<ProfileCubit>().setTemperatureUnit('C'),
+                                  onTap: () {
+                                    context.read<ProfileCubit>().setTemperatureUnit('C');
+                                    showGlowingToast(
+                                      context,
+                                      message: 'Sıcaklık birimi °C olarak güncellendi.',
+                                      icon: Icons.thermostat_rounded,
+                                    );
+                                  },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
@@ -615,7 +1029,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                                 GestureDetector(
-                                  onTap: () => context.read<ProfileCubit>().setTemperatureUnit('F'),
+                                  onTap: () {
+                                    context.read<ProfileCubit>().setTemperatureUnit('F');
+                                    showGlowingToast(
+                                      context,
+                                      message: 'Sıcaklık birimi °F olarak güncellendi.',
+                                      icon: Icons.thermostat_rounded,
+                                    );
+                                  },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
@@ -673,7 +1094,16 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           NestoraSwitch(
                             value: ecoModeActive,
-                            onChanged: (v) => context.read<ProfileCubit>().toggleEcoMode(v),
+                            onChanged: (v) {
+                              context.read<ProfileCubit>().toggleEcoMode(v);
+                              showGlowingToast(
+                                context,
+                                message: v
+                                    ? 'Eko Mod açıldı. Enerji tasarrufu devrede.'
+                                    : 'Eko Mod kapatıldı.',
+                                icon: Icons.eco_rounded,
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -694,6 +1124,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       title: 'Hakkında',
                       subtitle: 'Sürdürülebilir Akıllı Yaşam',
                       trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.secondary),
+                      onTap: () => _showAboutDialog(context, isDark),
                       isDark: isDark,
                     ),
                     const Divider(height: 1),
@@ -707,7 +1138,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          'v1.0.0 Güncel',
+                          'v2.4.0 (Build 2026.1)',
                           style: AppTypography.caption.copyWith(
                             color: AppColors.primaryContainer,
                             fontWeight: FontWeight.bold,
@@ -889,4 +1320,162 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+
+  void _showAboutDialog(BuildContext context, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Dialog(
+        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: const BoxDecoration(
+                    color: AppColors.secondaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: NestoraLogo(size: 36, enableNavigation: false),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Nestora',
+                  style: AppTypography.pageTitle(
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                  ).copyWith(fontSize: 22, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Sürdürülebilir Akıllı Yaşam Platformu',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.primaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Nestora; enerji verimliliği, yüksek güvenlik ve doğal konforu '
+                  'İskandinav ve modern kaşmir estetiğiyle harmanlayan '
+                  'yeni nesil akıllı ev yönetim ekosistemidir.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.description(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.eco_rounded, size: 16, color: AppColors.primaryContainer),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Sürdürülebilirlik & Eko-Tasarruf Algoritmaları',
+                              style: AppTypography.caption.copyWith(
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.security_rounded, size: 16, color: AppColors.primaryContainer),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Sıfır Gecikmeli Güvenli Yerel Kontrol & Gizlilik',
+                              style: AppTypography.caption.copyWith(
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.palette_outlined, size: 16, color: AppColors.primaryContainer),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Modern Kaşmir & Doğal Taş Mimari Estetiği',
+                              style: AppTypography.caption.copyWith(
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.verified_rounded, size: 16, color: AppColors.primaryContainer),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'Sürüm v2.4.0 (Build 2026.1) • Güncel',
+                          style: AppTypography.badge(
+                            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          ).copyWith(fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryContainer,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () => Navigator.pop(dialogCtx),
+                    child: const Text('Kapat'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
 }

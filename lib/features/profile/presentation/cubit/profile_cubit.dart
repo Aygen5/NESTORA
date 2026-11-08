@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/seed_data.dart';
+import '../../../../core/services/local_cache_service.dart';
 import '../../../../core/services/spark_quota_service.dart';
 import '../../data/datasources/profile_photo_service.dart';
 import '../../domain/entities/user_profile.dart';
@@ -15,6 +17,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   final ProfilePhotoService? photoService;
   final SharedPreferences? sharedPreferences;
   final SparkQuotaService? quotaService;
+  final LocalCacheService? localCacheService;
 
   StreamSubscription<UserProfile?>? _profileSubscription;
   String? _currentUserId;
@@ -24,7 +27,12 @@ class ProfileCubit extends Cubit<ProfileState> {
     this.photoService,
     this.sharedPreferences,
     this.quotaService,
-  }) : super(const ProfileInitial());
+    this.localCacheService,
+  }) : super(
+          ProfileLoaded(
+            profile: localCacheService?.loadProfile() ?? SeedData.defaultProfile,
+          ),
+        );
 
   String _photoPrefKey(String userId) =>
       '${AppConstants.prefProfilePhotoPath}_$userId';
@@ -38,7 +46,10 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
     _currentUserId = cleanUid;
 
-    if (state is! ProfileLoaded) {
+    final cached = localCacheService?.loadProfile();
+    if (cached != null) {
+      emit(ProfileLoaded(profile: cached));
+    } else if (state is! ProfileLoaded) {
       emit(const ProfileLoading());
     }
 
@@ -51,14 +62,17 @@ class ProfileCubit extends Cubit<ProfileState> {
             sharedPreferences?.getString(AppConstants.prefProfilePhotoPath);
 
         if (profile == null) {
-          final fallback = UserProfile(
-            uid: cleanUid,
-            email: '',
-            displayName: 'Nestora Kullanıcısı',
-            homeName: AppConstants.defaultHomeName,
-            photoPath: cachedPhoto,
-            preferences: const UserPreferences(),
-          );
+          final fallback = localCacheService?.loadProfile() ??
+              UserProfile(
+                uid: cleanUid,
+                email: '',
+                displayName: 'Nestora Kullanıcısı',
+                roleTitle: 'Ev Sahibi',
+                homeName: AppConstants.defaultHomeName,
+                photoPath: cachedPhoto,
+                preferences: const UserPreferences(),
+              );
+          localCacheService?.saveProfile(fallback);
           emit(ProfileLoaded(profile: fallback));
           return;
         }
@@ -68,6 +82,8 @@ class ProfileCubit extends Cubit<ProfileState> {
             ? profile.copyWith(photoPath: finalPhoto)
             : profile;
 
+        localCacheService?.saveProfile(finalProfile);
+
         if (state is ProfileLoaded) {
           final current = state as ProfileLoaded;
           emit(current.copyWith(profile: finalProfile, isSaving: false));
@@ -76,7 +92,10 @@ class ProfileCubit extends Cubit<ProfileState> {
         }
       },
       onError: (error) {
-        emit(ProfileError('Profil yüklenirken bir hata oluştu: $error'));
+        if (state is! ProfileLoaded) {
+          final fallback = localCacheService?.loadProfile() ?? SeedData.defaultProfile;
+          emit(ProfileLoaded(profile: fallback));
+        }
       },
     );
   }
@@ -91,25 +110,64 @@ class ProfileCubit extends Cubit<ProfileState> {
 
     if (state is! ProfileLoaded) return;
     final current = state as ProfileLoaded;
-    emit(current.copyWith(isSaving: true, clearFeedback: true, clearError: true));
+    final updatedProfile = current.profile.copyWith(homeName: cleanName);
+
+    await sharedPreferences?.setString(AppConstants.prefUserHomeName, cleanName);
+    await localCacheService?.saveProfile(updatedProfile);
+
+    emit(current.copyWith(
+      profile: updatedProfile,
+      isSaving: false,
+      feedbackMessage: 'Ev adı başarıyla güncellendi.',
+    ));
 
     final result = await profileRepository.updateHomeName(
       current.profile.uid,
       cleanName,
     );
+    if (result.isFailure) {
+      final msg = result.failureOrNull?.message ?? 'Ev adı kaydedilemedi';
+      emit(current.copyWith(errorMessage: msg));
+    }
+  }
 
-    if (result.isSuccess) {
-      await sharedPreferences?.setString(AppConstants.prefUserHomeName, cleanName);
-      emit(current.copyWith(
-        profile: current.profile.copyWith(homeName: cleanName),
-        isSaving: false,
-        feedbackMessage: 'Ev adı başarıyla güncellendi.',
-      ));
-    } else {
-      emit(current.copyWith(
-        isSaving: false,
-        errorMessage: result.failure.message,
-      ));
+  /// Updates multiple profile details atomically (displayName, email, roleTitle, homeName).
+  Future<void> updateProfileDetails({
+    String? displayName,
+    String? email,
+    String? roleTitle,
+    String? homeName,
+  }) async {
+    if (state is! ProfileLoaded) return;
+    final current = state as ProfileLoaded;
+    var updated = current.profile;
+
+    if (displayName != null && displayName.trim().isNotEmpty) {
+      updated = updated.copyWith(displayName: displayName.trim());
+    }
+    if (email != null && email.trim().isNotEmpty) {
+      updated = updated.copyWith(email: email.trim());
+    }
+    if (roleTitle != null && roleTitle.trim().isNotEmpty) {
+      updated = updated.copyWith(roleTitle: roleTitle.trim());
+    }
+    if (homeName != null && homeName.trim().isNotEmpty) {
+      updated = updated.copyWith(homeName: homeName.trim());
+    }
+
+    await localCacheService?.saveProfile(updated);
+    emit(current.copyWith(
+      profile: updated,
+      isSaving: false,
+      feedbackMessage: 'Profil başarıyla güncellendi.',
+    ));
+
+    await profileRepository.updateProfile(updated.uid, updated);
+    if (displayName != null && displayName.trim().isNotEmpty) {
+      await profileRepository.updateDisplayName(updated.uid, displayName.trim());
+    }
+    if (homeName != null && homeName.trim().isNotEmpty) {
+      await profileRepository.updateHomeName(updated.uid, homeName.trim());
     }
   }
 
@@ -123,51 +181,89 @@ class ProfileCubit extends Cubit<ProfileState> {
 
     if (state is! ProfileLoaded) return;
     final current = state as ProfileLoaded;
-    emit(current.copyWith(isSaving: true, clearFeedback: true, clearError: true));
+    final updatedProfile = current.profile.copyWith(displayName: cleanName);
 
-    final result = await profileRepository.updateDisplayName(
+    await localCacheService?.saveProfile(updatedProfile);
+
+    emit(current.copyWith(
+      profile: updatedProfile,
+      isSaving: false,
+      feedbackMessage: 'Kullanıcı adı başarıyla güncellendi.',
+    ));
+
+    await profileRepository.updateDisplayName(
       current.profile.uid,
       cleanName,
     );
+  }
 
-    if (result.isSuccess) {
-      emit(current.copyWith(
-        profile: current.profile.copyWith(displayName: cleanName),
-        isSaving: false,
-        feedbackMessage: 'Kullanıcı adı başarıyla güncellendi.',
-      ));
-    } else {
-      emit(current.copyWith(
-        isSaving: false,
-        errorMessage: result.failure.message,
-      ));
-    }
+  /// Updates the user's role title (e.g. "Ev Sahibi", "Yönetici", "Misafir").
+  Future<void> updateRoleTitle(String newRoleTitle) async {
+    final cleanRole = newRoleTitle.trim();
+    if (cleanRole.isEmpty) return;
+
+    if (state is! ProfileLoaded) return;
+    final current = state as ProfileLoaded;
+    final updatedProfile = current.profile.copyWith(roleTitle: cleanRole);
+
+    await localCacheService?.saveProfile(updatedProfile);
+
+    emit(current.copyWith(
+      profile: updatedProfile,
+      isSaving: false,
+      feedbackMessage: 'Rol başarıyla güncellendi.',
+    ));
+
+    await profileRepository.updateProfile(
+      current.profile.uid,
+      updatedProfile,
+    );
+  }
+
+  /// Updates the user's email address.
+  Future<void> updateEmail(String newEmail) async {
+    final cleanEmail = newEmail.trim();
+    if (cleanEmail.isEmpty) return;
+
+    if (state is! ProfileLoaded) return;
+    final current = state as ProfileLoaded;
+    final updatedProfile = current.profile.copyWith(email: cleanEmail);
+
+    await localCacheService?.saveProfile(updatedProfile);
+
+    emit(current.copyWith(
+      profile: updatedProfile,
+      isSaving: false,
+      feedbackMessage: 'E-posta başarıyla güncellendi.',
+    ));
+
+    await profileRepository.updateProfile(
+      current.profile.uid,
+      updatedProfile,
+    );
   }
 
   /// Toggles push notifications on/off.
   Future<void> toggleNotifications(bool enabled) async {
     if (state is! ProfileLoaded) return;
     final current = state as ProfileLoaded;
+    final previousProfile = current.profile;
     final updatedPrefs = current.profile.preferences.copyWith(
       notificationsEnabled: enabled,
     );
+    final updatedProfile = current.profile.copyWith(preferences: updatedPrefs);
 
-    // Optimistic UI update
-    emit(current.copyWith(
-      profile: current.profile.copyWith(preferences: updatedPrefs),
-    ));
+    // Optimistic UI update & local persistence
+    await localCacheService?.saveProfile(updatedProfile);
+    emit(current.copyWith(profile: updatedProfile));
 
     final result = await profileRepository.updatePreferences(
       current.profile.uid,
       updatedPrefs,
     );
-
     if (result.isFailure) {
-      // Rollback on failure
-      emit(current.copyWith(
-        profile: current.profile,
-        errorMessage: result.failure.message,
-      ));
+      final msg = result.failureOrNull?.message ?? 'Ayar güncellenemedi';
+      emit(current.copyWith(profile: previousProfile, errorMessage: msg));
     }
   }
 
@@ -178,23 +274,16 @@ class ProfileCubit extends Cubit<ProfileState> {
     final updatedPrefs = current.profile.preferences.copyWith(
       ecoModeEnabled: enabled,
     );
+    final updatedProfile = current.profile.copyWith(preferences: updatedPrefs);
 
-    // Optimistic UI update
-    emit(current.copyWith(
-      profile: current.profile.copyWith(preferences: updatedPrefs),
-    ));
+    // Optimistic UI update & local persistence
+    await localCacheService?.saveProfile(updatedProfile);
+    emit(current.copyWith(profile: updatedProfile));
 
-    final result = await profileRepository.updatePreferences(
+    await profileRepository.updatePreferences(
       current.profile.uid,
       updatedPrefs,
     );
-
-    if (result.isFailure) {
-      emit(current.copyWith(
-        profile: current.profile,
-        errorMessage: result.failure.message,
-      ));
-    }
   }
 
   /// Updates the preferred temperature unit ('C' or 'F').
@@ -207,22 +296,15 @@ class ProfileCubit extends Cubit<ProfileState> {
     final updatedPrefs = current.profile.preferences.copyWith(
       temperatureUnit: cleanUnit,
     );
+    final updatedProfile = current.profile.copyWith(preferences: updatedPrefs);
 
-    emit(current.copyWith(
-      profile: current.profile.copyWith(preferences: updatedPrefs),
-    ));
+    await localCacheService?.saveProfile(updatedProfile);
+    emit(current.copyWith(profile: updatedProfile));
 
-    final result = await profileRepository.updatePreferences(
+    await profileRepository.updatePreferences(
       current.profile.uid,
       updatedPrefs,
     );
-
-    if (result.isFailure) {
-      emit(current.copyWith(
-        profile: current.profile,
-        errorMessage: result.failure.message,
-      ));
-    }
   }
 
   /// Picks an image via [photoService], saves it locally, and saves the file path.
@@ -245,23 +327,49 @@ class ProfileCubit extends Cubit<ProfileState> {
     await sharedPreferences?.setString(_photoPrefKey(current.profile.uid), path);
     await sharedPreferences?.setString(AppConstants.prefProfilePhotoPath, path);
 
-    final result = await profileRepository.updatePhotoPath(
+    final updatedProfile = current.profile.copyWith(photoPath: path);
+    await localCacheService?.saveProfile(updatedProfile);
+
+    emit(current.copyWith(
+      profile: updatedProfile,
+      isSaving: false,
+      feedbackMessage: 'Profil fotoğrafı güncellendi.',
+    ));
+
+    await profileRepository.updatePhotoPath(
       current.profile.uid,
       path,
     );
+  }
 
-    if (result.isSuccess) {
-      emit(current.copyWith(
-        profile: current.profile.copyWith(photoPath: path),
-        isSaving: false,
-        feedbackMessage: 'Profil fotoğrafı güncellendi.',
-      ));
-    } else {
-      emit(current.copyWith(
-        isSaving: false,
-        errorMessage: result.failure.message,
-      ));
+  /// Sets a predefined or custom photo path directly (e.g. preset asset or saved path).
+  Future<void> setPhotoPath(String? path) async {
+    if (state is! ProfileLoaded) return;
+    final current = state as ProfileLoaded;
+
+    emit(current.copyWith(isSaving: true, clearFeedback: true, clearError: true));
+
+    if (path == null) {
+      await removePhoto();
+      return;
     }
+
+    await sharedPreferences?.setString(_photoPrefKey(current.profile.uid), path);
+    await sharedPreferences?.setString(AppConstants.prefProfilePhotoPath, path);
+
+    final updatedProfile = current.profile.copyWith(photoPath: path);
+    await localCacheService?.saveProfile(updatedProfile);
+
+    emit(current.copyWith(
+      profile: updatedProfile,
+      isSaving: false,
+      feedbackMessage: 'Profil fotoğrafı güncellendi.',
+    ));
+
+    await profileRepository.updatePhotoPath(
+      current.profile.uid,
+      path,
+    );
   }
 
   /// Removes the user's profile photo and deletes the local cached file.
@@ -277,23 +385,19 @@ class ProfileCubit extends Cubit<ProfileState> {
     await sharedPreferences?.remove(_photoPrefKey(current.profile.uid));
     await sharedPreferences?.remove(AppConstants.prefProfilePhotoPath);
 
-    final result = await profileRepository.updatePhotoPath(
+    final updatedProfile = current.profile.copyWith(clearPhotoPath: true);
+    await localCacheService?.saveProfile(updatedProfile);
+
+    emit(current.copyWith(
+      profile: updatedProfile,
+      isSaving: false,
+      feedbackMessage: 'Profil fotoğrafı kaldırıldı.',
+    ));
+
+    await profileRepository.updatePhotoPath(
       current.profile.uid,
       null,
     );
-
-    if (result.isSuccess) {
-      emit(current.copyWith(
-        profile: current.profile.copyWith(clearPhotoPath: true),
-        isSaving: false,
-        feedbackMessage: 'Profil fotoğrafı kaldırıldı.',
-      ));
-    } else {
-      emit(current.copyWith(
-        isSaving: false,
-        errorMessage: result.failure.message,
-      ));
-    }
   }
 
   /// Clears any transient feedback or error messages.

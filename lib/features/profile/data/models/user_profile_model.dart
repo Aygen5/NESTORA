@@ -9,6 +9,7 @@ class UserProfileModel extends UserProfile {
     required super.email,
     required super.displayName,
     required super.homeName,
+    super.roleTitle = 'Ev Sahibi',
     super.photoPath,
     super.preferences = const UserPreferences(),
     super.createdAt,
@@ -42,11 +43,17 @@ class UserProfileModel extends UserProfile {
       name.isNotEmpty ? "$name'in Evi" : "Nestora Evi",
     );
 
+    final role = FirestoreHelpers.parseString(
+      map['roleTitle'] ?? map['role'],
+      'Ev Sahibi',
+    );
+
     return UserProfileModel(
       uid: uid,
       email: FirestoreHelpers.parseString(map['email'], ''),
       displayName: name,
       homeName: home,
+      roleTitle: role,
       photoPath: map['photoPath'] as String?,
       preferences: prefs,
       createdAt: FirestoreHelpers.parseDateTime(map['createdAt']),
@@ -71,6 +78,7 @@ class UserProfileModel extends UserProfile {
       email: profile.email,
       displayName: profile.displayName,
       homeName: profile.homeName,
+      roleTitle: profile.roleTitle,
       photoPath: profile.photoPath,
       preferences: profile.preferences,
       createdAt: profile.createdAt,
@@ -84,6 +92,7 @@ class UserProfileModel extends UserProfile {
       'displayName': displayName,
       'homeName': homeName,
       'email': email,
+      'roleTitle': roleTitle,
       if (photoPath != null) 'photoPath': photoPath,
       'preferences': {
         'notificationsEnabled': preferences.notificationsEnabled,
@@ -102,6 +111,7 @@ class UserProfileModel extends UserProfile {
       'email': email,
       'displayName': displayName,
       'homeName': homeName,
+      'roleTitle': roleTitle,
       if (photoPath != null) 'photoPath': photoPath,
       'preferences': {
         'notificationsEnabled': preferences.notificationsEnabled,
@@ -119,6 +129,7 @@ class UserProfileModel extends UserProfile {
         email: email,
         displayName: displayName,
         homeName: homeName,
+        roleTitle: roleTitle,
         photoPath: photoPath,
         preferences: preferences,
         createdAt: createdAt,
