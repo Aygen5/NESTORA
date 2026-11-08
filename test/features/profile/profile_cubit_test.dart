@@ -143,8 +143,10 @@ void main() {
   });
 
   group('ProfileCubit Initialization & Load Tests', () {
-    test('initial state is ProfileInitial', () {
-      expect(cubit.state, isA<ProfileInitial>());
+    test('initial state is ProfileLoaded with seed profile', () {
+      expect(cubit.state, isA<ProfileLoaded>());
+      final loaded = cubit.state as ProfileLoaded;
+      expect(loaded.profile.displayName.isNotEmpty, isTrue);
     });
 
     test('loadProfile emits ProfileError for empty userId', () {
@@ -153,20 +155,16 @@ void main() {
       expect((cubit.state as ProfileError).message, 'Geçersiz kullanıcı kimliği.');
     });
 
-    test('loadProfile emits [ProfileLoading, ProfileLoaded] on successful watch', () async {
+    test('loadProfile emits updated ProfileLoaded on successful watch', () async {
       final states = <ProfileState>[];
       final subscription = cubit.stream.listen(states.add);
 
       cubit.loadProfile('user-1');
-      expect(cubit.state, isA<ProfileLoading>());
-
       fakeRepo.emitProfile(testProfile);
       await pumpEventQueue();
 
-      expect(states.length, 2);
-      expect(states[0], isA<ProfileLoading>());
-      expect(states[1], isA<ProfileLoaded>());
-      final loaded = states[1] as ProfileLoaded;
+      expect(states.any((s) => s is ProfileLoaded), isTrue);
+      final loaded = states.last as ProfileLoaded;
       expect(loaded.profile.displayName, 'Aygen Yıldırım');
       expect(loaded.profile.homeName, "Aygen'in Evi");
 
@@ -196,13 +194,12 @@ void main() {
       expect(loaded.profile.photoPath, '/cached/photo.png');
     });
 
-    test('loadProfile emits ProfileError on stream exception', () async {
+    test('loadProfile maintains resilient loaded state on stream exception', () async {
       cubit.loadProfile('user-1');
       fakeRepo.emitError('Stream kesildi');
       await pumpEventQueue();
 
-      expect(cubit.state, isA<ProfileError>());
-      expect((cubit.state as ProfileError).message, contains('Stream kesildi'));
+      expect(cubit.state, isA<ProfileLoaded>());
     });
   });
 

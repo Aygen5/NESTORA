@@ -282,8 +282,8 @@ void main() {
       expect(find.text('Nestora'), findsOneWidget);
       // Unread notification badge count (1 unread)
       expect(find.text('1'), findsOneWidget);
-      // Profile initial avatar ('A' for Aygen)
-      expect(find.text('A'), findsOneWidget);
+      // Profile avatar in header
+      expect(find.byKey(const Key('dashboard_profile_avatar')), findsOneWidget);
 
       // Hero Banner
       expect(find.text("Aygen'in Evi"), findsOneWidget);
@@ -301,8 +301,10 @@ void main() {
       expect(find.text('Gece Modu'), findsOneWidget);
       expect(find.text('Dışarıda'), findsOneWidget);
 
-      // Rooms Carousel
+      // Rooms Carousel & Add Room button
       expect(find.text('Odalar'), findsOneWidget);
+      expect(find.byKey(const Key('dashboard_add_room_button')), findsOneWidget);
+      expect(find.text('Oda Ekle'), findsOneWidget);
       expect(find.text('Tümünü Gör'), findsOneWidget);
       expect(find.text('Salon'), findsWidgets);
 

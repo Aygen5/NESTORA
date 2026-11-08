@@ -374,10 +374,13 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Tap avatar camera icon
+      // Tap avatar camera icon (opens bottom sheet photo options modal)
       await tester.tap(find.byIcon(Icons.camera_alt_rounded));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+
+      // Tap 'Galeriden Seç' from the bottomsheet
+      await tester.tap(find.text('Galeriden Seç'));
+      await tester.pumpAndSettle();
 
       expect(fakePhotoService.wasPickCalled, isTrue);
       expect(fakeProfileRepo.storedProfile?.photoPath, equals('/mock/avatar.png'));

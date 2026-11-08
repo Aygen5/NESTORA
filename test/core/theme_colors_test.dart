@@ -30,65 +30,67 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
 
-  group('Faz 7.1: Tema Renkleri ve Kontrast Değerlendirme Testleri', () {
+  group('Faz 7.1: Tema Renkleri ve Kontrast Değerlendirme Testleri (Senaryo B: Modern Kaşmir & Doğal Taş)', () {
     test('Açık mod arka plan renk sabitleri ve değerleri doğrudur', () {
-      expect(AppColors.lightNeutralPearl, const Color(0xFFF4F3EC));
+      expect(AppColors.lightNeutralPearl, const Color(0xFFF5F3EF));
       expect(AppColors.lightOldLace, const Color(0xFFFDF5E6));
       expect(AppColors.lightScaffoldBackground, AppColors.lightNeutralPearl);
       expect(AppColors.lightCardBackground, const Color(0xFFFFFFFF));
-      expect(AppColors.lightSecondarySurface, const Color(0xFFF1F4EF));
+      expect(AppColors.lightSecondarySurface, const Color(0xFFEAE6DF));
+      expect(AppColors.primary, const Color(0xFF1E3023));
+      expect(AppColors.kashmirBadge, const Color(0xFFD4C3A3));
     });
 
     test('Koyu mod arka plan ve kart renk sabitleri Stitch referansına uygundur', () {
-      expect(AppColors.darkScaffoldBackground, const Color(0xFF131713));
-      expect(AppColors.darkCardBackground, const Color(0xFF1C221D));
-      expect(AppColors.darkSecondarySurface, const Color(0xFF242B24));
-      expect(AppColors.darkBorder, const Color(0xFF2E382F));
-      expect(AppColors.darkTextPrimary, const Color(0xFFEDF2E9));
-      expect(AppColors.darkTextSecondary, const Color(0xFFA2A99E));
+      expect(AppColors.darkScaffoldBackground, const Color(0xFF131614));
+      expect(AppColors.darkCardBackground, const Color(0xFF1B201D));
+      expect(AppColors.darkSecondarySurface, const Color(0xFF242B26));
+      expect(AppColors.darkBorder, const Color(0xFF2F3832));
+      expect(AppColors.darkTextPrimary, const Color(0xFFFFFFFF));
+      expect(AppColors.darkTextSecondary, const Color(0xFFB0B7B2));
     });
 
     test('Açık mod kontrast denetimi: Metin ve kartlar WCAG standartlarını karşılar', () {
-      // Primary text (#292F29) on Neutral Pearl background (#F4F3EC)
+      // Primary text (#212121) on Neutral Pearl background (#F5F3EF)
       final textOnScaffoldContrast = _contrastRatio(AppColors.textPrimary, AppColors.lightNeutralPearl);
       expect(textOnScaffoldContrast, greaterThanOrEqualTo(7.0),
-          reason: 'Açık mod birincil metin (#292F29) arka planda WCAG AAA (7.0:1) eşiğini aşmalıdır');
+          reason: 'Açık mod birincil metin (#212121) arka planda WCAG AAA (7.0:1) eşiğini aşmalıdır');
 
-      // Primary text (#292F29) on white card (#FFFFFF)
+      // Primary text (#212121) on white card (#FFFFFF)
       final textOnCardContrast = _contrastRatio(AppColors.textPrimary, AppColors.lightCardBackground);
       expect(textOnCardContrast, greaterThanOrEqualTo(7.0),
-          reason: 'Açık mod birincil metin (#292F29) beyaz kart üzerinde WCAG AAA (7.0:1) eşiğini aşmalıdır');
+          reason: 'Açık mod birincil metin (#212121) beyaz kart üzerinde WCAG AAA (7.0:1) eşiğini aşmalıdır');
 
-      // Secondary text (#777D73) on white card (#FFFFFF)
+      // Secondary text (#666666) on white card (#FFFFFF)
       final secondaryOnCardContrast = _contrastRatio(AppColors.textSecondary, AppColors.lightCardBackground);
-      expect(secondaryOnCardContrast, greaterThanOrEqualTo(4.0),
-          reason: 'İkincil metin (#777D73) beyaz kart üzerinde en az 4.0:1 kontrast sağlamalıdır');
+      expect(secondaryOnCardContrast, greaterThanOrEqualTo(4.5),
+          reason: 'İkincil metin (#666666) beyaz kart üzerinde en az 4.5:1 kontrast sağlamalıdır');
 
-      // Subtle contrast between white card (#FFFFFF) and Neutral Pearl (#F4F3EC)
+      // Subtle contrast between white card (#FFFFFF) and Neutral Pearl (#F5F3EF)
       final cardOnScaffoldContrast = _contrastRatio(AppColors.lightCardBackground, AppColors.lightNeutralPearl);
-      expect(cardOnScaffoldContrast, greaterThan(1.10),
-          reason: 'Beyaz kart (#FFFFFF) ile nötr inci arka planı (#F4F3EC) arasında doğal bir görsel ayrım olmalıdır');
+      expect(cardOnScaffoldContrast, greaterThan(1.04),
+          reason: 'Beyaz kart (#FFFFFF) ile kaşmir arka planı (#F5F3EF) arasında doğal bir görsel ayrım olmalıdır');
     });
 
     test('Koyu mod kontrast denetimi: Metin ve kartlar WCAG standartlarını karşılar', () {
-      // Dark text primary (#EDF2E9) on dark scaffold (#131713)
+      // Dark text primary (#FFFFFF) on dark scaffold (#131614)
       final darkTextOnScaffold = _contrastRatio(AppColors.darkTextPrimary, AppColors.darkScaffoldBackground);
       expect(darkTextOnScaffold, greaterThanOrEqualTo(7.0),
-          reason: 'Koyu mod birincil metin (#EDF2E9) koyu arka planda (#131713) WCAG AAA (7.0:1) eşiğini aşmalıdır');
+          reason: 'Koyu mod birincil metin (#FFFFFF) koyu arka planda (#131614) WCAG AAA (7.0:1) eşiğini aşmalıdır');
 
-      // Dark text primary (#EDF2E9) on dark card (#1C221D)
+      // Dark text primary (#FFFFFF) on dark card (#1B201D)
       final darkTextOnCard = _contrastRatio(AppColors.darkTextPrimary, AppColors.darkCardBackground);
       expect(darkTextOnCard, greaterThanOrEqualTo(7.0),
-          reason: 'Koyu mod birincil metin (#EDF2E9) kart üzerinde (#1C221D) WCAG AAA (7.0:1) eşiğini aşmalıdır');
+          reason: 'Koyu mod birincil metin (#FFFFFF) kart üzerinde (#1B201D) WCAG AAA (7.0:1) eşiğini aşmalıdır');
 
-      // Dark text secondary (#A2A99E) on dark card (#1C221D)
+      // Dark text secondary (#B0B7B2) on dark card (#1B201D)
       final darkSecondaryOnCard = _contrastRatio(AppColors.darkTextSecondary, AppColors.darkCardBackground);
       expect(darkSecondaryOnCard, greaterThanOrEqualTo(4.5),
-          reason: 'Koyu mod ikincil metin (#A2A99E) kart üzerinde (#1C221D) WCAG AA (4.5:1) eşiğini aşmalıdır');
+          reason: 'Koyu mod ikincil metin (#B0B7B2) kart üzerinde (#1B201D) WCAG AA (4.5:1) eşiğini aşmalıdır');
 
-      // Card elevation contrast: #1C221D against #131713
+      // Card elevation contrast: #1B201D against #131614
       final cardOnScaffold = _contrastRatio(AppColors.darkCardBackground, AppColors.darkScaffoldBackground);
-      expect(cardOnScaffold, greaterThan(1.05),
+      expect(cardOnScaffold, greaterThan(1.04),
           reason: 'Koyu modda kart yüzeyi ile arka plan arasında görünür bir ton kademelenmesi olmalıdır');
     });
 

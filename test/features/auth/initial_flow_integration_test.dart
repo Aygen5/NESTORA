@@ -58,8 +58,8 @@ void main() {
 
       expect(find.byType(SplashPage), findsOneWidget);
 
-      // Fast-forward 1800ms splash timer
-      await tester.pump(const Duration(milliseconds: 1900));
+      // Fast-forward 4000ms splash timer (Faz 2.2)
+      await tester.pump(const Duration(milliseconds: 4200));
       await tester.pumpAndSettle();
 
       expect(find.byType(OnboardingPage), findsOneWidget);
@@ -83,8 +83,8 @@ void main() {
 
       expect(find.byType(SplashPage), findsOneWidget);
 
-      // Fast-forward 1800ms splash timer
-      await tester.pump(const Duration(milliseconds: 1900));
+      // Fast-forward 4000ms splash timer (Faz 2.2)
+      await tester.pump(const Duration(milliseconds: 4200));
       await tester.pumpAndSettle();
 
       expect(find.byType(WelcomePage), findsOneWidget);
@@ -105,8 +105,8 @@ void main() {
 
       expect(find.byType(SplashPage), findsOneWidget);
 
-      // Fast-forward 1800ms splash timer
-      await tester.pump(const Duration(milliseconds: 1900));
+      // Fast-forward 4000ms splash timer (Faz 2.2)
+      await tester.pump(const Duration(milliseconds: 4200));
       await tester.pumpAndSettle();
 
       expect(find.byType(AppShell), findsOneWidget);

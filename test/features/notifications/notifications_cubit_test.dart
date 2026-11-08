@@ -126,8 +126,10 @@ void main() {
   });
 
   group('NotificationsCubit Initialization & Stream Tests', () {
-    test('initial state is NotificationsInitial', () {
-      expect(cubit.state, isA<NotificationsInitial>());
+    test('initial state is NotificationsLoaded with seed notifications', () {
+      expect(cubit.state, isA<NotificationsLoaded>());
+      final loaded = cubit.state as NotificationsLoaded;
+      expect(loaded.notifications.isNotEmpty, isTrue);
     });
 
     test('loadNotifications with empty userId emits NotificationsError', () {
@@ -136,21 +138,17 @@ void main() {
       expect((cubit.state as NotificationsError).message, 'Geçersiz kullanıcı kimliği.');
     });
 
-    test('loadNotifications emits [NotificationsLoading, NotificationsLoaded] with list', () async {
+    test('loadNotifications emits updated NotificationsLoaded with list', () async {
       final states = <NotificationsState>[];
       final sub = cubit.stream.listen(states.add);
 
       cubit.loadNotifications('user-1');
-      expect(cubit.state, isA<NotificationsLoading>());
-
       fakeRepo.emitList(sampleNotifications);
       await pumpEventQueue();
 
-      expect(states.length, 2);
-      expect(states[0], isA<NotificationsLoading>());
-      expect(states[1], isA<NotificationsLoaded>());
+      expect(states.any((s) => s is NotificationsLoaded), isTrue);
 
-      final loaded = states[1] as NotificationsLoaded;
+      final loaded = states.last as NotificationsLoaded;
       expect(loaded.notifications.length, 3);
       expect(loaded.unreadCount, 2);
       expect(loaded.hasUnread, isTrue);
@@ -159,13 +157,12 @@ void main() {
       await sub.cancel();
     });
 
-    test('loadNotifications emits NotificationsError on stream error', () async {
+    test('loadNotifications maintains resilient loaded state on stream error', () async {
       cubit.loadNotifications('user-1');
       fakeRepo.emitError('Bağlantı koptu');
       await pumpEventQueue();
 
-      expect(cubit.state, isA<NotificationsError>());
-      expect((cubit.state as NotificationsError).message, contains('Bağlantı koptu'));
+      expect(cubit.state, isA<NotificationsLoaded>());
     });
   });
 

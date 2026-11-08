@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nestora/app/app_shell.dart';
@@ -108,10 +107,7 @@ void main() {
       expect(find.text('Preview'), findsNothing);
     });
 
-    testWidgets('AppShell debug floating action button displays developer gallery in debug mode', (tester) async {
-      // In tests, kDebugMode is true by default
-      expect(kDebugMode, isTrue);
-
+    testWidgets('AppShell debug floating action button is completely removed (Faz 2.3)', (tester) async {
       await tester.pumpWidget(
         _buildTestApp(
           const AppShell(
@@ -121,9 +117,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // In debug mode, FAB exists and labels gallery
-      expect(find.byType(FloatingActionButton), findsOneWidget);
-      expect(find.text('16 Ekran Galerisi'), findsOneWidget);
+      // In accordance with Faz 2.3, FAB and 16 Ekran Galerisi are permanently removed
+      expect(find.byType(FloatingActionButton), findsNothing);
+      expect(find.text('16 Ekran Galerisi'), findsNothing);
     });
   });
 }

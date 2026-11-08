@@ -23,8 +23,8 @@ void main() {
     // 1. Splash Page is visible
     expect(find.byType(SplashPage), findsOneWidget);
 
-    // Fast forward splash timer (1800ms)
-    await tester.pump(const Duration(milliseconds: 1900));
+    // Fast forward splash timer (4000ms, Faz 2.2)
+    await tester.pump(const Duration(milliseconds: 4200));
     await tester.pumpAndSettle();
 
     // 2. Onboarding Page is visible with Smart House & Big Headline

@@ -24,20 +24,20 @@ void main() {
       expect(find.byType(NestoraLogo), findsOneWidget);
       expect(finished, isFalse);
 
-      // Stage 1: Advance by 400ms (within 0.0 - 0.45, logo sliding down)
-      await tester.pump(const Duration(milliseconds: 400));
+      // Stage 1: Advance by 800ms (within 0.0 - 0.20, logo sliding down)
+      await tester.pump(const Duration(milliseconds: 800));
       expect(finished, isFalse);
 
-      // Center Hold: Advance to 1000ms (within 0.45 - 0.70, logo at center)
+      // Center Hold: Advance to 2500ms (within 0.20 - 0.80, logo at center)
+      await tester.pump(const Duration(milliseconds: 1700));
+      expect(finished, isFalse);
+
+      // Stage 2: Advance to 3600ms (within 0.80 - 1.00)
+      await tester.pump(const Duration(milliseconds: 1100));
+      expect(finished, isFalse);
+
+      // Advance past 4000ms to completion
       await tester.pump(const Duration(milliseconds: 600));
-      expect(finished, isFalse);
-
-      // Stage 2: Advance to 1500ms (within 0.70 - 1.00, screen sliding up)
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(finished, isFalse);
-
-      // Advance past 1800ms to completion
-      await tester.pump(const Duration(milliseconds: 400));
       await tester.pumpAndSettle();
 
       expect(finished, isTrue);

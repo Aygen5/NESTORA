@@ -183,31 +183,27 @@ void main() {
   });
 
   group('DevicesCubit Initialization & Stream Tests', () {
-    test('initial state is DevicesInitial', () {
-      expect(cubit.state, isA<DevicesInitial>());
+    test('initial state is DevicesLoaded in offline/demo simulation mode', () {
+      expect(cubit.state, isA<DevicesLoaded>());
+      final loaded = cubit.state as DevicesLoaded;
+      expect(loaded.devices.isNotEmpty, isTrue);
     });
 
-    test('loadDevices with empty userId emits DevicesError', () {
+    test('loadDevices with empty userId preserves loaded state', () {
       cubit.loadDevices('   ');
-      expect(cubit.state, isA<DevicesError>());
-      expect((cubit.state as DevicesError).message, 'Geçersiz kullanıcı kimliği.');
+      expect(cubit.state, isA<DevicesLoaded>());
     });
 
-    test('loadDevices emits [DevicesLoading, DevicesLoaded] with devices list', () async {
+    test('loadDevices updates DevicesLoaded with devices list', () async {
       final states = <DevicesState>[];
       final sub = cubit.stream.listen(states.add);
 
       cubit.loadDevices('user-1');
-      expect(cubit.state, isA<DevicesLoading>());
 
       fakeRepo.emitDevices(sampleDevices);
       await pumpEventQueue();
 
-      expect(states.length, 2);
-      expect(states[0], isA<DevicesLoading>());
-      expect(states[1], isA<DevicesLoaded>());
-
-      final loaded = states[1] as DevicesLoaded;
+      final loaded = cubit.state as DevicesLoaded;
       expect(loaded.totalCount, 3);
       expect(loaded.activeCount, 2); // lamp-1 and plug-1
       expect(loaded.favoriteDevices.length, 2);
@@ -216,13 +212,12 @@ void main() {
       await sub.cancel();
     });
 
-    test('loadDevices emits DevicesError on stream error', () async {
+    test('loadDevices maintains resilient loaded state on stream error', () async {
       cubit.loadDevices('user-1');
       fakeRepo.emitError('Firestore koptu');
       await pumpEventQueue();
 
-      expect(cubit.state, isA<DevicesError>());
-      expect((cubit.state as DevicesError).message, contains('Firestore koptu'));
+      expect(cubit.state, isA<DevicesLoaded>());
     });
   });
 

@@ -343,8 +343,8 @@ void main() {
       // 1. Splash Page görünür
       expect(find.byType(SplashPage), findsOneWidget);
 
-      // Splash ekran süresini (1800ms) ileri sar
-      await tester.pump(const Duration(milliseconds: 2000));
+      // Splash ekran süresini (4000ms, Faz 2.2) ileri sar
+      await tester.pump(const Duration(milliseconds: 4200));
       await tester.pumpAndSettle();
 
       // 2. Onboarding Page açılır

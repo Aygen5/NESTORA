@@ -211,9 +211,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Title & Mode Switcher
-      expect(find.text('Yeni Cihaz Ekle'), findsWidgets);
-      expect(find.text('Cihazı Düzenle'), findsOneWidget);
+      // Dedicated Add Mode: Title is 'Yeni Cihaz Ekle', no 'Cihazı Düzenle' switcher
+      expect(find.text('Yeni Cihaz Ekle'), findsOneWidget);
+      expect(find.text('Cihazı Düzenle'), findsNothing);
 
       // Smart Pairing Banner
       expect(find.text('SANAL EŞLEŞTİRME'), findsOneWidget);
@@ -346,7 +346,7 @@ void main() {
       // Dynamic Hardware Panel switched to AC
       expect(find.text('Hedef Sıcaklık'), findsOneWidget);
       expect(find.text('Çalışma Modu'), findsOneWidget);
-      expect(find.text('22.0°C'), findsOneWidget);
+      expect(find.text('22°C'), findsOneWidget);
     });
 
     testWidgets('switching device types updates dynamic hardware settings panel', (tester) async {
@@ -459,6 +459,36 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(fakeDevicesRepo.devices.any((d) => d.id == targetDev.id), isFalse);
+    });
+
+    testWidgets('typing keywords in device name dynamically auto-detects device type and room', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Type "Salon Kliması" in input
+      await tester.enterText(find.byType(NestoraInput), 'Salon Kliması');
+      await tester.pump();
+
+      // Expect auto-detected badge and AC panel
+      expect(find.textContaining('Akıllı Eşleşti: Klima (AC) • Salon'), findsOneWidget);
+      expect(find.text('Hedef Sıcaklık'), findsOneWidget);
+      expect(find.text('Çalışma Modu'), findsOneWidget);
+
+      // Change input to "Mutfak Kahve Prizi"
+      await tester.enterText(find.byType(NestoraInput), 'Mutfak Kahve Prizi');
+      await tester.pump();
+
+      // Expect auto-detected badge for Plug and Mutfak
+      expect(find.textContaining('Akıllı Eşleşti: Akıllı Priz • Mutfak'), findsOneWidget);
+      expect(find.text('Enerji Tasarruf Rölesi'), findsOneWidget);
     });
   });
 }
