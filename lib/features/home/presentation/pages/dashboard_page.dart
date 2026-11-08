@@ -475,22 +475,31 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'NESTORA · AKILLI YAŞAM',
-                style: AppTypography.badge(
-                  color: const Color(0xFFB7CCB9),
-                ).copyWith(letterSpacing: 1.0, fontWeight: FontWeight.w600),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0x33FFFFFF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              Flexible(
                 child: Text(
-                  homeName,
-                  style: AppTypography.badge(color: Colors.white).copyWith(
-                    fontWeight: FontWeight.w600,
+                  'NESTORA · AKILLI YAŞAM',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.badge(
+                    color: const Color(0xFFB7CCB9),
+                  ).copyWith(letterSpacing: 1.0, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0x33FFFFFF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    homeName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.badge(color: Colors.white).copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

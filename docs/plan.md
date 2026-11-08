@@ -301,7 +301,7 @@ Proje, mevcut 16 arayüz ekranının görsel tasarımını, animasyonlarını ve
 - Cihaz kartları, lamba parlaklık slider'ı ve toggle anahtarları.
 - Tema değiştirme etkileşimleri.
 
-### Adım 9.3: Uçtan Uca Entegrasyon Testleri
+### Adım 9.3: [x] Uçtan Uca Entegrasyon Testleri
 - Splash -> Onboarding -> Welcome -> Login/Register -> Dashboard akışı.
 - Hızlı demo ile giriş ve ana kontrol paneline erişim.
 - Yeni oda ekleme, cihaza bağlama, cihaz durumunu değiştirme ve Dashboard'da anlık güncelleme.
