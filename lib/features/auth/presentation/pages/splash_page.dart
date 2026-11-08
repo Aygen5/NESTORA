@@ -38,7 +38,7 @@ class _SplashPageState extends State<SplashPage>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 4000),
     );
 
     // 1. Stage: Logo drops smoothly from top into center with spring/bounce
@@ -48,7 +48,7 @@ class _SplashPageState extends State<SplashPage>
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.45, curve: Curves.easeOutBack),
+        curve: const Interval(0.0, 0.35, curve: Curves.easeOutBack),
       ),
     );
 
@@ -59,7 +59,7 @@ class _SplashPageState extends State<SplashPage>
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.30, curve: Curves.easeIn),
+        curve: const Interval(0.0, 0.25, curve: Curves.easeIn),
       ),
     );
 
@@ -70,7 +70,7 @@ class _SplashPageState extends State<SplashPage>
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.20, 0.65, curve: Curves.easeInOut),
+        curve: const Interval(0.20, 0.80, curve: Curves.easeInOut),
       ),
     );
 
@@ -81,7 +81,7 @@ class _SplashPageState extends State<SplashPage>
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.70, 1.0, curve: Curves.easeInOutCubic),
+        curve: const Interval(0.85, 1.0, curve: Curves.easeInOutCubic),
       ),
     );
 
@@ -95,7 +95,7 @@ class _SplashPageState extends State<SplashPage>
     _controller.forward();
 
     // Safety fallback timer ensuring navigation occurs smoothly even in delayed environments
-    _fallbackTimer = Timer(const Duration(milliseconds: 2100), () {
+    _fallbackTimer = Timer(const Duration(milliseconds: 4200), () {
       if (mounted && !_hasNavigated) {
         _navigateToNext();
       }
