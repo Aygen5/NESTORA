@@ -70,13 +70,13 @@ graph TD
 ## 📋 4. Adım Adım Uygulama Planı (Fazlar)
 
 ### Faz A: Uygulama Kabuğu (AppShell) ve Alt Gezinme Çubuğu (4 Sekme)
-- [ ] **A.1:** `lib/core/widgets/nestora_bottom_nav.dart` bileşenine 4. sekme (`Odalar`) entegrasyonu:
+- [x] **A.1:** `lib/core/widgets/nestora_bottom_nav.dart` bileşenine 4. sekme (`Odalar`) entegrasyonu:
   - 0: `Ana Sayfa` (`Icons.home_outlined` / `Icons.home`)
   - 1: `Odalar` (`Icons.meeting_room_outlined` / `Icons.meeting_room`)
   - 2: `Cihazlar` (`Icons.grid_view_outlined` / `Icons.grid_view`)
   - 3: `Profil` (`Icons.person_outline` / `Icons.person`)
-- [ ] **A.2:** `lib/app/app_shell.dart` içerisinde `pages` listesine `RoomsPage`'in 1. index olarak eklenmesi; `_calculateSelectedIndex` ve `_onItemTapped` yönlendirmelerinin 4 sekmeye göre güncellenmesi.
-- [ ] **A.3:** `lib/app/router/app_router.dart` rota eşlemelerinin `/rooms` rotasını Shell tab olarak destekleyecek şekilde doğrulanması.
+- [x] **A.2:** `lib/app/app_shell.dart` içerisinde `pages` listesine `RoomsPage`'in 1. index olarak eklenmesi; `_calculateSelectedIndex` ve `_onItemTapped` yönlendirmelerinin 4 sekmeye göre güncellenmesi.
+- [x] **A.3:** `lib/app/router/app_router.dart` rota eşlemelerinin `/rooms` rotasını Shell tab olarak destekleyecek şekilde doğrulanması.
 
 ### Faz B: Dashboard — Karşılama, Villa Görseli ve Sistem Durumu
 - [ ] **B.1:** `DashboardPage` üst karşılama bloğunun (Image 3) inşası:
@@ -140,3 +140,4 @@ graph TD
 1. **Çalışmayan Hiçbir Özellik Olmayacak:** Tüm butonlar, sayaçlar, kartlar ve çipler ya bir duruma etki edecek ya da ilgili sayfaya navigasyon sağlayacaktır.
 2. **Sahte / Temsili Veri Yok:** Rakamlar ve durumlar doğrudan `DevicesCubit` ve `RoomsCubit` durumlarından dinamik beslenecektir.
 3. **Dokümantasyon Bütünlüğü:** Tüm adımlar tamamlandıkça `docs/plan_2.md` üzerinde işaretlenecek ve raporlanacaktır.
+

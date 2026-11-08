@@ -83,7 +83,7 @@ void main() {
       expect(find.text('Open Preview'), findsOneWidget);
     });
 
-    testWidgets('NestoraBottomNav strictly contains only 3 main items and excludes ComponentsPreview', (tester) async {
+    testWidgets('NestoraBottomNav strictly contains 4 main items (Ana Sayfa, Odalar, Cihazlar, Profil) and excludes ComponentsPreview', (tester) async {
       await tester.pumpWidget(
         _buildTestApp(
           Scaffold(
@@ -96,8 +96,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Ensure the 3 user-facing tabs exist
+      // Ensure the 4 user-facing tabs exist
       expect(find.text('Ana Sayfa'), findsOneWidget);
+      expect(find.text('Odalar'), findsOneWidget);
       expect(find.text('Cihazlar'), findsOneWidget);
       expect(find.text('Profil'), findsOneWidget);
 

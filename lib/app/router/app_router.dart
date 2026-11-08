@@ -50,11 +50,11 @@ abstract class AppRoutePaths {
 
   // Shell Tabs
   static const String dashboard = '/dashboard';
+  static const String rooms = '/rooms';
   static const String devices = '/devices';
   static const String profile = '/profile';
 
   // Standalone Full-Page Routes
-  static const String rooms = '/rooms';
   static const String roomDetail = '/rooms/:roomId';
   static const String addEditRoom = '/rooms/add-edit';
   static const String lampControl = '/devices/lamp/:deviceId';
@@ -242,7 +242,7 @@ GoRouter createAppRouter({
         ),
       ),
 
-      // 7. ShellRoute: Dashboard (Tab 0), Devices (Tab 1), Profile (Tab 2)
+      // 7. ShellRoute: Dashboard (Tab 0), Rooms (Tab 1), Devices (Tab 2), Profile (Tab 3)
       ShellRoute(
         navigatorKey: shellNavigatorKey,
         builder: (context, state, child) {
@@ -253,9 +253,15 @@ GoRouter createAppRouter({
             path: AppRoutePaths.dashboard,
             name: AppRouteNames.dashboard,
             builder: (context, state) => DashboardPage(
+              onNavigateToRooms: () => context.go(AppRoutePaths.rooms),
               onNavigateToDevices: ({status}) => context.go(AppRoutePaths.devices),
               onNavigateToProfile: () => context.go(AppRoutePaths.profile),
             ),
+          ),
+          GoRoute(
+            path: AppRoutePaths.rooms,
+            name: AppRouteNames.rooms,
+            builder: (context, state) => const RoomsPage(),
           ),
           GoRoute(
             path: AppRoutePaths.devices,
@@ -275,14 +281,6 @@ GoRouter createAppRouter({
             ),
           ),
         ],
-      ),
-
-      // 8. Rooms List (Full page)
-      GoRoute(
-        path: AppRoutePaths.rooms,
-        name: AppRouteNames.rooms,
-        parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const RoomsPage(),
       ),
 
       // 9. Add / Edit Room (/rooms/add-edit) - Must precede /rooms/:roomId to prevent param collision
@@ -438,9 +436,9 @@ extension NestoraNavigationExtension on BuildContext {
   void goToRegister() => go(AppRoutePaths.register);
   void goToForgotPassword() => go(AppRoutePaths.forgotPassword);
   void goToDashboard() => go(AppRoutePaths.dashboard);
+  void goToRooms() => go(AppRoutePaths.rooms);
   void goToDevices() => go(AppRoutePaths.devices);
   void goToProfile() => go(AppRoutePaths.profile);
-  void goToRooms() => push(AppRoutePaths.rooms);
   void goToRoomDetail(String roomId, {RoomModel? room}) =>
       push('/rooms/$roomId', extra: room);
   void goToAddEditRoom({RoomModel? room}) =>

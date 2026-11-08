@@ -39,11 +39,13 @@ import '../../../rooms/presentation/pages/rooms_page.dart';
 /// Connects dynamically to [ProfileCubit], [NotificationsCubit], [RoomsCubit],
 /// and [DevicesCubit] as the single sources of truth.
 class DashboardPage extends StatefulWidget {
+  final VoidCallback? onNavigateToRooms;
   final void Function({DeviceStatusFilter? status})? onNavigateToDevices;
   final VoidCallback? onNavigateToProfile;
 
   const DashboardPage({
     super.key,
+    this.onNavigateToRooms,
     this.onNavigateToDevices,
     this.onNavigateToProfile,
   });
@@ -99,6 +101,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _navigateToRooms() {
+    if (widget.onNavigateToRooms != null) {
+      widget.onNavigateToRooms!();
+      return;
+    }
     try {
       context.goToRooms();
     } catch (_) {

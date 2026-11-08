@@ -112,11 +112,12 @@ void main() {
       expect(find.byType(ProfilePage), findsOneWidget);
     });
 
-    testWidgets('renders RoomsPage at /rooms', (tester) async {
+    testWidgets('renders RoomsPage within AppShell at /rooms', (tester) async {
       _setTestViewport(tester);
       addTearDown(() => tester.view.resetPhysicalSize());
       await tester.pumpWidget(_buildTestApp(AppRoutePaths.rooms));
       await tester.pump();
+      expect(find.byType(AppShell), findsOneWidget);
       expect(find.byType(RoomsPage), findsOneWidget);
     });
 
