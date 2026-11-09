@@ -13,3 +13,4 @@ class GetUserProfileUseCase implements UseCase<UserProfile?, String> {
     return repository.getProfile(userId);
   }
 }
+

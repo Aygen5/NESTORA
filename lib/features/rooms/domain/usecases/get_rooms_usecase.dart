@@ -13,3 +13,4 @@ class GetRoomsUseCase implements UseCase<List<Room>, String> {
     return repository.getRooms(userId);
   }
 }
+

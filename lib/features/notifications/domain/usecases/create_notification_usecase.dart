@@ -23,3 +23,4 @@ class CreateNotificationUseCase implements UseCase<void, CreateNotificationParam
     return repository.createNotification(params.userId, params.notification);
   }
 }
+

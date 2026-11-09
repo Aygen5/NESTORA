@@ -22,3 +22,4 @@ class DeleteNotificationUseCase implements UseCase<void, DeleteNotificationParam
     return repository.deleteNotification(params.userId, params.notificationId);
   }
 }
+

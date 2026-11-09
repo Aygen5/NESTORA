@@ -12,3 +12,4 @@ class MarkAllNotificationsReadUseCase implements UseCase<void, String> {
     return repository.markAllAsRead(userId);
   }
 }
+

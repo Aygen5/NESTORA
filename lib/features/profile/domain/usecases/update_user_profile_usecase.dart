@@ -20,3 +20,4 @@ class UpdateUserProfileUseCase implements UseCase<void, UpdateUserProfileParams>
     return repository.updateProfile(params.userId, params.profile);
   }
 }
+

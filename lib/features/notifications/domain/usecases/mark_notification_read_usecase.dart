@@ -22,3 +22,4 @@ class MarkNotificationReadUseCase implements UseCase<void, MarkNotificationReadP
     return repository.markAsRead(params.userId, params.notificationId);
   }
 }
+

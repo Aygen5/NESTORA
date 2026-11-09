@@ -20,3 +20,4 @@ class UpdateDeviceUseCase implements UseCase<void, UpdateDeviceParams> {
     return repository.updateDevice(params.userId, params.device);
   }
 }
+

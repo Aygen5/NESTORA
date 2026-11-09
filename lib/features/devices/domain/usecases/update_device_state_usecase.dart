@@ -28,3 +28,4 @@ class UpdateDeviceStateUseCase implements UseCase<void, UpdateDeviceStateParams>
     );
   }
 }
+

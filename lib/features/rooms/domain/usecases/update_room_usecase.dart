@@ -20,3 +20,4 @@ class UpdateRoomUseCase implements UseCase<void, UpdateRoomParams> {
     return repository.updateRoom(params.userId, params.room);
   }
 }
+

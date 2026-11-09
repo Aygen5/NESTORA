@@ -12,3 +12,4 @@ class WatchUserProfileUseCase implements StreamUseCase<UserProfile?, String> {
     return repository.watchProfile(userId);
   }
 }
+

@@ -12,3 +12,4 @@ class WatchAuthStateUseCase implements NoParamsStreamUseCase<AuthUser?> {
     return repository.authStateChanges;
   }
 }
+

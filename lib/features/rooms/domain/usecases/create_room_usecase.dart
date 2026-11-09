@@ -20,3 +20,4 @@ class CreateRoomUseCase implements UseCase<void, CreateRoomParams> {
     return repository.createRoom(params.userId, params.room);
   }
 }
+

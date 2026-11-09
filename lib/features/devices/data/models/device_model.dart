@@ -41,7 +41,7 @@ class DeviceModel extends Device {
       ),
       brightness: FirestoreHelpers.parseInt(map['brightness'], 72),
       colorHex: FirestoreHelpers.parseString(
-        map['color'] ?? map['colorHex'],
+        map['colorHex'] ?? map['color'],
         '#E1C1A0',
       ),
       colorName: FirestoreHelpers.parseString(
@@ -107,7 +107,9 @@ class DeviceModel extends Device {
       'isPoweredOn': isPoweredOn,
       'brightness': brightness,
       'color': colorHex,
+      'colorHex': colorHex,
       'colorName': colorName,
+      'targetTemp': targetTemp,
       'targetTemperature': targetTemp,
       'mode': acMode.toShortString(),
       'fanSpeed': fanSpeed.toShortString(),
@@ -129,7 +131,9 @@ class DeviceModel extends Device {
       'isPoweredOn': isPoweredOn,
       'brightness': brightness,
       'color': colorHex,
+      'colorHex': colorHex,
       'colorName': colorName,
+      'targetTemp': targetTemp,
       'targetTemperature': targetTemp,
       'mode': acMode.toShortString(),
       'fanSpeed': fanSpeed.toShortString(),

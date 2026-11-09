@@ -12,3 +12,4 @@ class WatchNotificationsUseCase implements StreamUseCase<List<AppNotification>, 
     return repository.watchNotifications(userId);
   }
 }
+

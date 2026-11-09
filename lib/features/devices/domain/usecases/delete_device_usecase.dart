@@ -19,3 +19,4 @@ class DeleteDeviceUseCase implements UseCase<void, DeleteDeviceParams> {
     return repository.deleteDevice(params.userId, params.deviceId);
   }
 }
+

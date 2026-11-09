@@ -13,3 +13,4 @@ class GetNotificationsUseCase implements UseCase<List<AppNotification>, String> 
     return repository.getNotifications(userId);
   }
 }
+

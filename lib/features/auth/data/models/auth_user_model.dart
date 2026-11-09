@@ -44,3 +44,4 @@ class AuthUserModel extends AuthUser {
     };
   }
 }
+

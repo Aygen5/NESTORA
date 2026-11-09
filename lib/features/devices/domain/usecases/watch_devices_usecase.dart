@@ -12,3 +12,4 @@ class WatchDevicesUseCase implements StreamUseCase<List<Device>, String> {
     return repository.watchDevices(userId);
   }
 }
+

@@ -32,3 +32,4 @@ class ToggleDevicePowerUseCase implements UseCase<void, ToggleDevicePowerParams>
     );
   }
 }
+

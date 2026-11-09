@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/seed_data.dart';
 import '../../../../core/services/local_cache_service.dart';
@@ -53,10 +54,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   void reset() {
     _subscription?.cancel();
     _currentUserId = null;
-    emit(NotificationsLoaded(
-      notifications: localCacheService?.loadNotifications(userId: 'usr-1') ??
-          List<AppNotification>.from(SeedData.defaultNotifications),
-    ));
+    emit(const NotificationsLoaded(notifications: []));
   }
 
   /// Loads and listens to real-time notification updates for [userId].
@@ -124,7 +122,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       return n.id == cleanNotifId ? n.copyWith(isRead: true) : n;
     }).toList();
 
-    await localCacheService?.saveNotifications(updatedList);
+    await localCacheService?.saveNotifications(updatedList, userId: userId.trim());
     emit(current.copyWith(notifications: updatedList));
 
     try {
@@ -166,7 +164,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       return n.isRead ? n : n.copyWith(isRead: true);
     }).toList();
 
-    await localCacheService?.saveNotifications(updatedList);
+    await localCacheService?.saveNotifications(updatedList, userId: userId.trim());
     emit(current.copyWith(
       notifications: updatedList,
       isProcessing: false,
@@ -190,7 +188,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         .where((n) => n.id != cleanNotifId)
         .toList();
 
-    await localCacheService?.saveNotifications(updatedList);
+    await localCacheService?.saveNotifications(updatedList, userId: userId.trim());
     emit(current.copyWith(
       notifications: updatedList,
       isProcessing: false,
@@ -280,13 +278,30 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 
+  /// Resolves guaranteed active Firebase user ID to prevent permission denied errors.
+  String _resolveUserId([String? userId]) {
+    if (userId != null && userId.trim().isNotEmpty && userId.trim() != 'demo-user') {
+      return userId.trim();
+    }
+    if (_currentUserId != null && _currentUserId!.trim().isNotEmpty && _currentUserId!.trim() != 'demo-user') {
+      return _currentUserId!.trim();
+    }
+    try {
+      final fbUid = FirebaseAuth.instance.currentUser?.uid;
+      if (fbUid != null && fbUid.isNotEmpty) {
+        return fbUid;
+      }
+    } catch (_) {}
+    return _currentUserId ?? 'demo-user';
+  }
+
   /// Currently active authenticated user ID.
   String? get currentUserId => _currentUserId;
 
   /// Convenience method for marking a notification as read.
   Future<void> markNotificationRead(String notificationId, {String? userId}) {
     return markAsRead(
-      userId: userId ?? _currentUserId ?? 'demo-user',
+      userId: _resolveUserId(userId),
       notificationId: notificationId,
     );
   }
@@ -294,14 +309,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   /// Convenience method for marking all notifications as read.
   Future<void> markAllNotificationsRead({String? userId}) {
     return markAllAsRead(
-      userId: userId ?? _currentUserId ?? 'demo-user',
+      userId: _resolveUserId(userId),
     );
   }
 
   /// Convenience method for deleting a notification.
   Future<void> deleteNotificationById(String notificationId, {String? userId}) {
     return deleteNotification(
-      userId: userId ?? _currentUserId ?? 'demo-user',
+      userId: _resolveUserId(userId),
       notificationId: notificationId,
     );
   }
@@ -313,10 +328,10 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     if (current.notifications.isEmpty) return;
 
     _setProcessing(true);
-    final user = userId ?? _currentUserId ?? 'demo-user';
+    final user = _resolveUserId(userId);
     final notifsToDelete = List<AppNotification>.from(current.notifications);
 
-    await localCacheService?.saveNotifications(const []);
+    await localCacheService?.saveNotifications(const [], userId: user);
     emit(current.copyWith(notifications: const [], isProcessing: true));
 
     for (final notif in notifsToDelete) {

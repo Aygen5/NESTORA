@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -241,6 +242,7 @@ class DevicesCubit extends Cubit<DevicesState> {
       userId: userId,
       deviceId: deviceId,
       updates: {
+        'color': colorHex.trim(),
         'colorHex': colorHex.trim(),
         'colorName': colorName.trim(),
       },
@@ -488,6 +490,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     required String name,
     required String roomId,
     required DeviceType type,
+    String? deviceId,
     int? brightness,
     double? targetTemp,
     String? colorHex,
@@ -523,9 +526,11 @@ class DevicesCubit extends Cubit<DevicesState> {
     _setSaving(true);
     final current = _ensureLoaded();
 
-    final deviceId = 'device-${DateTime.now().millisecondsSinceEpoch}';
+    final effectiveDeviceId = (deviceId != null && deviceId.trim().isNotEmpty)
+        ? deviceId.trim()
+        : 'device-${DateTime.now().millisecondsSinceEpoch}';
     final newDevice = Device(
-      id: deviceId,
+      id: effectiveDeviceId,
       name: cleanName,
       roomId: cleanRoomId,
       type: type,
@@ -708,48 +713,66 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
+  /// Resolves the guaranteed active Firebase user ID to prevent permission denied errors.
+  String _resolveUserId([String? userId]) {
+    if (userId != null && userId.trim().isNotEmpty && userId.trim() != 'demo-user') {
+      return userId.trim();
+    }
+    if (_currentUserId != null && _currentUserId!.trim().isNotEmpty && _currentUserId!.trim() != 'demo-user') {
+      return _currentUserId!.trim();
+    }
+    try {
+      final fbUid = FirebaseAuth.instance.currentUser?.uid;
+      if (fbUid != null && fbUid.isNotEmpty) {
+        return fbUid;
+      }
+    } catch (_) {}
+    return _currentUserId ?? 'demo-user';
+  }
+
   /// Currently active authenticated user ID.
   String? get currentUserId => _currentUserId;
 
   /// Convenience method for toggling device power.
   Future<void> toggleDevicePower(String deviceId, {String? userId}) {
-    return togglePower(userId ?? _currentUserId ?? 'demo-user', deviceId);
+    return togglePower(_resolveUserId(userId), deviceId);
   }
 
   /// Convenience method for toggling favorite flag.
   Future<void> toggleDeviceFavorite(String deviceId, {String? userId}) {
-    return toggleFavorite(userId ?? _currentUserId ?? 'demo-user', deviceId);
+    return toggleFavorite(_resolveUserId(userId), deviceId);
   }
 
   /// Convenience method for setting lamp brightness.
   void setLampBrightness(String deviceId, int brightness, {String? userId}) {
-    setBrightness(userId ?? _currentUserId ?? 'demo-user', deviceId, brightness);
+    setBrightness(_resolveUserId(userId), deviceId, brightness);
   }
 
   /// Convenience method for setting lamp color.
   void setLampColor(String deviceId, {required String name, required String hex, String? userId}) {
-    setColor(userId ?? _currentUserId ?? 'demo-user', deviceId, hex, name);
+    setColor(_resolveUserId(userId), deviceId, hex, name);
   }
 
   /// Convenience method for setting AC target temperature.
   void setAcTemp(String deviceId, double targetTemp, {String? userId}) {
-    setTargetTemperature(userId ?? _currentUserId ?? 'demo-user', deviceId, targetTemp);
+    setTargetTemperature(_resolveUserId(userId), deviceId, targetTemp);
   }
 
   /// Convenience method for setting AC mode.
   Future<void> setAcModeChoice(String deviceId, AcMode mode, {String? userId}) {
-    return setAcMode(userId ?? _currentUserId ?? 'demo-user', deviceId, mode);
+    return setAcMode(_resolveUserId(userId), deviceId, mode);
   }
 
   /// Convenience method for setting AC fan speed.
   Future<void> setAcFanSpeedChoice(String deviceId, FanSpeed speed, {String? userId}) {
-    return setFanSpeed(userId ?? _currentUserId ?? 'demo-user', deviceId, speed);
+    return setFanSpeed(_resolveUserId(userId), deviceId, speed);
   }
 
   /// Convenience method for adding a Device entity.
   Future<void> addDeviceEntity(Device device, {String? userId}) {
     return createDevice(
-      userId: userId ?? _currentUserId ?? 'demo-user',
+      userId: _resolveUserId(userId),
+      deviceId: device.id,
       name: device.name,
       roomId: device.roomId,
       type: device.type,
@@ -767,19 +790,20 @@ class DevicesCubit extends Cubit<DevicesState> {
   /// Convenience method for updating an existing Device entity.
   Future<void> updateDeviceEntity(Device device, {String? userId}) {
     return updateDevice(
-      userId: userId ?? _currentUserId ?? 'demo-user',
+      userId: _resolveUserId(userId),
       device: device,
     );
   }
 
   /// Convenience method for deleting a device.
   Future<void> deleteDeviceById(String deviceId, {String? userId}) {
-    return deleteDevice(userId: userId ?? _currentUserId ?? 'demo-user', deviceId: deviceId);
+    return deleteDevice(userId: _resolveUserId(userId), deviceId: deviceId);
   }
 
   /// Convenience method for toggling power state of all devices in a room.
   Future<void> toggleAllInRoom(String roomNameOrId, bool powerState, {String? userId, String? roomName}) async {
     final current = _ensureLoaded();
+    final effectiveUid = _resolveUserId(userId);
     final target = roomNameOrId.trim().toLowerCase();
     final cleanRoomName = roomName?.trim().toLowerCase();
     String? mappedRoomId;
@@ -788,15 +812,19 @@ class DevicesCubit extends Cubit<DevicesState> {
     if (target.contains('mutfak')) mappedRoomId = 'room-3';
     if (target.contains('calisma') || target.contains('çalışma')) mappedRoomId = 'room-4';
 
+    final devicesToUpdate = <Device>[];
     final updatedDevices = current.devices.map((d) {
       final devRoomId = d.roomId.trim().toLowerCase();
-      final matchesRoom = devRoomId == target ||
+      final devRoomExact = d.roomId.trim();
+      final matchesRoom = devRoomExact == roomNameOrId.trim() ||
+          devRoomId == target ||
           (cleanRoomName != null && devRoomId == cleanRoomName) ||
           (cleanRoomName != null && d.name.toLowerCase().contains(cleanRoomName)) ||
           (mappedRoomId != null && devRoomId == mappedRoomId) ||
           devRoomId.contains(target) ||
           target.contains(devRoomId) ||
-          d.name.toLowerCase().contains(target);
+          (cleanRoomName != null && cleanRoomName.contains(devRoomId));
+
       if (matchesRoom) {
         double newWatts = 0.0;
         if (powerState) {
@@ -812,10 +840,12 @@ class DevicesCubit extends Cubit<DevicesState> {
             newWatts = 45.0;
           }
         }
-        return d.copyWith(
+        final updated = d.copyWith(
           isPoweredOn: powerState,
           currentPowerWatts: double.parse(newWatts.toStringAsFixed(1)),
         );
+        devicesToUpdate.add(updated);
+        return updated;
       }
       return d;
     }).toList();
@@ -826,11 +856,11 @@ class DevicesCubit extends Cubit<DevicesState> {
           ? 'Odadaki tüm cihazlar açıldı.'
           : 'Odadaki tüm cihazlar kapatıldı.',
     ));
-    localCacheService?.saveDevices(updatedDevices, userId: userId ?? _currentUserId);
+    localCacheService?.saveDevices(updatedDevices, userId: effectiveUid);
 
-    for (final dev in updatedDevices) {
+    for (final dev in devicesToUpdate) {
       try {
-        devicesRepository.updateDeviceState(userId ?? _currentUserId ?? 'demo-user', dev.id, {
+        await devicesRepository.updateDeviceState(effectiveUid, dev.id, {
           'isOn': dev.isPoweredOn,
           'isPoweredOn': dev.isPoweredOn,
           'currentPowerWatts': dev.currentPowerWatts,

@@ -311,7 +311,17 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
         _selectedType = matchedType;
       }
       if (matchedRoom != null && widget.initialRoom == null) {
-        _selectedRoom = matchedRoom;
+        final cleanMatched = matchedRoom.trim();
+        _selectedRoom = cleanMatched;
+        try {
+          final roomsState = context.read<RoomsCubit>().state;
+          if (roomsState is RoomsLoaded) {
+            final match = roomsState.rooms.where((r) => r.name.trim() == cleanMatched).firstOrNull;
+            if (match != null) {
+              _selectedRoomId = match.id;
+            }
+          }
+        } catch (_) {}
       }
       if (matchedType != null || (matchedRoom != null && widget.initialRoom == null)) {
         final typeName = matchedType != null ? _getTypeName(matchedType) : '';
@@ -455,6 +465,15 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
       }
       _nameError = null;
       _autoDetectedMatch = '${_getTypeName(_selectedType)} • $_selectedRoom';
+      try {
+        final roomsState = context.read<RoomsCubit>().state;
+        if (roomsState is RoomsLoaded) {
+          final match = roomsState.rooms.where((r) => r.name.trim() == _selectedRoom.trim()).firstOrNull;
+          if (match != null) {
+            _selectedRoomId = match.id;
+          }
+        }
+      } catch (_) {}
     });
 
     showNestoraSnackbar(
@@ -474,6 +493,7 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
     }
     final clean = roomName.trim();
     final match = rooms.where((r) =>
+        r.id.trim() == clean ||
         r.name.trim() == clean ||
         r.name.trim().toLowerCase() == clean.toLowerCase()).firstOrNull;
     if (match != null) return match.id;
@@ -482,7 +502,7 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
     if (clean == 'Mutfak') return 'room-3';
     if (clean == 'Çalışma Odası') return 'room-4';
     if (clean == 'Banyo' || clean == 'Giriş / Dış') return 'room-5';
-    return 'room-${clean.toLowerCase().replaceAll(' ', '-')}';
+    return clean.startsWith('room-') ? clean : 'room-${clean.toLowerCase().replaceAll(' ', '-')}';
   }
 
   void _saveDevice(BuildContext context) {

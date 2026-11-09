@@ -19,3 +19,4 @@ class DeleteRoomUseCase implements UseCase<void, DeleteRoomParams> {
     return repository.deleteRoom(params.userId, params.roomId);
   }
 }
+

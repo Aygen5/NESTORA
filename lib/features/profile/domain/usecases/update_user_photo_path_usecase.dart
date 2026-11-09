@@ -19,3 +19,4 @@ class UpdatePhotoPathUseCase implements UseCase<void, UpdatePhotoPathParams> {
     return repository.updatePhotoPath(params.userId, params.photoPath);
   }
 }
+

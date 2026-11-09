@@ -200,16 +200,22 @@ class FirestoreSeedService {
       for (final dev in devices) {
         final docRef = devicesCollection.doc(dev['id'] as String);
         batch.set(docRef, {
+          'id': dev['id'],
           'name': dev['name'],
           'roomId': dev['roomId'],
           'type': dev['type'],
           'isOn': dev['isOn'],
+          'isPoweredOn': dev['isOn'],
           'brightness': dev['brightness'],
           'color': dev['color'],
+          'colorHex': dev['color'],
+          'colorName': 'Sıcak Günışığı (2700K)',
+          'targetTemp': dev['targetTemperature'],
           'targetTemperature': dev['targetTemperature'],
           'mode': dev['mode'],
           'fanSpeed': dev['fanSpeed'],
           'currentPowerWatts': dev['currentPowerWatts'],
+          'isFavorite': false,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
@@ -250,6 +256,7 @@ class FirestoreSeedService {
       for (final notif in notifications) {
         final docRef = notificationsCollection.doc(notif['id'] as String);
         batch.set(docRef, {
+          'id': notif['id'],
           'title': notif['title'],
           'message': notif['message'],
           'type': notif['type'],

@@ -12,3 +12,4 @@ class SignOutUseCase implements NoParamsUseCase<void> {
     return repository.signOut();
   }
 }
+

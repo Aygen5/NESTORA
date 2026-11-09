@@ -161,12 +161,11 @@ class LocalCacheService {
       final jsonStr = prefs?.getString(key);
       if (jsonStr != null && jsonStr.isNotEmpty) {
         final List<dynamic> list = jsonDecode(jsonStr) as List<dynamic>;
-        final notifs = list.map((item) {
+        return list.map((item) {
           final map = item as Map<String, dynamic>;
           final id = map['id'] as String? ?? 'notif-unknown';
           return NotificationModel.fromMap(map, id: id).toEntity();
         }).toList();
-        if (notifs.isNotEmpty) return notifs;
       }
     } catch (e) {
       debugPrint('LocalCacheService: loadNotifications error: $e');

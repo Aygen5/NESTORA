@@ -20,3 +20,4 @@ class CreateDeviceUseCase implements UseCase<void, CreateDeviceParams> {
     return repository.createDevice(params.userId, params.device);
   }
 }
+

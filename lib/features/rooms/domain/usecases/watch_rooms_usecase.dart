@@ -12,3 +12,4 @@ class WatchRoomsUseCase implements StreamUseCase<List<Room>, String> {
     return repository.watchRooms(userId);
   }
 }
+

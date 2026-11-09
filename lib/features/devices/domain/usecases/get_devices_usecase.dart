@@ -13,3 +13,4 @@ class GetDevicesUseCase implements UseCase<List<Device>, String> {
     return repository.getDevices(userId);
   }
 }
+
