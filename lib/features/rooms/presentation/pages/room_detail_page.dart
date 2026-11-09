@@ -23,6 +23,7 @@ import '../../../devices/presentation/pages/add_edit_device_page.dart';
 import '../../../devices/presentation/pages/coffee_machine_control_page.dart';
 import '../../../devices/presentation/pages/lamp_control_page.dart';
 import '../../../devices/presentation/pages/plug_control_page.dart';
+import '../../../devices/presentation/pages/security_camera_control_page.dart';
 import '../../../devices/presentation/pages/tv_control_page.dart';
 import '../cubit/rooms_cubit.dart';
 import '../cubit/rooms_state.dart';
@@ -62,12 +63,18 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
 
   void _navigateToAddDevice(RoomModel currentRoom) {
     try {
-      context.goToAddEditDevice(initialRoom: currentRoom.name);
+      context.goToAddEditDevice(
+        initialRoom: currentRoom.name,
+        initialRoomId: currentRoom.id,
+      );
     } catch (_) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => AddEditDevicePage(initialRoom: currentRoom.name),
+          builder: (_) => AddEditDevicePage(
+            initialRoom: currentRoom.name,
+            initialRoomId: currentRoom.id,
+          ),
         ),
       );
     }
@@ -80,6 +87,10 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
     final isTv = device.type == DeviceType.tv || lower.contains('televizyon') || lower.contains('tv');
     final isCoffee = (lower.contains('kahve') || lower.contains('coffee'));
     final isPlug = device.type == DeviceType.plug || lower.contains('priz');
+    final isSecurity = device.type == DeviceType.security ||
+        lower.contains('kamera') ||
+        lower.contains('camera') ||
+        lower.contains('güvenlik');
 
     if (isBulb) {
       try {
@@ -124,6 +135,15 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => PlugControlPage(deviceId: device.id)),
+        );
+      }
+    } else if (isSecurity) {
+      try {
+        context.goToCameraControl(device.id);
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => SecurityCameraControlPage(deviceId: device.id)),
         );
       }
     } else {
@@ -649,7 +669,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                           : () {
                               context
                                   .read<DevicesCubit>()
-                                  .toggleAllInRoom(currentRoom.id, !allActive);
+                                  .toggleAllInRoom(currentRoom.id, !allActive, roomName: currentRoom.name);
                             },
                       icon: const Icon(Icons.power_settings_new_rounded, size: 16),
                       label: Text(allActive ? 'Tümünü Kapat' : 'Tümünü Aç'),

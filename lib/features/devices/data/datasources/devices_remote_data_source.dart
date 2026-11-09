@@ -182,7 +182,14 @@ class DevicesRemoteDataSourceImpl implements DevicesRemoteDataSource {
       final payload = Map<String, dynamic>.from(stateUpdates);
       payload['updatedAt'] = FieldValue.serverTimestamp();
 
-      await _devicesRef(userId).doc(deviceId.trim()).update(payload);
+      // Ensure both boolean flags are synchronized for legacy & current SDK models
+      if (payload.containsKey('isPoweredOn') && !payload.containsKey('isOn')) {
+        payload['isOn'] = payload['isPoweredOn'];
+      } else if (payload.containsKey('isOn') && !payload.containsKey('isPoweredOn')) {
+        payload['isPoweredOn'] = payload['isOn'];
+      }
+
+      await _devicesRef(userId).doc(deviceId.trim()).set(payload, SetOptions(merge: true));
     } on FirebaseException catch (e) {
       throw ServerException(
         e.message ?? 'Cihaz durumu güncellenirken hata oluştu.',

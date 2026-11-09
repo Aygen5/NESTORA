@@ -26,6 +26,7 @@ import '../../features/devices/presentation/pages/coffee_machine_control_page.da
 import '../../features/devices/presentation/pages/devices_page.dart';
 import '../../features/devices/presentation/pages/lamp_control_page.dart';
 import '../../features/devices/presentation/pages/plug_control_page.dart';
+import '../../features/devices/presentation/pages/security_camera_control_page.dart';
 import '../../features/devices/presentation/pages/tv_control_page.dart';
 import '../../features/home/presentation/pages/dashboard_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
@@ -62,6 +63,7 @@ abstract class AppRoutePaths {
   static const String tvControl = '/devices/tv/:deviceId';
   static const String plugControl = '/devices/plug/:deviceId';
   static const String coffeeControl = '/devices/coffee/:deviceId';
+  static const String cameraControl = '/devices/camera/:deviceId';
   static const String addEditDevice = '/devices/add-edit';
   static const String notifications = '/notifications';
 
@@ -92,6 +94,7 @@ abstract class AppRouteNames {
   static const String tvControl = 'tv-control';
   static const String plugControl = 'plug-control';
   static const String coffeeControl = 'coffee-control';
+  static const String cameraControl = 'camera-control';
   static const String addEditDevice = 'add-edit-device';
   static const String notifications = 'notifications';
 
@@ -380,6 +383,16 @@ GoRouter createAppRouter({
         ),
       ),
 
+      // Security Camera Control (/devices/camera/:deviceId)
+      GoRoute(
+        path: AppRoutePaths.cameraControl,
+        name: AppRouteNames.cameraControl,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => SecurityCameraControlPage(
+          deviceId: state.pathParameters['deviceId'],
+        ),
+      ),
+
       // 13. Add / Edit Device (/devices/add-edit)
       GoRoute(
         path: AppRoutePaths.addEditDevice,
@@ -392,6 +405,8 @@ GoRouter createAppRouter({
           final initialRoom = state.uri.queryParameters['room'] ??
               (state.extra is String ? state.extra as String : null) ??
               (extraMap?['initialRoom'] as String?);
+          final initialRoomId = state.uri.queryParameters['roomId'] ??
+              (extraMap?['initialRoomId'] as String?);
           final isEditing = state.uri.queryParameters['mode'] == 'edit' ||
               extraMap?['isEditing'] == true;
           final device = state.extra is DeviceModel
@@ -401,6 +416,7 @@ GoRouter createAppRouter({
               (extraMap?['deviceId'] as String?);
           return AddEditDevicePage(
             initialRoom: initialRoom,
+            initialRoomId: initialRoomId,
             isEditing: isEditing || device != null || deviceId != null,
             device: device,
             deviceId: deviceId,
@@ -453,8 +469,11 @@ extension NestoraNavigationExtension on BuildContext {
       push('/devices/plug/$deviceId');
   void goToCoffeeControl(String deviceId) =>
       push('/devices/coffee/$deviceId');
+  void goToCameraControl(String deviceId) =>
+      push('/devices/camera/$deviceId');
   void goToAddEditDevice({
     String? initialRoom,
+    String? initialRoomId,
     bool isEditing = false,
     DeviceModel? device,
     String? deviceId,
@@ -463,6 +482,7 @@ extension NestoraNavigationExtension on BuildContext {
         AppRoutePaths.addEditDevice,
         extra: {
           'initialRoom': initialRoom,
+          'initialRoomId': initialRoomId,
           'isEditing': isEditing,
           'device': device,
           'deviceId': deviceId,

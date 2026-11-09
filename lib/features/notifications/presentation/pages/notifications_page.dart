@@ -36,6 +36,9 @@ class NotificationsPage extends StatelessWidget {
       } else if (titleLower.contains('lamba') || descLower.contains('lamba') || descLower.contains('parlaklık')) {
         context.goToLampControl(devId);
         return;
+      } else if (titleLower.contains('kamera') || descLower.contains('kamera') || titleLower.contains('güvenlik') || descLower.contains('hareket')) {
+        context.goToCameraControl(devId);
+        return;
       } else {
         context.go(AppRoutePaths.devices);
         return;

@@ -281,12 +281,35 @@ abstract class SeedData {
     );
   }
 
-  static DeviceModel deviceToModel(Device device) {
-    String roomName = 'Salon';
-    if (device.roomId == 'room-2') roomName = 'Yatak Odası';
-    if (device.roomId == 'room-3') roomName = 'Mutfak';
-    if (device.roomId == 'room-4') roomName = 'Çalışma Odası';
-    if (device.roomId == 'room-5') roomName = 'Giriş / Dış';
+  static DeviceModel deviceToModel(Device device, [List<dynamic>? rooms]) {
+    String? matchedName;
+    if (rooms != null && rooms.isNotEmpty) {
+      for (final r in rooms) {
+        final rId = (r is Room) ? r.id : (r is RoomModel ? r.id : null);
+        final rName = (r is Room) ? r.name : (r is RoomModel ? r.name : null);
+        if (rId != null && (rId.trim() == device.roomId.trim() || rName?.trim() == device.roomId.trim())) {
+          matchedName = rName;
+          break;
+        }
+      }
+    }
+
+    String roomName = matchedName ?? 'Salon';
+    if (matchedName == null) {
+      if (device.roomId == 'room-1' || device.roomId.toLowerCase() == 'salon') {
+        roomName = 'Salon';
+      } else if (device.roomId == 'room-2' || device.roomId.toLowerCase().contains('yatak')) {
+        roomName = 'Yatak Odası';
+      } else if (device.roomId == 'room-3' || device.roomId.toLowerCase().contains('mutfak')) {
+        roomName = 'Mutfak';
+      } else if (device.roomId == 'room-4' || device.roomId.toLowerCase().contains('çalışma')) {
+        roomName = 'Çalışma Odası';
+      } else if (device.roomId == 'room-5' || device.roomId.toLowerCase().contains('giriş')) {
+        roomName = 'Giriş / Dış';
+      } else if (device.roomId.trim().isNotEmpty) {
+        roomName = device.roomId;
+      }
+    }
 
     return DeviceModel(
       id: device.id,

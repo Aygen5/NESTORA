@@ -25,6 +25,7 @@ import 'add_edit_device_page.dart';
 import 'coffee_machine_control_page.dart';
 import 'lamp_control_page.dart';
 import 'plug_control_page.dart';
+import 'security_camera_control_page.dart';
 import 'tv_control_page.dart';
 
 /// The 5 main device category tabs required by Nestora smart home specs:
@@ -224,6 +225,7 @@ class _DevicesPageState extends State<DevicesPage> {
     final isTv = device.type == DeviceType.tv || lower.contains('televizyon') || lower.contains('tv');
     final isCoffee = (lower.contains('kahve') || lower.contains('coffee'));
     final isPlug = device.type == DeviceType.plug || lower.contains('priz');
+    final isSecurity = device.type == DeviceType.security || lower.contains('kamera') || lower.contains('güvenlik');
 
     if (isBulb) {
       try {
@@ -268,6 +270,15 @@ class _DevicesPageState extends State<DevicesPage> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => PlugControlPage(deviceId: device.id)),
+        );
+      }
+    } else if (isSecurity) {
+      try {
+        context.push('/devices/camera/${device.id}');
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => SecurityCameraControlPage(deviceId: device.id)),
         );
       }
     } else {
@@ -732,23 +743,23 @@ class _DevicesPageState extends State<DevicesPage> {
                         onPressed: totalCount == 0
                             ? null
                             : () {
-                                final allOn = activeCount == totalCount;
-                                context.read<DevicesCubit>().toggleAllDevices(!allOn);
+                                final shouldTurnOff = activeCount > 0;
+                                context.read<DevicesCubit>().toggleAllDevices(!shouldTurnOff);
                               },
                         icon: Icon(
-                          activeCount == totalCount
+                          activeCount > 0
                               ? Icons.power_settings_new_rounded
                               : Icons.power_settings_new_outlined,
                           size: 16,
-                          color: activeCount == totalCount
+                          color: activeCount > 0
                               ? AppColors.error
                               : (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer),
                         ),
                         label: Text(
-                          activeCount == totalCount ? 'Tümünü Kapat' : 'Tümünü Aç',
+                          activeCount > 0 ? 'Tümünü Kapat' : 'Tümünü Aç',
                           style: AppTypography.labelSmall.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: activeCount == totalCount
+                            color: activeCount > 0
                                 ? AppColors.error
                                 : (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer),
                           ),

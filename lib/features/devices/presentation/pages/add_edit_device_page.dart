@@ -24,6 +24,7 @@ import '../cubit/devices_state.dart';
 /// room assignment synced with RoomsCubit, form validation, and safe deletion.
 class AddEditDevicePage extends StatefulWidget {
   final String? initialRoom;
+  final String? initialRoomId;
   final bool isEditing;
   final DeviceModel? device;
   final String? deviceId;
@@ -31,6 +32,7 @@ class AddEditDevicePage extends StatefulWidget {
   const AddEditDevicePage({
     super.key,
     this.initialRoom,
+    this.initialRoomId,
     this.isEditing = false,
     this.device,
     this.deviceId,
@@ -47,9 +49,11 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
 
   final TextEditingController _nameController = TextEditingController();
   String? _nameError;
+  bool _isSubmitting = false;
 
   DeviceType _selectedType = DeviceType.bulb;
   late String _selectedRoom;
+  String? _selectedRoomId;
   bool _isFavorite = false;
   bool _initialPowerState = true;
 
@@ -306,12 +310,12 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
       if (matchedType != null) {
         _selectedType = matchedType;
       }
-      if (matchedRoom != null) {
+      if (matchedRoom != null && widget.initialRoom == null) {
         _selectedRoom = matchedRoom;
       }
-      if (matchedType != null || matchedRoom != null) {
+      if (matchedType != null || (matchedRoom != null && widget.initialRoom == null)) {
         final typeName = matchedType != null ? _getTypeName(matchedType) : '';
-        final roomName = matchedRoom ?? '';
+        final roomName = (matchedRoom != null && widget.initialRoom == null) ? matchedRoom : _selectedRoom;
         _autoDetectedMatch = [typeName, roomName].where((s) => s.isNotEmpty).join(' • ');
       } else {
         _autoDetectedMatch = null;
@@ -338,6 +342,7 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
     super.initState();
     _isAddMode = !widget.isEditing && widget.device == null && widget.deviceId == null;
     _selectedRoom = widget.initialRoom ?? 'Salon';
+    _selectedRoomId = widget.initialRoomId;
 
     _radarController = AnimationController(
       vsync: this,
@@ -459,17 +464,30 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
   }
 
   String _resolveRoomId(String roomName, List<RoomModel> rooms) {
-    final match = rooms.where((r) => r.name.trim().toLowerCase() == roomName.trim().toLowerCase()).firstOrNull;
+    if (widget.initialRoomId != null &&
+        widget.initialRoomId!.trim().isNotEmpty &&
+        (widget.initialRoom == null || widget.initialRoom == roomName)) {
+      return widget.initialRoomId!.trim();
+    }
+    if (_selectedRoomId != null && _selectedRoomId!.trim().isNotEmpty) {
+      return _selectedRoomId!.trim();
+    }
+    final clean = roomName.trim();
+    final match = rooms.where((r) =>
+        r.name.trim() == clean ||
+        r.name.trim().toLowerCase() == clean.toLowerCase()).firstOrNull;
     if (match != null) return match.id;
-    if (roomName == 'Salon') return 'room-1';
-    if (roomName == 'Yatak Odası') return 'room-2';
-    if (roomName == 'Mutfak') return 'room-3';
-    if (roomName == 'Çalışma Odası') return 'room-4';
-    if (roomName == 'Banyo' || roomName == 'Giriş / Dış') return 'room-5';
-    return 'room-${roomName.trim().toLowerCase().replaceAll(' ', '-')}';
+    if (clean == 'Salon') return 'room-1';
+    if (clean == 'Yatak Odası') return 'room-2';
+    if (clean == 'Mutfak') return 'room-3';
+    if (clean == 'Çalışma Odası') return 'room-4';
+    if (clean == 'Banyo' || clean == 'Giriş / Dış') return 'room-5';
+    return 'room-${clean.toLowerCase().replaceAll(' ', '-')}';
   }
 
   void _saveDevice(BuildContext context) {
+    if (_isSubmitting) return;
+
     final cleanName = _nameController.text.trim();
     if (cleanName.isEmpty) {
       setState(() => _nameError = 'Lütfen cihaz adını giriniz.');
@@ -480,7 +498,10 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
       );
       return;
     }
-    setState(() => _nameError = null);
+    setState(() {
+      _nameError = null;
+      _isSubmitting = true;
+    });
 
     final roomsState = context.read<RoomsCubit>().state;
     final List<RoomModel> currentRooms = (roomsState is RoomsLoaded)
@@ -585,8 +606,9 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
     final tempUnit = TemperatureFormatter.currentUnit(context);
 
     final roomsState = context.watch<RoomsCubit>().state;
-    final List<String> roomOptions = (roomsState is RoomsLoaded && roomsState.rooms.isNotEmpty)
-        ? [...roomsState.rooms.map((r) => r.name), 'Atanmamış']
+    final roomItems = roomsState is RoomsLoaded ? roomsState.rooms : const [];
+    final List<String> roomOptions = roomItems.isNotEmpty
+        ? [...roomItems.map((r) => r.name), 'Atanmamış']
         : ['Salon', 'Yatak Odası', 'Mutfak', 'Çalışma Odası', 'Banyo', 'Atanmamış'];
 
     final devicesState = context.watch<DevicesCubit>().state;
@@ -1301,7 +1323,13 @@ class _AddEditDevicePageState extends State<AddEditDevicePage>
                   children: roomOptions.map((roomName) {
                     final isSelected = _selectedRoom == roomName;
                     return GestureDetector(
-                      onTap: () => setState(() => _selectedRoom = roomName),
+                      onTap: () {
+                        setState(() {
+                          _selectedRoom = roomName;
+                          final match = roomItems.where((r) => r.name.trim() == roomName.trim()).firstOrNull;
+                          _selectedRoomId = match?.id;
+                        });
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(

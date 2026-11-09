@@ -21,6 +21,7 @@ import '../../../devices/presentation/pages/ac_control_page.dart';
 import '../../../devices/presentation/pages/coffee_machine_control_page.dart';
 import '../../../devices/presentation/pages/lamp_control_page.dart';
 import '../../../devices/presentation/pages/plug_control_page.dart';
+import '../../../devices/presentation/pages/security_camera_control_page.dart';
 import '../../../devices/presentation/pages/tv_control_page.dart';
 import '../../../devices/presentation/pages/devices_page.dart';
 import '../../../notifications/presentation/cubit/notifications_cubit.dart';
@@ -142,6 +143,10 @@ class _DashboardPageState extends State<DashboardPage> {
     final isTv = device.type == DeviceType.tv || lower.contains('televizyon') || lower.contains('tv');
     final isCoffee = (lower.contains('kahve') || lower.contains('coffee'));
     final isPlug = device.type == DeviceType.plug || lower.contains('priz');
+    final isSecurity = device.type == DeviceType.security ||
+        lower.contains('kamera') ||
+        lower.contains('camera') ||
+        lower.contains('güvenlik');
 
     if (isBulb) {
       try {
@@ -186,6 +191,15 @@ class _DashboardPageState extends State<DashboardPage> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => PlugControlPage(deviceId: device.id)),
+        );
+      }
+    } else if (isSecurity) {
+      try {
+        context.goToCameraControl(device.id);
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => SecurityCameraControlPage(deviceId: device.id)),
         );
       }
     } else {

@@ -266,6 +266,7 @@ class DevicesCubit extends Cubit<DevicesState> {
         userId,
         deviceId,
         {
+          'isOn': newPowerState,
           'isPoweredOn': newPowerState,
           'currentPowerWatts': updatedDevice.currentPowerWatts,
         },
@@ -748,9 +749,10 @@ class DevicesCubit extends Cubit<DevicesState> {
   }
 
   /// Convenience method for toggling power state of all devices in a room.
-  Future<void> toggleAllInRoom(String roomNameOrId, bool powerState, {String? userId}) async {
+  Future<void> toggleAllInRoom(String roomNameOrId, bool powerState, {String? userId, String? roomName}) async {
     final current = _ensureLoaded();
     final target = roomNameOrId.trim().toLowerCase();
+    final cleanRoomName = roomName?.trim().toLowerCase();
     String? mappedRoomId;
     if (target.contains('salon')) mappedRoomId = 'room-1';
     if (target.contains('yatak')) mappedRoomId = 'room-2';
@@ -758,8 +760,13 @@ class DevicesCubit extends Cubit<DevicesState> {
     if (target.contains('calisma') || target.contains('çalışma')) mappedRoomId = 'room-4';
 
     final updatedDevices = current.devices.map((d) {
-      final matchesRoom = d.roomId.toLowerCase() == target ||
-          (mappedRoomId != null && d.roomId.toLowerCase() == mappedRoomId) ||
+      final devRoomId = d.roomId.trim().toLowerCase();
+      final matchesRoom = devRoomId == target ||
+          (cleanRoomName != null && devRoomId == cleanRoomName) ||
+          (cleanRoomName != null && d.name.toLowerCase().contains(cleanRoomName)) ||
+          (mappedRoomId != null && devRoomId == mappedRoomId) ||
+          devRoomId.contains(target) ||
+          target.contains(devRoomId) ||
           d.name.toLowerCase().contains(target);
       if (matchesRoom) {
         double newWatts = 0.0;
@@ -795,6 +802,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     for (final dev in updatedDevices) {
       try {
         devicesRepository.updateDeviceState(userId ?? _currentUserId ?? 'demo-user', dev.id, {
+          'isOn': dev.isPoweredOn,
           'isPoweredOn': dev.isPoweredOn,
           'currentPowerWatts': dev.currentPowerWatts,
         });
@@ -837,6 +845,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     for (final dev in updatedDevices) {
       try {
         devicesRepository.updateDeviceState(userId ?? _currentUserId ?? 'demo-user', dev.id, {
+          'isOn': dev.isPoweredOn,
           'isPoweredOn': dev.isPoweredOn,
           'currentPowerWatts': dev.currentPowerWatts,
         });
