@@ -50,7 +50,7 @@ class DefaultFirebaseOptions {
   // Real secrets are never checked into version control.
   static const String _webApiKey = String.fromEnvironment(
     'FIREBASE_WEB_API_KEY',
-    defaultValue: 'DEMO_NESTORA_WEB_API_KEY_PLACEHOLDER',
+    defaultValue: 'AIzaSyAkwud6VKPxVVAMtVoamcx3FfTbQuKATPQ',
   );
 
   static const String _androidApiKey = String.fromEnvironment(
