@@ -333,7 +333,11 @@ Future<void> initDependencies({
     if (sl.isRegistered<FirebaseAuth>()) {
       auth = sl<FirebaseAuth>();
     }
-    sl.registerSingleton<AppAuthListenable>(AppAuthListenable(firebaseAuth: auth));
+    sl.registerSingleton<AppAuthListenable>(AppAuthListenable(
+      firebaseAuth: auth,
+      sharedPreferences:
+          sl.isRegistered<SharedPreferences>() ? sl<SharedPreferences>() : null,
+    ));
   }
 
   // 4. Demo Config & Firestore Seed Services

@@ -178,6 +178,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String? email,
     String? password,
   }) async {
+    // Check if Firebase Auth is missing or configured with placeholder credentials
+    final apiKey = _safeAuth?.app.options.apiKey ?? '';
+    if (_safeAuth == null || apiKey.isEmpty || apiKey.contains('PLACEHOLDER')) {
+      throw const AuthException(
+        'Firebase API anahtarı yerel yer tutucu olarak ayarlı. Çevrimdışı demo modu etkinleştiriliyor.',
+        code: 'demo-local-fallback',
+      );
+    }
+
     final demoEmail = email ??
         (await demoConfigService?.getDemoEmail() ?? AppConstants.demoEmail);
     final demoPassword = password ??
@@ -230,7 +239,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   /// Maps standard Firebase Auth error codes into clear, user-friendly Turkish messages.
   String _mapFirebaseErrorToMessage(FirebaseAuthException e) {
-    switch (e.code) {
+    final code = e.code.toLowerCase();
+    final rawMessage = e.message?.trim() ?? '';
+
+    if (code.contains('api-key') ||
+        code.contains('invalid-api-key') ||
+        rawMessage.toLowerCase().contains('api key not valid') ||
+        rawMessage.toLowerCase().contains('api-key')) {
+      return 'Firebase API anahtarı geçersiz veya henüz yapılandırılmamış.';
+    }
+
+    switch (code) {
       case 'invalid-email':
         return 'Lütfen geçerli bir e-posta adresi giriniz.';
       case 'user-disabled':
@@ -251,7 +270,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       case 'network-request-failed':
         return 'İnternet bağlantınızı kontrol edip tekrar deneyiniz.';
       default:
-        return e.message ?? 'Kimlik doğrulama işlemi gerçekleştirilemedi.';
+        if (rawMessage.isEmpty ||
+            rawMessage.toLowerCase() == 'error' ||
+            rawMessage.toLowerCase() == 'firebaseerror') {
+          return 'Kimlik doğrulama işlemi gerçekleştirilemedi. Lütfen tekrar deneyiniz.';
+        }
+        return rawMessage;
     }
   }
 }

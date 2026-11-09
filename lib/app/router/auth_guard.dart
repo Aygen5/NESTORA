@@ -1,23 +1,36 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/app_constants.dart';
 import 'app_router.dart';
 
 /// [AppAuthListenable] listens to authentication state changes (via FirebaseAuth or manual overrides)
 /// and notifies GoRouter so redirect guards can trigger automatically.
 class AppAuthListenable extends ChangeNotifier {
   final FirebaseAuth? firebaseAuth;
+  final SharedPreferences? sharedPreferences;
   StreamSubscription<User?>? _authSubscription;
   bool _isAuthenticated;
 
   AppAuthListenable({
     this.firebaseAuth,
+    this.sharedPreferences,
     bool initialAuthState = false,
   }) : _isAuthenticated = initialAuthState {
-    if (firebaseAuth != null) {
+    final hasDemoSession =
+        sharedPreferences?.getBool(AppConstants.prefDemoSessionActive) ?? false;
+    if (hasDemoSession) {
+      _isAuthenticated = true;
+    } else if (firebaseAuth != null) {
       _isAuthenticated = firebaseAuth!.currentUser != null;
+    }
+
+    if (firebaseAuth != null) {
       _authSubscription = firebaseAuth!.authStateChanges().listen((User? user) {
-        final newAuth = user != null;
+        final demoActive =
+            sharedPreferences?.getBool(AppConstants.prefDemoSessionActive) ?? false;
+        final newAuth = demoActive || (user != null);
         if (_isAuthenticated != newAuth) {
           _isAuthenticated = newAuth;
           notifyListeners();

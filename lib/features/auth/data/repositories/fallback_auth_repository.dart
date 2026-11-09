@@ -54,8 +54,14 @@ class FallbackAuthRepository implements AuthRepository {
     String? email,
     String? password,
   }) async {
-    return Result.failure(
-      const AuthFailure('Demo servisi henüz hazır değil.'),
+    return Result.success(
+      const AuthUser(
+        id: 'usr-1',
+        email: 'demo@nestora.app',
+        displayName: 'Aygen Yıldırım',
+        photoUrl: 'assets/profile/user_avatar.jpg',
+        isAnonymous: false,
+      ),
     );
   }
 }
