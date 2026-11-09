@@ -13,16 +13,7 @@ import '../../domain/repositories/devices_repository.dart';
 import '../../domain/usecases/devices_usecases.dart';
 import 'devices_state.dart';
 
-/// Single Source of Truth for all simulated smart devices in Nestora.
-///
-/// Features:
-/// - Real-time sync with Cloud Firestore.
-/// - Optimistic UI updates for 0-latency slider / dial / toggle responsiveness.
-/// - High-frequency update debouncing (default: 300ms) to conserve Firestore write quota on Spark plan.
-/// - Quick Scenes ("Evdeyim", "Gündüz", "Gece Modu", "Dışarıda") multi-device orchestration.
-/// - Dispatches privacy-safe analytics events and logs errors to Crashlytics.
-/// - Guards Firestore quotas under Firebase Spark free tier.
-/// - Resilient offline/demo persistence via [LocalCacheService].
+// Akıllı cihazların durumunu, gerçek zamanlı senkronizasyonunu ve yerel önbelleğini yönetir.
 class DevicesCubit extends Cubit<DevicesState> {
   final DevicesRepository devicesRepository;
   final Duration debounceDuration;
@@ -31,7 +22,7 @@ class DevicesCubit extends Cubit<DevicesState> {
   final SparkQuotaService? quotaService;
   final LocalCacheService? localCacheService;
 
-  // Domain Use Cases
+  // İş mantığı kullanım senaryoları (Use Cases)
   final GetDevicesUseCase getDevicesUseCase;
   final WatchDevicesUseCase watchDevicesUseCase;
   final ToggleDevicePowerUseCase toggleDevicePowerUseCase;
@@ -84,7 +75,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     return loaded;
   }
 
-  /// Resets active devices state, cancels subscriptions and pending debouncers on logout.
+  // Çıkış yapıldığında cihaz durumunu, dinleyicileri ve gecikme zamanlayıcılarını sıfırlar.
   void reset() {
     _devicesSubscription?.cancel();
     for (final timer in _debounceTimers.values) {
@@ -98,7 +89,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     ));
   }
 
-  /// Loads and listens to real-time updates for all devices belonging to [userId].
+  // Kullanıcıya ait tüm cihazları gerçek zamanlı dinler ve yükler.
   void loadDevices(String userId) {
     final cleanUid = userId.trim();
     if (cleanUid.isEmpty) {
@@ -122,7 +113,7 @@ class DevicesCubit extends Cubit<DevicesState> {
               ? (localCacheService?.loadDevices(userId: cleanUid) ?? SeedData.defaultDevices)
               : devices;
 
-          // Merge local in-flight debounced updates if any exist
+          // Bekleyen yerel değişiklikler varsa birleştir.
           final mergedDevices = effectiveDevices.map((incoming) {
             final pending = _pendingUpdates[incoming.id];
             if (pending != null && pending.isNotEmpty) {
@@ -159,7 +150,7 @@ class DevicesCubit extends Cubit<DevicesState> {
             stack,
             reason: 'Devices watchDevices stream notice for user: $cleanUid',
           );
-          // Do not overwrite loaded state with error in offline/demo mode
+          // Çevrimdışı ve demo modunda hata fırlatıldığında mevcut aktif cihaz listesini korur.
           debugPrint('DevicesCubit: Stream notice ($error). Using local active devices.');
         },
       );
@@ -168,7 +159,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Sets brightness (0-100%) for a lighting device with optimistic UI and 300ms Firestore debounce.
+  // Aydınlatma parlaklığını (%0-100) iyimser arayüz ve 300ms geciktirmeyle günceller.
   void setBrightness(String userId, String deviceId, int brightness) {
     final current = _ensureLoaded();
     final cleanBrightness = brightness.clamp(AppConstants.minBrightness, AppConstants.maxBrightness);
@@ -198,7 +189,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     );
   }
 
-  /// Sets target temperature (16.0°C - 30.0°C, 0.5°C step) with optimistic UI and 300ms debounce.
+  // Termostat hedef sıcaklığını (16-30°C) iyimser arayüz ve geciktirmeyle günceller.
   void setTargetTemperature(String userId, String deviceId, double targetTemp) {
     final current = _ensureLoaded();
 
@@ -220,7 +211,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     );
   }
 
-  /// Sets light color/glow hex and name with optimistic UI and 300ms debounce.
+  // Lamba ışık rengini iyimser arayüz ve geciktirmeyle günceller.
   void setColor(
     String userId,
     String deviceId,
@@ -249,7 +240,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     );
   }
 
-  /// Toggles device power on/off with optimistic UI and immediate synchronization.
+  // Cihazın güç durumunu (açık/kapalı) anında günceller ve Firestore'a yansıtır.
   Future<void> togglePower(String userId, String deviceId) async {
     final current = _ensureLoaded();
 
@@ -307,7 +298,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Toggles favorite flag on/off.
+  // Cihazın favori durumunu değiştirir.
   Future<void> toggleFavorite(String userId, String deviceId) async {
     final current = _ensureLoaded();
 
@@ -327,7 +318,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     } catch (_) {}
   }
 
-  /// Sets air conditioner operating mode.
+  // Klima çalışma modunu ayarlar.
   Future<void> setAcMode(String userId, String deviceId, AcMode mode) async {
     final current = _ensureLoaded();
 
@@ -346,7 +337,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     } catch (_) {}
   }
 
-  /// Sets air conditioner fan speed.
+  // Klima fan hızını ayarlar.
   Future<void> setFanSpeed(String userId, String deviceId, FanSpeed speed) async {
     final current = _ensureLoaded();
 
@@ -365,8 +356,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     } catch (_) {}
   }
 
-  /// Applies one of the 4 quick smart home scenes across all matching virtual devices.
-  /// Supported scene keys: 'home', 'day', 'night', 'away'
+  // 4 hızlı akıllı ev senaryosundan birini ("Evdeyim", "Gündüz", "Gece Modu", "Dışarıda") uygular.
   Future<void> applyScene({
     required String userId,
     required String sceneKey,
@@ -425,7 +415,7 @@ class DevicesCubit extends Cubit<DevicesState> {
       } else if (normalized == 'night' || normalized == 'gece' || normalized.contains('gece')) {
         sceneDisplayName = 'Gece Modu';
         if (dev.type == DeviceType.bulb) {
-          // Keep only 1 warm night lamp or turn off
+          // Yalnızca gece lambasını loş açık bırak, diğerlerini kapat.
           final isNightLight = dev.name.toLowerCase().contains('gece') ||
               dev.name.toLowerCase().contains('yatak') ||
               dev.name.toLowerCase().contains('komodin');
@@ -467,7 +457,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     ));
     localCacheService?.saveDevices(updatedDevices, userId: userId);
 
-    // Persist changes to Firestore safely in background
+    // Değişiklikleri arka planda Firestore'a yansıtır.
     for (final dev in updatedDevices) {
       try {
         devicesRepository.updateDeviceState(userId, dev.id, {
@@ -484,7 +474,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Creates a new virtual device in Firestore.
+  // Sisteme yeni bir akıllı cihaz ekler ve kaydeder.
   Future<void> createDevice({
     required String userId,
     required String name,
@@ -558,7 +548,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Updates all attributes of an existing device.
+  // Mevcut bir cihazın tüm bilgilerini günceller.
   Future<void> updateDevice({
     required String userId,
     required Device device,
@@ -588,7 +578,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Deletes a device from Firestore.
+  // Cihazı sistemden ve veritabanından siler.
   Future<void> deleteDevice({
     required String userId,
     required String deviceId,
@@ -610,7 +600,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Filters devices by category. Pass `null` for "All".
+  // Cihazları kategorisine göre filtreler (null tümünü gösterir).
   void selectCategory(DeviceType? category) {
     if (state is DevicesLoaded) {
       final current = state as DevicesLoaded;
@@ -621,7 +611,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Updates search query filter.
+  // Cihaz arama filtresini günceller.
   void searchDevices(String query) {
     if (state is DevicesLoaded) {
       final current = state as DevicesLoaded;
@@ -629,7 +619,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Clears device search filter.
+  // Cihaz arama filtresini temizler.
   void clearSearch() {
     if (state is DevicesLoaded) {
       final current = state as DevicesLoaded;
@@ -637,7 +627,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Clears transient feedback or error messages.
+  // Bildirim ve hata mesajlarını temizler.
   void clearMessages() {
     if (state is DevicesLoaded) {
       final current = state as DevicesLoaded;
@@ -645,7 +635,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Immediately flushes all debounced writes to Firestore without waiting for timers.
+  // Bekleyen tüm geciktirilmiş güncellemeleri anında Firestore'a kaydeder.
   Future<void> flushPendingUpdates(String userId) async {
     final keys = List<String>.from(_pendingUpdates.keys);
     for (final deviceId in keys) {
@@ -713,7 +703,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Resolves the guaranteed active Firebase user ID to prevent permission denied errors.
+  // İzin hatası almamak için aktif Firebase kullanıcı ID'sini çözümler.
   String _resolveUserId([String? userId]) {
     if (userId != null && userId.trim().isNotEmpty && userId.trim() != 'demo-user') {
       return userId.trim();
@@ -730,45 +720,45 @@ class DevicesCubit extends Cubit<DevicesState> {
     return _currentUserId ?? 'demo-user';
   }
 
-  /// Currently active authenticated user ID.
+  // Oturumu açık olan kullanıcının ID'si.
   String? get currentUserId => _currentUserId;
 
-  /// Convenience method for toggling device power.
+  // Cihazın açık/kapalı durumunu değiştirmek için yardımcı metot.
   Future<void> toggleDevicePower(String deviceId, {String? userId}) {
     return togglePower(_resolveUserId(userId), deviceId);
   }
 
-  /// Convenience method for toggling favorite flag.
+  // Cihazı favorilere eklemek/çıkarmak için yardımcı metot.
   Future<void> toggleDeviceFavorite(String deviceId, {String? userId}) {
     return toggleFavorite(_resolveUserId(userId), deviceId);
   }
 
-  /// Convenience method for setting lamp brightness.
+  // Lamba parlaklığını ayarlamak için yardımcı metot.
   void setLampBrightness(String deviceId, int brightness, {String? userId}) {
     setBrightness(_resolveUserId(userId), deviceId, brightness);
   }
 
-  /// Convenience method for setting lamp color.
+  // Lamba rengini ayarlamak için yardımcı metot.
   void setLampColor(String deviceId, {required String name, required String hex, String? userId}) {
     setColor(_resolveUserId(userId), deviceId, hex, name);
   }
 
-  /// Convenience method for setting AC target temperature.
+  // Klima hedef sıcaklığını ayarlamak için yardımcı metot.
   void setAcTemp(String deviceId, double targetTemp, {String? userId}) {
     setTargetTemperature(_resolveUserId(userId), deviceId, targetTemp);
   }
 
-  /// Convenience method for setting AC mode.
+  // Klima modunu ayarlamak için yardımcı metot.
   Future<void> setAcModeChoice(String deviceId, AcMode mode, {String? userId}) {
     return setAcMode(_resolveUserId(userId), deviceId, mode);
   }
 
-  /// Convenience method for setting AC fan speed.
+  // Klima fan hızını ayarlamak için yardımcı metot.
   Future<void> setAcFanSpeedChoice(String deviceId, FanSpeed speed, {String? userId}) {
     return setFanSpeed(_resolveUserId(userId), deviceId, speed);
   }
 
-  /// Convenience method for adding a Device entity.
+  // Cihaz nesnesi eklemek için yardımcı metot.
   Future<void> addDeviceEntity(Device device, {String? userId}) {
     return createDevice(
       userId: _resolveUserId(userId),
@@ -787,7 +777,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     );
   }
 
-  /// Convenience method for updating an existing Device entity.
+  // Cihaz nesnesi güncellemek için yardımcı metot.
   Future<void> updateDeviceEntity(Device device, {String? userId}) {
     return updateDevice(
       userId: _resolveUserId(userId),
@@ -795,12 +785,12 @@ class DevicesCubit extends Cubit<DevicesState> {
     );
   }
 
-  /// Convenience method for deleting a device.
+  // Cihaz silmek için yardımcı metot.
   Future<void> deleteDeviceById(String deviceId, {String? userId}) {
     return deleteDevice(userId: _resolveUserId(userId), deviceId: deviceId);
   }
 
-  /// Convenience method for toggling power state of all devices in a room.
+  // Bir odadaki tüm cihazları açıp kapatmak için yardımcı metot.
   Future<void> toggleAllInRoom(String roomNameOrId, bool powerState, {String? userId, String? roomName}) async {
     final current = _ensureLoaded();
     final effectiveUid = _resolveUserId(userId);
@@ -869,7 +859,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Convenience method for toggling power state of all devices in the entire home.
+  // Evdeki tüm cihazları tek seferde açıp kapatmak için yardımcı metot.
   Future<void> toggleAllDevices(bool powerState, {String? userId}) async {
     final current = _ensureLoaded();
     final updatedDevices = current.devices.map((d) {
@@ -912,7 +902,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
   }
 
-  /// Convenience method for applying one of the 4 quick scenes ('Evdeyim', 'Gündüz', 'Gece Modu', 'Dışarıda').
+  // 4 hızlı senaryoyu tek çağrıyla uygulamak için yardımcı metot.
   Future<void> applyQuickScene(String sceneKey, {String? userId}) {
     return applyScene(
       userId: userId ?? _currentUserId ?? 'demo-user',

@@ -11,13 +11,7 @@ import '../../features/rooms/data/models/room_model.dart';
 import '../../features/rooms/domain/entities/room.dart';
 import '../constants/seed_data.dart';
 
-/// Centralized local persistent cache service for Nestora simulation state.
-/// Ensures that even in offline, demo, or unauthenticated modes, all devices,
-/// rooms, profiles, and notifications are 100% interactive, never get locked out,
-/// and preserve state across app hot-reloads and restarts.
-///
-/// Multi-user isolation: Every cache slot is strictly scoped to [userId] so that
-/// different accounts (e.g. Demo vs. real Firebase users) never leak data to each other.
+// Kullanıcı bazlı izole edilmiş yerel çevrimdışı önbellek servisi.
 class LocalCacheService {
   final SharedPreferences? prefs;
 
@@ -48,7 +42,7 @@ class LocalCacheService {
           ? '${_keyNotifications}_${userId.trim()}'
           : _keyNotifications;
 
-  // ==================== DEVICES ====================
+  // Cihaz önbellek işlemleri
 
   List<Device> loadDevices({String? userId}) {
     try {
@@ -82,7 +76,7 @@ class LocalCacheService {
     }
   }
 
-  // ==================== ROOMS ====================
+  // Oda önbellek işlemleri
 
   List<Room> loadRooms({String? userId}) {
     try {
@@ -116,7 +110,7 @@ class LocalCacheService {
     }
   }
 
-  // ==================== PROFILE ====================
+  // Profil önbellek işlemleri
 
   UserProfile loadProfile({String? userId}) {
     try {
@@ -153,7 +147,7 @@ class LocalCacheService {
     }
   }
 
-  // ==================== NOTIFICATIONS ====================
+  // Bildirim önbellek işlemleri
 
   List<AppNotification> loadNotifications({String? userId}) {
     try {
@@ -188,7 +182,7 @@ class LocalCacheService {
     }
   }
 
-  /// Completely purges user-specific cache on account deletion or test teardown.
+  // Kullanıcı silindiğinde veya oturum sıfırlandığında yerel önbelleğini temizler.
   Future<void> clearUserCache(String userId) async {
     try {
       final cleanUid = userId.trim();

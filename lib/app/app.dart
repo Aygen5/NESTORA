@@ -29,10 +29,7 @@ import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_cubit.dart';
 
-/// Root application widget for Nestora.
-/// Connects [ThemeCubit], [AuthCubit], [ProfileCubit], [RoomsCubit],
-/// [DevicesCubit], and [NotificationsCubit] via [MultiBlocProvider]
-/// and provides the centralized [GoRouter] configuration.
+// Uygulamanın ana kök widget'ı; tüm Cubit sağlayıcılarını ve GoRouter'ı bağlar.
 class NestoraApp extends StatefulWidget {
   final GoRouter? router;
   final ThemeCubit? themeCubit;
@@ -172,12 +169,14 @@ class _NestoraAppState extends State<NestoraApp> {
       child: BlocListener<AuthCubit, AuthState>(
         listener: (context, authState) {
           if (authState is Authenticated) {
+            // Kullanıcı oturum açtığında tüm modüllerin verilerini kullanıcı ID'sine göre yükler.
             final uid = authState.user.id;
             _profileCubit.loadProfile(uid);
             _roomsCubit.loadRooms(uid);
             _devicesCubit.loadDevices(uid);
             _notificationsCubit.loadNotifications(uid);
           } else if (authState is Unauthenticated) {
+            // Kullanıcı çıkış yaptığında state'leri ve oturum verilerini sıfırlar.
             _profileCubit.reset();
             _roomsCubit.reset();
             _devicesCubit.reset();

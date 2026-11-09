@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Type;
 import '../../../../core/utils/firestore_helpers.dart';
 import '../../domain/entities/room.dart';
 
-/// Data Transfer Object (DTO) for [Room] handling Cloud Firestore serialization.
+// Firestore serileştirme ve veri dönüşümlerini yöneten Oda Veri Modeli (DTO).
 class RoomModel extends Room {
   const RoomModel({
     required super.id,
@@ -17,7 +17,7 @@ class RoomModel extends Room {
     super.updatedAt,
   });
 
-  /// Factory creating a [RoomModel] from a raw Firestore Map and document [id].
+  // Ham Firestore Map verisinden ve doküman ID'sinden RoomModel üretir.
   factory RoomModel.fromMap(
     Map<String, dynamic> map, {
     required String id,
@@ -42,7 +42,7 @@ class RoomModel extends Room {
     );
   }
 
-  /// Factory creating a [RoomModel] from a Firestore [DocumentSnapshot].
+  // Firestore DocumentSnapshot nesnesinden RoomModel üretir.
   factory RoomModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
   ) {
@@ -52,7 +52,7 @@ class RoomModel extends Room {
     );
   }
 
-  /// Factory creating a [RoomModel] from a pure domain [Room] entity.
+  // Saf domain Room entity nesnesinden RoomModel üretir.
   factory RoomModel.fromEntity(Room room) {
     return RoomModel(
       id: room.id,
@@ -68,7 +68,7 @@ class RoomModel extends Room {
     );
   }
 
-  /// Converts this model into a Firestore write payload with [FieldValue.serverTimestamp].
+  // Modeli sunucu zaman damgasıyla Firestore yazma formatına dönüştürür.
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
@@ -83,7 +83,7 @@ class RoomModel extends Room {
     };
   }
 
-  /// Converts this model into a serializable standard Dart Map (e.g. for testing or local cache).
+  // Modeli yerel önbellek ve testler için standart Map formatına dönüştürür.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -99,7 +99,7 @@ class RoomModel extends Room {
     };
   }
 
-  /// Pure domain conversion.
+  // Modeli saf domain entity nesnesine dönüştürür.
   Room toEntity() => Room(
         id: id,
         name: name,

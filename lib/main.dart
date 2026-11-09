@@ -10,7 +10,7 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase across supported platforms (Web, Android, iOS)
+  // Firebase servislerini platforma uygun ayarlarla başlatır.
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -22,15 +22,15 @@ void main() async {
     }
   }
 
-  // Initialize dependency injection / service locator
+  // Bağımlılık enjeksiyonunu (ServiceLocator) kurar.
   await initDependencies();
 
-  // Initialize global Crashlytics error handlers
+  // Global hata ve çökme takip servisini (Crashlytics) başlatır.
   if (sl.isRegistered<CrashlyticsService>()) {
     await sl<CrashlyticsService>().initialize();
   }
 
-  // Initialize Performance Monitoring
+  // Uygulama performans izleme servisini başlatır.
   if (sl.isRegistered<PerformanceService>()) {
     await sl<PerformanceService>().initialize();
   }

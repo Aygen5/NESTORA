@@ -12,7 +12,7 @@ import '../../domain/repositories/profile_repository.dart';
 import '../../domain/usecases/profile_usecases.dart';
 import 'profile_state.dart';
 
-/// Cubit managing the User Profile, local preferences, and avatar storage in Nestora.
+// Kullanıcı profilini, tercihlerini ve profil fotoğrafını yöneten Cubit.
 class ProfileCubit extends Cubit<ProfileState> {
   final ProfileRepository profileRepository;
   final ProfilePhotoService? photoService;
@@ -20,7 +20,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   final SparkQuotaService? quotaService;
   final LocalCacheService? localCacheService;
 
-  // Domain Use Cases
+  // İş mantığı kullanım senaryoları (Use Cases)
   final GetUserProfileUseCase getUserProfileUseCase;
   final WatchUserProfileUseCase watchUserProfileUseCase;
   final UpdateUserProfileUseCase updateUserProfileUseCase;
@@ -53,7 +53,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     LocalCacheService? localCacheService,
     SharedPreferences? sharedPreferences,
   ) {
-    // Purge legacy global key if present to prevent cross-account pollution
+    // Hesaplar arası çakışmayı önlemek için eski global anahtarı temizler.
     if (sharedPreferences != null &&
         sharedPreferences.containsKey(AppConstants.prefProfilePhotoPath)) {
       sharedPreferences.remove(AppConstants.prefProfilePhotoPath);
@@ -64,7 +64,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   String _photoPrefKey(String userId) =>
       '${AppConstants.prefProfilePhotoPath}_$userId';
 
-  /// Resets active profile state and terminates stream subscriptions on logout.
+  // Çıkış yapıldığında profil durumunu sıfırlar ve akış dinleyicilerini iptal eder.
   void reset() {
     _profileSubscription?.cancel();
     _currentUserId = null;
@@ -73,7 +73,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     ));
   }
 
-  /// Loads and listens to real-time updates for the user profile of [userId].
+  // Kullanıcı profili değişikliklerini Firestore'dan gerçek zamanlı dinler ve yükler.
   void loadProfile(String userId) {
     final cleanUid = userId.trim();
     if (cleanUid.isEmpty) {
@@ -153,7 +153,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  /// Updates the user's home name (e.g. "Aygen'in Evi").
+  // Ev adını günceller.
   Future<void> updateHomeName(String newHomeName) async {
     final cleanName = newHomeName.trim();
     if (cleanName.isEmpty) {
@@ -184,7 +184,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  /// Updates multiple profile details atomically (displayName, email, roleTitle, homeName).
+  // Kullanıcı profil bilgilerini topluca günceller.
   Future<void> updateProfileDetails({
     String? displayName,
     String? email,
@@ -224,7 +224,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  /// Updates the user's display name.
+  // Kullanıcının görünen adını günceller.
   Future<void> updateDisplayName(String newDisplayName) async {
     final cleanName = newDisplayName.trim();
     if (cleanName.isEmpty) {
@@ -250,7 +250,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  /// Updates the user's role title (e.g. "Ev Sahibi", "Yönetici", "Misafir").
+  // Kullanıcının evdeki rol unvanını günceller.
   Future<void> updateRoleTitle(String newRoleTitle) async {
     final cleanRole = newRoleTitle.trim();
     if (cleanRole.isEmpty) return;
@@ -273,7 +273,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  /// Updates the user's email address.
+  // Kullanıcının e-posta adresini günceller.
   Future<void> updateEmail(String newEmail) async {
     final cleanEmail = newEmail.trim();
     if (cleanEmail.isEmpty) return;
@@ -296,7 +296,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  /// Toggles push notifications on/off.
+  // Bildirim alma tercihini açar veya kapatır.
   Future<void> toggleNotifications(bool enabled) async {
     if (state is! ProfileLoaded) return;
     final current = state as ProfileLoaded;
@@ -306,7 +306,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
     final updatedProfile = current.profile.copyWith(preferences: updatedPrefs);
 
-    // Optimistic UI update & local persistence
+    // İyimser arayüz güncellemesi ve yerel önbelleğe kaydetme
     await localCacheService?.saveProfile(updatedProfile);
     emit(current.copyWith(profile: updatedProfile));
 
@@ -320,7 +320,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  /// Toggles eco mode preference on/off.
+  // Eko mod tercihini açar veya kapatır.
   Future<void> toggleEcoMode(bool enabled) async {
     if (state is! ProfileLoaded) return;
     final current = state as ProfileLoaded;
@@ -329,7 +329,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
     final updatedProfile = current.profile.copyWith(preferences: updatedPrefs);
 
-    // Optimistic UI update & local persistence
+    // İyimser arayüz güncellemesi ve yerel önbelleğe kaydetme
     await localCacheService?.saveProfile(updatedProfile);
     emit(current.copyWith(profile: updatedProfile));
 
@@ -339,7 +339,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  /// Updates the preferred temperature unit ('C' or 'F').
+  // Sıcaklık birimi tercihini ('C' veya 'F') ayarlar.
   Future<void> setTemperatureUnit(String unit) async {
     final cleanUnit = unit.toUpperCase().trim();
     if (cleanUnit != 'C' && cleanUnit != 'F') return;
@@ -360,7 +360,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  /// Picks an image via [photoService], saves it locally, and saves the file path.
+  // Galeriden veya kameradan profil fotoğrafı seçip kaydeder.
   Future<void> pickAndSavePhoto({ImageSource source = ImageSource.gallery}) async {
     if (state is! ProfileLoaded) return;
     final current = state as ProfileLoaded;
@@ -377,7 +377,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       return;
     }
 
-    // Persist strictly to user-scoped key
+    // Fotoğraf yolunu yalnızca ilgili kullanıcının anahtarına yazar.
     await sharedPreferences?.setString(_photoPrefKey(current.profile.uid), path);
 
     final updatedProfile = current.profile.copyWith(photoPath: path);
@@ -395,7 +395,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  /// Sets a predefined or custom photo path directly (e.g. preset asset or saved path).
+  // Hazır veya özel bir profil fotoğrafı yolunu doğrudan atar.
   Future<void> setPhotoPath(String? path) async {
     if (state is! ProfileLoaded) return;
     final current = state as ProfileLoaded;
@@ -407,7 +407,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       return;
     }
 
-    // Persist strictly to user-scoped key
+    // Fotoğraf yolunu yalnızca ilgili kullanıcının anahtarına yazar.
     await sharedPreferences?.setString(_photoPrefKey(current.profile.uid), path);
 
     final updatedProfile = current.profile.copyWith(photoPath: path);
@@ -425,7 +425,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  /// Removes the user's profile photo and deletes the local cached file.
+  // Kullanıcının profil fotoğrafını kaldırır ve yerel dosyasını siler.
   Future<void> removePhoto() async {
     if (state is! ProfileLoaded) return;
     final current = state as ProfileLoaded;
@@ -452,7 +452,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  /// Clears any transient feedback or error messages.
+  // Geri bildirim ve hata mesajlarını temizler.
   void clearMessages() {
     if (state is ProfileLoaded) {
       final current = state as ProfileLoaded;

@@ -54,3 +54,7 @@ app.*.map.json
 *.keystore
 *.jks
 **/google-services.private.json
+
+# Yerel Dokümantasyon (Kullanıcı talebi doğrultusunda Git'e atılmaz)
+docs/PROJE_DETAYLI_TEKNIK_REHBER.md
+

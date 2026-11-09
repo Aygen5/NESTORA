@@ -9,14 +9,13 @@ import '../../domain/repositories/notifications_repository.dart';
 import '../../domain/usecases/notifications_usecases.dart';
 import 'notifications_state.dart';
 
-/// Cubit managing in-app smart home notifications, real-time unread badges,
-/// individual and bulk read confirmations, and deletions.
+// Akıllı ev bildirimlerini, okunma durumunu ve gerçek zamanlı bildirim sayısını yönetir.
 class NotificationsCubit extends Cubit<NotificationsState> {
   final NotificationsRepository notificationsRepository;
   final SparkQuotaService? quotaService;
   final LocalCacheService? localCacheService;
 
-  // Domain Use Cases
+  // İş mantığı kullanım senaryoları (Use Cases)
   final GetNotificationsUseCase getNotificationsUseCase;
   final WatchNotificationsUseCase watchNotificationsUseCase;
   final MarkNotificationReadUseCase markNotificationReadUseCase;
@@ -50,14 +49,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           ),
         );
 
-  /// Resets active notifications state and terminates stream subscription on logout.
+  // Çıkış yapıldığında bildirim durumunu sıfırlar ve akış aboneliğini sonlandırır.
   void reset() {
     _subscription?.cancel();
     _currentUserId = null;
     emit(const NotificationsLoaded(notifications: []));
   }
 
-  /// Loads and listens to real-time notification updates for [userId].
+  // Kullanıcıya ait bildirimleri gerçek zamanlı dinler ve yükler.
   void loadNotifications(String userId) {
     final cleanUid = userId.trim();
     if (cleanUid.isEmpty) {
@@ -107,7 +106,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     );
   }
 
-  /// Marks a single notification as read with optimistic UI update.
+  // Tek bir bildirimi okundu olarak işaretler.
   Future<void> markAsRead({
     required String userId,
     required String notificationId,
@@ -117,7 +116,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     final current = state as NotificationsLoaded;
     final previousList = current.notifications;
 
-    // Optimistic in-memory update
+    // İyimser arayüz güncellemesi
     final updatedList = current.notifications.map((n) {
       return n.id == cleanNotifId ? n.copyWith(isRead: true) : n;
     }).toList();
@@ -150,7 +149,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 
-  /// Marks all unread notifications as read atomically.
+  // Okunmamış tüm bildirimleri tek seferde okundu olarak işaretler.
   Future<void> markAllAsRead({
     required String userId,
   }) async {
@@ -159,7 +158,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
     if (current.unreadCount == 0) return;
 
-    // Optimistic in-memory update
+    // İyimser arayüz güncellemesi
     final updatedList = current.notifications.map((n) {
       return n.isRead ? n : n.copyWith(isRead: true);
     }).toList();
@@ -174,7 +173,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     await markAllNotificationsReadUseCase(userId.trim());
   }
 
-  /// Deletes a specific notification with optimistic UI removal.
+  // Belirli bir bildirimi siler.
   Future<void> deleteNotification({
     required String userId,
     required String notificationId,
@@ -183,7 +182,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     if (state is! NotificationsLoaded || cleanNotifId.isEmpty) return;
     final current = state as NotificationsLoaded;
 
-    // Optimistic in-memory removal
+    // Arayüzden anında kaldırır.
     final updatedList = current.notifications
         .where((n) => n.id != cleanNotifId)
         .toList();
@@ -203,7 +202,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     );
   }
 
-  /// Adds a local notification immediately and saves to cache.
+  // Yerel bir bildirimi anında ekler ve önbelleğe yazar.
   Future<void> addNotification(AppNotification notification) async {
     final current = state is NotificationsLoaded
         ? state as NotificationsLoaded
@@ -217,7 +216,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     emit(current.copyWith(notifications: updatedList));
   }
 
-  /// Creates and dispatches a new in-app notification.
+  // Yeni bir uygulama içi bildirim oluşturur.
   Future<void> createNotification({
     required String userId,
     required String title,
@@ -259,7 +258,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     } catch (_) {}
   }
 
-  /// Clears any transient feedback or error messages.
+  // Geri bildirim ve hata mesajlarını temizler.
   void clearMessages() {
     if (state is NotificationsLoaded) {
       final current = state as NotificationsLoaded;
@@ -278,7 +277,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 
-  /// Resolves guaranteed active Firebase user ID to prevent permission denied errors.
+  // İzin hatasını önlemek için aktif Firebase kullanıcı ID'sini çözümler.
   String _resolveUserId([String? userId]) {
     if (userId != null && userId.trim().isNotEmpty && userId.trim() != 'demo-user') {
       return userId.trim();
@@ -295,10 +294,10 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     return _currentUserId ?? 'demo-user';
   }
 
-  /// Currently active authenticated user ID.
+  // Aktif kullanıcının ID'si.
   String? get currentUserId => _currentUserId;
 
-  /// Convenience method for marking a notification as read.
+  // Bildirimi okundu işaretlemek için yardımcı metot.
   Future<void> markNotificationRead(String notificationId, {String? userId}) {
     return markAsRead(
       userId: _resolveUserId(userId),
@@ -306,14 +305,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     );
   }
 
-  /// Convenience method for marking all notifications as read.
+  // Tüm bildirimleri okundu yapmak için yardımcı metot.
   Future<void> markAllNotificationsRead({String? userId}) {
     return markAllAsRead(
       userId: _resolveUserId(userId),
     );
   }
 
-  /// Convenience method for deleting a notification.
+  // Bildirim silmek için yardımcı metot.
   Future<void> deleteNotificationById(String notificationId, {String? userId}) {
     return deleteNotification(
       userId: _resolveUserId(userId),
@@ -321,7 +320,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     );
   }
 
-  /// Convenience method for clearing all notifications.
+  // Tüm bildirimleri temizlemek için yardımcı metot.
   Future<void> clearAllNotifications({String? userId}) async {
     if (state is! NotificationsLoaded) return;
     final current = state as NotificationsLoaded;

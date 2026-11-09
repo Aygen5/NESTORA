@@ -13,10 +13,7 @@ import '../../domain/repositories/rooms_repository.dart';
 import '../../domain/usecases/rooms_usecases.dart';
 import 'rooms_state.dart';
 
-/// Cubit managing smart home rooms, real-time room streams, search filtering,
-/// and safe cascading room deletions (preserving devices or deleting them).
-/// Dispatches privacy-safe analytics events, logs unexpected room operation errors,
-/// and guards Firestore resource limits under Firebase Spark Plan.
+// Akıllı ev odalarını, gerçek zamanlı oda akışlarını ve silme/taşıma işlemlerini yönetir.
 class RoomsCubit extends Cubit<RoomsState> {
   final RoomsRepository roomsRepository;
   final DevicesRepository devicesRepository;
@@ -25,7 +22,7 @@ class RoomsCubit extends Cubit<RoomsState> {
   final SparkQuotaService? quotaService;
   final LocalCacheService? localCacheService;
 
-  // Domain Use Cases
+  // İş mantığı kullanım senaryoları (Use Cases)
   final GetRoomsUseCase getRoomsUseCase;
   final WatchRoomsUseCase watchRoomsUseCase;
   final CreateRoomUseCase createRoomUseCase;
@@ -67,7 +64,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     return loaded;
   }
 
-  /// Resets active rooms state, cancels stream subscription, and purges in-memory list on logout.
+  // Çıkış yapıldığında oda durumunu sıfırlar ve akış dinleyicisini iptal eder.
   void reset() {
     _roomsSubscription?.cancel();
     _currentUserId = null;
@@ -76,7 +73,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     ));
   }
 
-  /// Loads and listens to real-time updates for all rooms belonging to [userId].
+  // Kullanıcıya ait tüm odaları gerçek zamanlı dinler ve yükler.
   void loadRooms(String userId) {
     final cleanUid = userId.trim();
     if (cleanUid.isEmpty) {
@@ -122,7 +119,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     }
   }
 
-  /// Creates a new room in the user's home.
+  // Eve yeni bir oda ekler.
   Future<void> createRoom({
     required String userId,
     required String name,
@@ -170,7 +167,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     analyticsService?.logRoomCreated(roomType: room.iconName);
   }
 
-  /// Updates an existing room's details.
+  // Mevcut bir odanın bilgilerini günceller.
   Future<void> updateRoom({
     required String userId,
     required Room room,
@@ -199,10 +196,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     localCacheService?.saveRooms(updated, userId: cleanUid);
   }
 
-  /// Deletes a room.
-  /// If [moveToRoomId] is provided and non-empty, all devices located in this room
-  /// will be safely reassigned to the target room before deleting the room.
-  /// If [moveToRoomId] is null or empty, all associated devices are deleted atomically.
+  // Odayı ve isteğe bağlı olarak içindeki cihazları siler ya da başka odaya taşır.
   Future<void> deleteRoom({
     required String userId,
     required String roomId,
@@ -255,7 +249,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     analyticsService?.logRoomDeleted(roomId: cleanRoomId);
   }
 
-  /// Updates search query for filtering room lists in the UI.
+  // Arayüzde oda araması için filtre sorgusunu günceller.
   void searchRooms(String query) {
     if (state is RoomsLoaded) {
       final current = state as RoomsLoaded;
@@ -263,10 +257,10 @@ class RoomsCubit extends Cubit<RoomsState> {
     }
   }
 
-  /// Alias for searchRooms.
+  // Arama metodu takma adı.
   void setSearchQuery(String query) => searchRooms(query);
 
-  /// Clears search filter.
+  // Arama filtresini temizler.
   void clearSearch() {
     if (state is RoomsLoaded) {
       final current = state as RoomsLoaded;
@@ -274,7 +268,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     }
   }
 
-  /// Clears transient feedback or error messages.
+  // Geçici bildirim ve hata mesajlarını temizler.
   void clearMessages() {
     if (state is RoomsLoaded) {
       final current = state as RoomsLoaded;
@@ -292,10 +286,10 @@ class RoomsCubit extends Cubit<RoomsState> {
     }
   }
 
-  /// Currently active authenticated user ID.
+  // Oturumu açık olan kullanıcının ID'si.
   String? get currentUserId => _currentUserId;
 
-  /// Convenience method for deleting a room by ID.
+  // ID ile oda silmek için yardımcı metot.
   Future<void> deleteRoomById(String roomId, {String? moveToRoomId, String? userId}) {
     return deleteRoom(
       userId: userId ?? _currentUserId ?? 'demo-user',
@@ -304,7 +298,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     );
   }
 
-  /// Convenience method for adding a Room entity.
+  // Oda nesnesi eklemek için yardımcı metot.
   Future<void> addRoomEntity(Room room, {String? userId}) {
     return createRoom(
       userId: userId ?? _currentUserId ?? 'demo-user',
@@ -316,7 +310,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     );
   }
 
-  /// Convenience method for updating an existing Room entity.
+  // Oda nesnesi güncellemek için yardımcı metot.
   Future<void> updateRoomEntity(Room room, {String? userId}) {
     return updateRoom(
       userId: userId ?? _currentUserId ?? 'demo-user',
@@ -324,7 +318,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     );
   }
 
-  /// Updates the image asset or local file path of a room and persists it.
+  // Odanın görsel veya kapak fotoğrafı yolunu günceller.
   Future<void> updateRoomImage(String roomId, String? imagePath, {String? userId}) async {
     final current = _ensureLoaded();
     final target = current.rooms.where((r) => r.id == roomId).firstOrNull;

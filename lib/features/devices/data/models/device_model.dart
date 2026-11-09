@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Type;
 import '../../../../core/utils/firestore_helpers.dart';
 import '../../domain/entities/device.dart';
 
-/// Data Transfer Object (DTO) for [Device] handling Cloud Firestore serialization.
+// Firestore serileştirme ve veri dönüşümlerini yöneten Cihaz Veri Modeli (DTO).
 class DeviceModel extends Device {
   const DeviceModel({
     required super.id,
@@ -22,7 +22,7 @@ class DeviceModel extends Device {
     super.updatedAt,
   });
 
-  /// Factory creating a [DeviceModel] from a raw Firestore Map and document [id].
+  // Ham Firestore Map verisinden ve doküman ID'sinden DeviceModel üretir.
   factory DeviceModel.fromMap(
     Map<String, dynamic> map, {
     required String id,
@@ -66,7 +66,7 @@ class DeviceModel extends Device {
     );
   }
 
-  /// Factory creating a [DeviceModel] from a Firestore [DocumentSnapshot].
+  // Firestore DocumentSnapshot nesnesinden DeviceModel üretir.
   factory DeviceModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
   ) {
@@ -76,7 +76,7 @@ class DeviceModel extends Device {
     );
   }
 
-  /// Factory creating a [DeviceModel] from a pure domain [Device] entity.
+  // Saf domain Device entity nesnesinden DeviceModel üretir.
   factory DeviceModel.fromEntity(Device device) {
     return DeviceModel(
       id: device.id,
@@ -97,7 +97,7 @@ class DeviceModel extends Device {
     );
   }
 
-  /// Converts this model into a Firestore write payload with [FieldValue.serverTimestamp].
+  // Modeli sunucu zaman damgasıyla Firestore yazma formatına dönüştürür.
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
@@ -120,7 +120,7 @@ class DeviceModel extends Device {
     };
   }
 
-  /// Converts this model into a serializable standard Dart Map (e.g. for testing or local cache).
+  // Modeli yerel önbellek ve testler için standart Map formatına dönüştürür.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -144,7 +144,7 @@ class DeviceModel extends Device {
     };
   }
 
-  /// Pure domain conversion.
+  // Modeli saf domain entity nesnesine dönüştürür.
   Device toEntity() => Device(
         id: id,
         name: name,

@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Type;
 import 'package:flutter/foundation.dart';
 
-/// Service providing initial seed data generation in Cloud Firestore for demo accounts
-/// or initial onboarding environments according to the project's data architecture.
+// Demo hesap veya ilk kurulum için Cloud Firestore başlangıç verisi üreten servis.
 class FirestoreSeedService {
   final FirebaseFirestore? firestore;
 
@@ -10,8 +9,7 @@ class FirestoreSeedService {
     this.firestore,
   });
 
-  /// Checks if the user's rooms collection is empty, and if so, seeds default rooms,
-  /// devices, and notifications in an atomic batch. Returns true if seeded.
+  // Kullanıcının veritabanı boşsa atomik batch ile varsayılan oda, cihaz ve bildirimleri yükler.
   Future<bool> seedDemoUserDataIfEmpty(
     String uid, {
     String? displayName,
@@ -27,7 +25,7 @@ class FirestoreSeedService {
       final userDocRef = firestore!.collection('users').doc(uid);
       final roomsCollection = userDocRef.collection('rooms');
 
-      // Check if user already has seeded rooms
+      // Kullanıcının daha önceden verisi olup olmadığını kontrol eder.
       final existingRooms = await roomsCollection.limit(1).get();
       if (existingRooms.docs.isNotEmpty) {
         debugPrint('FirestoreSeedService: User $uid already has data, skipping seed.');
@@ -36,7 +34,7 @@ class FirestoreSeedService {
 
       final batch = firestore!.batch();
 
-      // 1. User Profile Document
+      // 1. Kullanıcı Profil Dokümanı
       final effectiveName = displayName ?? 'Aygen Yıldırım';
       final effectiveHomeName = homeName ?? "$effectiveName'in Evi";
 
@@ -57,7 +55,7 @@ class FirestoreSeedService {
         SetOptions(merge: true),
       );
 
-      // 2. Initial Rooms
+      // 2. Başlangıç Odaları
       final rooms = [
         {
           'id': 'room-1',
@@ -101,7 +99,7 @@ class FirestoreSeedService {
         });
       }
 
-      // 3. Initial Devices
+      // 3. Başlangıç Cihazları
       final devicesCollection = userDocRef.collection('devices');
       final devices = [
         {
@@ -221,7 +219,7 @@ class FirestoreSeedService {
         });
       }
 
-      // 4. Initial Notifications
+      // 4. Başlangıç Bildirimleri
       final notificationsCollection = userDocRef.collection('notifications');
       final notifications = [
         {

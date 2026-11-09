@@ -9,14 +9,13 @@ import '../../domain/usecases/auth_usecases.dart';
 import '../widgets/password_validator_widget.dart';
 import 'auth_state.dart';
 
-/// Cubit managing user authentication flow, input validation, and session states.
-/// Dispatches privacy-safe analytics events and records unexpected auth failures.
+// Kullanıcı kimlik doğrulama akışını, form doğrulamasını ve oturum durumunu yönetir.
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository authRepository;
   final AnalyticsService? analyticsService;
   final CrashlyticsService? crashlyticsService;
 
-  // Domain Use Cases
+  // İş mantığı kullanım senaryoları (Use Cases)
   final SignInWithEmailUseCase signInWithEmailUseCase;
   final SignUpWithEmailUseCase signUpWithEmailUseCase;
   final SignInDemoUseCase signInDemoUseCase;
@@ -63,7 +62,7 @@ class AuthCubit extends Cubit<AuthState> {
     });
   }
 
-  /// Checks the current cached/SDK authentication status and emits the proper state.
+  // Mevcut oturum durumunu denetler ve uygun durumu yayar.
   void checkAuthStatus() {
     final user = getCurrentUserUseCase();
     if (user != null) {
@@ -75,7 +74,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Authenticates using email and password with format validation.
+  // E-posta ve şifre ile sisteme giriş yapar.
   Future<void> signInWithEmail({
     required String email,
     required String password,
@@ -116,7 +115,7 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  /// Registers a new account with email, password complexity verification, and confirmation match.
+  // E-posta, şifre ve şifre tekrarı ile yeni bir kullanıcı hesabı kaydeder.
   Future<void> signUpWithEmail({
     required String email,
     required String password,
@@ -129,7 +128,7 @@ class AuthCubit extends Cubit<AuthState> {
       return;
     }
 
-    // Evaluate password rules: min 8 chars, uppercase, number, special char, and matching confirmation
+    // Şifre kurallarını doğrular: en az 8 karakter, büyük harf, rakam ve özel karakter.
     final validation = PasswordValidationResult.evaluate(password, passwordConfirm);
 
     if (!validation.hasMin8Chars) {
@@ -183,7 +182,7 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  /// Signs in using the pre-configured Demo account credentials.
+  // Önceden yapılandırılmış Demo hesabıyla hızlı giriş yapar.
   Future<void> signInDemo({
     String? email,
     String? password,
@@ -213,7 +212,7 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  /// Dispatches a password reset link to the provided email address.
+  // Belirtilen e-posta adresine şifre sıfırlama bağlantısı gönderir.
   Future<void> sendPasswordReset({
     required String email,
   }) async {
@@ -240,7 +239,7 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  /// Signs the user out from active session.
+  // Kullanıcının mevcut oturumunu kapatır.
   Future<void> signOut() async {
     emit(const AuthLoading(message: 'Çıkış yapılıyor...'));
 
@@ -264,7 +263,7 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  /// Resets an active error state back to unauthenticated or current session.
+  // Hata durumunu temizleyerek oturum durumuna geri döner.
   void clearError() {
     if (state is AuthError) {
       final user = authRepository.currentUser;

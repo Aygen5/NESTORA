@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Type;
 import '../../../../core/utils/firestore_helpers.dart';
 import '../../domain/entities/user_profile.dart';
 
-/// Data Transfer Object (DTO) for [UserProfile] handling Cloud Firestore serialization.
+// Firestore serileştirme ve veri dönüşümlerini yöneten Kullanıcı Profili Veri Modeli (DTO).
 class UserProfileModel extends UserProfile {
   const UserProfileModel({
     required super.uid,
@@ -16,7 +16,7 @@ class UserProfileModel extends UserProfile {
     super.updatedAt,
   });
 
-  /// Factory creating a [UserProfileModel] from a raw Firestore Map and document [uid].
+  // Ham Firestore Map verisinden ve doküman ID'sinden (uid) UserProfileModel üretir.
   factory UserProfileModel.fromMap(
     Map<String, dynamic> map, {
     required String uid,
@@ -61,7 +61,7 @@ class UserProfileModel extends UserProfile {
     );
   }
 
-  /// Factory creating a [UserProfileModel] from a Firestore [DocumentSnapshot].
+  // Firestore DocumentSnapshot nesnesinden UserProfileModel üretir.
   factory UserProfileModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
   ) {
@@ -71,7 +71,7 @@ class UserProfileModel extends UserProfile {
     );
   }
 
-  /// Factory creating a [UserProfileModel] from a pure domain [UserProfile] entity.
+  // Saf domain UserProfile entity nesnesinden UserProfileModel üretir.
   factory UserProfileModel.fromEntity(UserProfile profile) {
     return UserProfileModel(
       uid: profile.uid,
@@ -86,7 +86,7 @@ class UserProfileModel extends UserProfile {
     );
   }
 
-  /// Converts this model into a Firestore write payload with [FieldValue.serverTimestamp].
+  // Modeli sunucu zaman damgasıyla Firestore yazma formatına dönüştürür.
   Map<String, dynamic> toFirestore() {
     return {
       'displayName': displayName,
@@ -104,7 +104,7 @@ class UserProfileModel extends UserProfile {
     };
   }
 
-  /// Converts this model into a serializable standard Dart Map.
+  // Modeli yerel önbellek ve testler için standart Map formatına dönüştürür.
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -123,7 +123,7 @@ class UserProfileModel extends UserProfile {
     };
   }
 
-  /// Pure domain conversion.
+  // Modeli saf domain entity nesnesine dönüştürür.
   UserProfile toEntity() => UserProfile(
         uid: uid,
         email: email,

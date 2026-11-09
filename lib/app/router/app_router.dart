@@ -40,7 +40,7 @@ import '../../core/constants/seed_data.dart';
 import '../../features/rooms/presentation/cubit/rooms_cubit.dart';
 import '../../features/rooms/presentation/cubit/rooms_state.dart';
 
-/// URL and Path definitions for all 16 application screens and preview tools.
+// Uygulamanın tüm ekranlarının rota yollarını tanımlar.
 abstract class AppRoutePaths {
   static const String splash = '/splash';
   static const String onboarding = '/onboarding';
@@ -49,13 +49,13 @@ abstract class AppRoutePaths {
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
 
-  // Shell Tabs
+  // Alt navigasyon çubuğu sekmeleri
   static const String dashboard = '/dashboard';
   static const String rooms = '/rooms';
   static const String devices = '/devices';
   static const String profile = '/profile';
 
-  // Standalone Full-Page Routes
+  // Bağımsız tam ekran rotaları
   static const String roomDetail = '/rooms/:roomId';
   static const String addEditRoom = '/rooms/add-edit';
   static const String lampControl = '/devices/lamp/:deviceId';
@@ -67,11 +67,11 @@ abstract class AppRoutePaths {
   static const String addEditDevice = '/devices/add-edit';
   static const String notifications = '/notifications';
 
-  // Dev / Debug Preview
+  // Geliştirici önizleme rotası
   static const String componentsPreview = '/components-preview';
 }
 
-/// Named routes for type-safe and clear routing.
+// Tip güvenli rota adları.
 abstract class AppRouteNames {
   static const String splash = 'splash';
   static const String onboarding = 'onboarding';
@@ -80,12 +80,12 @@ abstract class AppRouteNames {
   static const String register = 'register';
   static const String forgotPassword = 'forgot-password';
 
-  // Shell Tabs
+  // Alt navigasyon çubuğu sekmeleri
   static const String dashboard = 'dashboard';
   static const String devices = 'devices';
   static const String profile = 'profile';
 
-  // Standalone Full-Page Routes
+  // Bağımsız tam ekran rotaları
   static const String rooms = 'rooms';
   static const String roomDetail = 'room-detail';
   static const String addEditRoom = 'add-edit-room';
@@ -98,17 +98,17 @@ abstract class AppRouteNames {
   static const String addEditDevice = 'add-edit-device';
   static const String notifications = 'notifications';
 
-  // Dev / Debug Preview
+  // Geliştirici önizleme rotası
   static const String componentsPreview = 'components-preview';
 }
 
-/// Global navigator keys for root and shell navigators.
+// Kök ve alt kabuk gezginleri için genel anahtarlar.
 final GlobalKey<NavigatorState> rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'rootNav');
 final GlobalKey<NavigatorState> shellNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'shellNav');
 
-/// Central GoRouter factory function.
+// Merkezi GoRouter yapılandırma fabrikası.
 GoRouter createAppRouter({
   String initialLocation = AppRoutePaths.splash,
   AppAuthListenable? authListenable,
@@ -443,7 +443,7 @@ GoRouter createAppRouter({
   );
 }
 
-/// Helper navigation extension methods on BuildContext for clean call sites.
+// BuildContext üzerinden doğrudan sayfa yönlendirmesi sağlayan yardımcı metotlar.
 extension NestoraNavigationExtension on BuildContext {
   void goToSplash() => go(AppRoutePaths.splash);
   void goToOnboarding() => go(AppRoutePaths.onboarding);

@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Type;
 import '../../../../core/utils/firestore_helpers.dart';
 import '../../domain/entities/app_notification.dart';
 
-/// Data Transfer Object (DTO) for [AppNotification] handling Cloud Firestore serialization.
+// Firestore serileştirme ve veri dönüşümlerini yöneten Bildirim Veri Modeli (DTO).
 class NotificationModel extends AppNotification {
   const NotificationModel({
     required super.id,
@@ -15,12 +15,12 @@ class NotificationModel extends AppNotification {
     required super.createdAt,
   });
 
-  /// Factory creating a [NotificationModel] from a raw Firestore Map and document [id].
+  // Ham Firestore Map verisinden ve doküman ID'sinden NotificationModel üretir.
   factory NotificationModel.fromMap(
     Map<String, dynamic> map, {
     required String id,
   }) {
-    // Handle both `isRead` and legacy `isUnread` fields safely
+    // Hem `isRead` hem de eski `isUnread` alanlarını güvenle işler.
     bool readState = false;
     if (map.containsKey('isRead')) {
       readState = FirestoreHelpers.parseBool(map['isRead'], false);
@@ -44,7 +44,7 @@ class NotificationModel extends AppNotification {
     );
   }
 
-  /// Factory creating a [NotificationModel] from a Firestore [DocumentSnapshot].
+  // Firestore DocumentSnapshot nesnesinden NotificationModel üretir.
   factory NotificationModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
   ) {
@@ -54,7 +54,7 @@ class NotificationModel extends AppNotification {
     );
   }
 
-  /// Factory creating a [NotificationModel] from a pure domain [AppNotification] entity.
+  // Saf domain AppNotification entity nesnesinden NotificationModel üretir.
   factory NotificationModel.fromEntity(AppNotification notification) {
     return NotificationModel(
       id: notification.id,
@@ -68,7 +68,7 @@ class NotificationModel extends AppNotification {
     );
   }
 
-  /// Converts this model into a Firestore write payload.
+  // Modeli Firestore yazma formatına dönüştürür.
   Map<String, dynamic> toFirestore() {
     return {
       'title': title,
@@ -81,7 +81,7 @@ class NotificationModel extends AppNotification {
     };
   }
 
-  /// Converts this model into a serializable standard Dart Map.
+  // Modeli yerel önbellek ve testler için standart Map formatına dönüştürür.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -95,7 +95,7 @@ class NotificationModel extends AppNotification {
     };
   }
 
-  /// Pure domain conversion.
+  // Modeli saf domain entity nesnesine dönüştürür.
   AppNotification toEntity() => AppNotification(
         id: id,
         title: title,

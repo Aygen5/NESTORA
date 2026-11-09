@@ -47,20 +47,19 @@ import '../theme/theme_cubit.dart';
 
 typedef FactoryFunc<T> = T Function();
 
-/// [ServiceLocator] provides a lightweight, type-safe, reflection-free dependency
-/// injection and service lookup mechanism for Nestora.
+// Nestora için tip güvenli, yansıma (reflection) içermeyen bağımlılık enjeksiyonu yöneticisi.
 class ServiceLocator {
   ServiceLocator._();
   static final ServiceLocator _instance = ServiceLocator._();
 
-  /// Singleton instance of the locator.
+  // Servis bulucunun tekil (singleton) örneğini döndürür.
   static ServiceLocator get instance => _instance;
 
   final Map<Type, dynamic> _singletons = {};
   final Map<Type, FactoryFunc<dynamic>> _lazySingletons = {};
   final Map<Type, FactoryFunc<dynamic>> _factories = {};
 
-  /// Registers an already instantiated singleton of type [T].
+  // Önceden oluşturulmuş bir nesneyi tekil örnek (singleton) olarak kaydeder.
   void registerSingleton<T extends Object>(T instance) {
     if (isRegistered<T>()) {
       throw StateError('ServiceLocator: Type $T is already registered.');
@@ -68,7 +67,7 @@ class ServiceLocator {
     _singletons[T] = instance;
   }
 
-  /// Registers a lazy singleton of type [T] that will be instantiated upon first access.
+  // İlk erişimde oluşturulacak tembel tekil örneği (lazy singleton) kaydeder.
   void registerLazySingleton<T extends Object>(FactoryFunc<T> factory) {
     if (isRegistered<T>()) {
       throw StateError('ServiceLocator: Type $T is already registered.');
@@ -76,7 +75,7 @@ class ServiceLocator {
     _lazySingletons[T] = factory;
   }
 
-  /// Registers a factory of type [T] that creates a new instance on every request.
+  // Her çağrıda yeni bir örnek üreten fabrika fonksiyonunu kaydeder.
   void registerFactory<T extends Object>(FactoryFunc<T> factory) {
     if (isRegistered<T>()) {
       throw StateError('ServiceLocator: Type $T is already registered.');
@@ -84,14 +83,14 @@ class ServiceLocator {
     _factories[T] = factory;
   }
 
-  /// Retrieves an instance of type [T].
+  // Kayıtlı örneği tipine göre bulup döndürür.
   T get<T extends Object>() {
-    // 1. Check existing singletons
+    // 1. Mevcut tekil örnekleri kontrol et.
     if (_singletons.containsKey(T)) {
       return _singletons[T] as T;
     }
 
-    // 2. Check lazy singletons
+    // 2. Tembel tekil örnekleri kontrol et ve oluştur.
     if (_lazySingletons.containsKey(T)) {
       final instance = _lazySingletons[T]!() as T;
       _singletons[T] = instance;
@@ -99,7 +98,7 @@ class ServiceLocator {
       return instance;
     }
 
-    // 3. Check factories
+    // 3. Fabrika kayıtlarını kontrol et ve yeni örnek üret.
     if (_factories.containsKey(T)) {
       return _factories[T]!() as T;
     }
@@ -107,24 +106,24 @@ class ServiceLocator {
     throw StateError('ServiceLocator: Type $T is not registered.');
   }
 
-  /// Shortcut callable syntax: `sl<T>()` or `locator<T>()`
+  // Kısa çağrı sözdizimi: `sl<T>()`
   T call<T extends Object>() => get<T>();
 
-  /// Checks if type [T] is registered in any form.
+  // Verilen tipin kayıtlı olup olmadığını kontrol eder.
   bool isRegistered<T extends Object>() {
     return _singletons.containsKey(T) ||
         _lazySingletons.containsKey(T) ||
         _factories.containsKey(T);
   }
 
-  /// Unregisters type [T] if registered.
+  // Belirtilen tipin kaydını siler.
   void unregister<T extends Object>() {
     _singletons.remove(T);
     _lazySingletons.remove(T);
     _factories.remove(T);
   }
 
-  /// Resets all registrations. Primarily used for clean test teardowns.
+  // Tüm kayıtları sıfırlar; test temizliklerinde kullanılır.
   void reset() {
     _singletons.clear();
     _lazySingletons.clear();
@@ -132,25 +131,13 @@ class ServiceLocator {
   }
 }
 
-/// Global Service Locator instance accessor (short alias).
+// Global bağımlılık bulucu örneği (kısa alias).
 final sl = ServiceLocator.instance;
 
-/// Global Service Locator instance accessor (standard alias).
+// Global bağımlılık bulucu örneği (standart alias).
 final locator = ServiceLocator.instance;
 
-/// Initializes core infrastructure dependencies:
-/// - [SharedPreferences]
-/// - [FirebaseAuth]
-/// - [FirebaseFirestore]
-/// - [FirebaseAnalytics]
-/// - [FirebaseRemoteConfig]
-/// - [CrashlyticsService]
-/// - [AnalyticsService]
-/// - [PerformanceService]
-/// - [RemoteConfigService]
-/// - [SparkQuotaService]
-///
-/// In subsequent phases, Data Sources and Repositories will be registered here.
+// Tüm çekirdek servisleri, veri kaynaklarını, repository ve use case'leri kaydeder.
 Future<void> initDependencies({
   SharedPreferences? sharedPreferences,
   FirebaseAuth? firebaseAuth,
@@ -165,13 +152,13 @@ Future<void> initDependencies({
   RemoteConfigService? remoteConfigService,
   SparkQuotaService? sparkQuotaService,
 }) async {
-  // 1. SharedPreferences (Local key-value storage)
+  // 1. SharedPreferences (Yerel anahtar-değer depolama)
   if (!sl.isRegistered<SharedPreferences>()) {
     final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
     sl.registerSingleton<SharedPreferences>(prefs);
   }
 
-  // 1.1 Local Cache Service (Resilient Offline & Demo Simulation Persistence)
+  // 1.1 LocalCacheService (Oturum bazlı izole yerel önbellek)
   if (!sl.isRegistered<LocalCacheService>()) {
     sl.registerSingleton<LocalCacheService>(
       LocalCacheService(
@@ -180,12 +167,12 @@ Future<void> initDependencies({
     );
   }
 
-  // 1.2 Network Info (Connectivity & Reachability Guard)
+  // 1.2 NetworkInfo (Ağ bağlantı durumu kontrolü)
   if (!sl.isRegistered<NetworkInfo>()) {
     sl.registerSingleton<NetworkInfo>(const NetworkInfoImpl());
   }
 
-  // 2. Firebase Services (Registered safely with optional test overrides)
+  // 2. Firebase Servisleri (Güvenli ve test edilebilir singleton kayıtları)
   if (firebaseAuth != null) {
     if (!sl.isRegistered<FirebaseAuth>()) {
       sl.registerSingleton<FirebaseAuth>(firebaseAuth);
@@ -242,7 +229,7 @@ Future<void> initDependencies({
     }
   }
 
-  // 2.1 Crashlytics & Analytics Services
+  // 2.1 Crashlytics ve Analytics Servisleri
   if (crashlyticsService != null) {
     if (!sl.isRegistered<CrashlyticsService>()) {
       sl.registerSingleton<CrashlyticsService>(crashlyticsService);
@@ -280,7 +267,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 2.2 Performance Service
+  // 2.2 Performance İzleme Servisi
   if (performanceService != null) {
     if (!sl.isRegistered<PerformanceService>()) {
       sl.registerSingleton<PerformanceService>(performanceService);
@@ -305,7 +292,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 2.3 Remote Config Service
+  // 2.3 Remote Config Servisi
   if (remoteConfigService != null) {
     if (!sl.isRegistered<RemoteConfigService>()) {
       sl.registerSingleton<RemoteConfigService>(remoteConfigService);
@@ -320,7 +307,7 @@ Future<void> initDependencies({
     sl.registerSingleton<RemoteConfigService>(rcService);
   }
 
-  // 2.4 Spark Quota Service (Firebase Spark Plan Quota Guard)
+  // 2.4 Spark Kota Koruma Servisi (SparkQuotaService)
   if (sparkQuotaService != null) {
     if (!sl.isRegistered<SparkQuotaService>()) {
       sl.registerSingleton<SparkQuotaService>(sparkQuotaService);
@@ -338,7 +325,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 3. Auth Redirect Listenable for GoRouter
+  // 3. GoRouter için Auth Yönlendirme Dinleyicisi
   if (!sl.isRegistered<AppAuthListenable>()) {
     FirebaseAuth? auth;
     if (sl.isRegistered<FirebaseAuth>()) {
@@ -351,7 +338,7 @@ Future<void> initDependencies({
     ));
   }
 
-  // 4. Demo Config & Firestore Seed Services
+  // 4. Demo Yapılandırma ve Firestore Tohumlama Servisi
   if (!sl.isRegistered<DemoConfigService>()) {
     final demoConfig = DemoConfigService(
       remoteConfig: sl.isRegistered<FirebaseRemoteConfig>()
@@ -375,7 +362,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 5. Auth Data Source & Repository
+  // 5. Kimlik Doğrulama Veri Kaynağı ve Deposu
   if (!sl.isRegistered<AuthRemoteDataSource>()) {
     sl.registerLazySingleton<AuthRemoteDataSource>(
       () => AuthRemoteDataSourceImpl(
@@ -401,7 +388,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 6. Auth Cubit
+  // 6. Kimlik Doğrulama Durum Yönetimi (AuthCubit)
   if (!sl.isRegistered<AuthCubit>()) {
     sl.registerFactory<AuthCubit>(
       () => AuthCubit(
@@ -414,7 +401,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 7. Feature Remote Data Sources
+  // 7. Özellik Uzak Veri Kaynakları (Data Sources)
   if (!sl.isRegistered<RoomsRemoteDataSource>()) {
     sl.registerLazySingleton<RoomsRemoteDataSource>(
       () => RoomsRemoteDataSourceImpl(
@@ -455,7 +442,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 8. Feature Repositories
+  // 8. Özellik Depoları (Repositories)
   if (!sl.isRegistered<RoomsRepository>()) {
     sl.registerLazySingleton<RoomsRepository>(
       () => RoomsRepositoryImpl(
@@ -488,8 +475,8 @@ Future<void> initDependencies({
     );
   }
 
-  // 8.1 Domain Use Cases
-  // Auth Use Cases
+  // 8.1 İş Mantığı Kullanım Senaryoları (Use Cases)
+  // Kimlik Doğrulama Senaryoları
   if (!sl.isRegistered<SignInWithEmailUseCase>()) {
     sl.registerLazySingleton<SignInWithEmailUseCase>(() => SignInWithEmailUseCase(sl<AuthRepository>()));
   }
@@ -512,7 +499,7 @@ Future<void> initDependencies({
     sl.registerLazySingleton<WatchAuthStateUseCase>(() => WatchAuthStateUseCase(sl<AuthRepository>()));
   }
 
-  // Devices Use Cases
+  // Cihaz İşlem Senaryoları
   if (!sl.isRegistered<GetDevicesUseCase>()) {
     sl.registerLazySingleton<GetDevicesUseCase>(() => GetDevicesUseCase(sl<DevicesRepository>()));
   }
@@ -538,7 +525,7 @@ Future<void> initDependencies({
     sl.registerLazySingleton<MoveDevicesToRoomUseCase>(() => MoveDevicesToRoomUseCase(sl<DevicesRepository>()));
   }
 
-  // Rooms Use Cases
+  // Oda İşlem Senaryoları
   if (!sl.isRegistered<GetRoomsUseCase>()) {
     sl.registerLazySingleton<GetRoomsUseCase>(() => GetRoomsUseCase(sl<RoomsRepository>()));
   }
@@ -555,7 +542,7 @@ Future<void> initDependencies({
     sl.registerLazySingleton<DeleteRoomUseCase>(() => DeleteRoomUseCase(sl<RoomsRepository>()));
   }
 
-  // Notifications Use Cases
+  // Bildirim Senaryoları
   if (!sl.isRegistered<GetNotificationsUseCase>()) {
     sl.registerLazySingleton<GetNotificationsUseCase>(() => GetNotificationsUseCase(sl<NotificationsRepository>()));
   }
@@ -575,7 +562,7 @@ Future<void> initDependencies({
     sl.registerLazySingleton<CreateNotificationUseCase>(() => CreateNotificationUseCase(sl<NotificationsRepository>()));
   }
 
-  // Profile Use Cases
+  // Profil Senaryoları
   if (!sl.isRegistered<GetUserProfileUseCase>()) {
     sl.registerLazySingleton<GetUserProfileUseCase>(() => GetUserProfileUseCase(sl<ProfileRepository>()));
   }
@@ -589,7 +576,7 @@ Future<void> initDependencies({
     sl.registerLazySingleton<UpdatePhotoPathUseCase>(() => UpdatePhotoPathUseCase(sl<ProfileRepository>()));
   }
 
-  // 9. Profile Photo Service, Secure Image Service & Profile Cubit
+  // 9. Profil Fotoğrafı ve Profil Durum Yönetimi (ProfileCubit)
   if (!sl.isRegistered<SecureImageService>()) {
     sl.registerLazySingleton<SecureImageService>(
       () => SecureImageService(),
@@ -617,7 +604,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 10. Rooms Cubit
+  // 10. Oda Durum Yönetimi (RoomsCubit)
   if (!sl.isRegistered<RoomsCubit>()) {
     sl.registerFactory<RoomsCubit>(
       () => RoomsCubit(
@@ -635,7 +622,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 11. Devices Cubit
+  // 11. Cihaz Durum Yönetimi (DevicesCubit)
   if (!sl.isRegistered<DevicesCubit>()) {
     sl.registerFactory<DevicesCubit>(
       () => DevicesCubit(
@@ -652,7 +639,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 12. Notifications Cubit
+  // 12. Bildirim Durum Yönetimi (NotificationsCubit)
   if (!sl.isRegistered<NotificationsCubit>()) {
     sl.registerFactory<NotificationsCubit>(
       () => NotificationsCubit(
@@ -665,7 +652,7 @@ Future<void> initDependencies({
     );
   }
 
-  // 13. Theme Cubit
+  // 13. Tema Durum Yönetimi (ThemeCubit)
   if (!sl.isRegistered<ThemeCubit>()) {
     sl.registerFactory<ThemeCubit>(
       () => ThemeCubit(
