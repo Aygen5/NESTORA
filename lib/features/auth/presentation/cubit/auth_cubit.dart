@@ -5,6 +5,7 @@ import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/crashlytics_service.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/auth_usecases.dart';
 import '../widgets/password_validator_widget.dart';
 import 'auth_state.dart';
 
@@ -15,18 +16,41 @@ class AuthCubit extends Cubit<AuthState> {
   final AnalyticsService? analyticsService;
   final CrashlyticsService? crashlyticsService;
 
+  // Domain Use Cases
+  final SignInWithEmailUseCase signInWithEmailUseCase;
+  final SignUpWithEmailUseCase signUpWithEmailUseCase;
+  final SignInDemoUseCase signInDemoUseCase;
+  final SignOutUseCase signOutUseCase;
+  final SendPasswordResetUseCase sendPasswordResetUseCase;
+  final GetCurrentUserUseCase getCurrentUserUseCase;
+  final WatchAuthStateUseCase watchAuthStateUseCase;
+
   StreamSubscription<AuthUser?>? _authSubscription;
 
   AuthCubit({
     required this.authRepository,
     this.analyticsService,
     this.crashlyticsService,
-  }) : super(const AuthInitial()) {
+    SignInWithEmailUseCase? signInWithEmailUseCase,
+    SignUpWithEmailUseCase? signUpWithEmailUseCase,
+    SignInDemoUseCase? signInDemoUseCase,
+    SignOutUseCase? signOutUseCase,
+    SendPasswordResetUseCase? sendPasswordResetUseCase,
+    GetCurrentUserUseCase? getCurrentUserUseCase,
+    WatchAuthStateUseCase? watchAuthStateUseCase,
+  })  : signInWithEmailUseCase = signInWithEmailUseCase ?? SignInWithEmailUseCase(authRepository),
+        signUpWithEmailUseCase = signUpWithEmailUseCase ?? SignUpWithEmailUseCase(authRepository),
+        signInDemoUseCase = signInDemoUseCase ?? SignInDemoUseCase(authRepository),
+        signOutUseCase = signOutUseCase ?? SignOutUseCase(authRepository),
+        sendPasswordResetUseCase = sendPasswordResetUseCase ?? SendPasswordResetUseCase(authRepository),
+        getCurrentUserUseCase = getCurrentUserUseCase ?? GetCurrentUserUseCase(authRepository),
+        watchAuthStateUseCase = watchAuthStateUseCase ?? WatchAuthStateUseCase(authRepository),
+        super(const AuthInitial()) {
     _initAuthListener();
   }
 
   void _initAuthListener() {
-    _authSubscription = authRepository.authStateChanges.listen((authUser) {
+    _authSubscription = watchAuthStateUseCase().listen((authUser) {
       if (authUser != null) {
         analyticsService?.setUserId(authUser.id);
         crashlyticsService?.setUserId(authUser.id);
@@ -41,7 +65,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   /// Checks the current cached/SDK authentication status and emits the proper state.
   void checkAuthStatus() {
-    final user = authRepository.currentUser;
+    final user = getCurrentUserUseCase();
     if (user != null) {
       analyticsService?.setUserId(user.id);
       crashlyticsService?.setUserId(user.id);
@@ -69,7 +93,7 @@ class AuthCubit extends Cubit<AuthState> {
 
     emit(const AuthLoading(message: 'Giriş yapılıyor...'));
 
-    final result = await authRepository.signInWithEmail(
+    final result = await signInWithEmailUseCase(
       email: cleanEmail,
       password: password,
     );
@@ -135,7 +159,7 @@ class AuthCubit extends Cubit<AuthState> {
 
     emit(const AuthLoading(message: 'Hesabınız oluşturuluyor...'));
 
-    final result = await authRepository.signUpWithEmail(
+    final result = await signUpWithEmailUseCase(
       email: cleanEmail,
       password: password,
       displayName: displayName?.trim(),
@@ -166,7 +190,7 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     emit(const AuthLoading(message: 'Demo hesaba bağlanılıyor...'));
 
-    final result = await authRepository.signInDemo(
+    final result = await signInDemoUseCase(
       email: email,
       password: password,
     );
@@ -201,7 +225,7 @@ class AuthCubit extends Cubit<AuthState> {
 
     emit(const AuthLoading(message: 'Şifre sıfırlama bağlantısı gönderiliyor...'));
 
-    final result = await authRepository.sendPasswordReset(email: cleanEmail);
+    final result = await sendPasswordResetUseCase(email: cleanEmail);
 
     result.when(
       success: (_) => emit(AuthPasswordResetSent(cleanEmail)),
@@ -220,7 +244,7 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> signOut() async {
     emit(const AuthLoading(message: 'Çıkış yapılıyor...'));
 
-    final result = await authRepository.signOut();
+    final result = await signOutUseCase();
 
     result.when(
       success: (_) {

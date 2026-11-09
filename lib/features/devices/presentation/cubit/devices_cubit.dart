@@ -9,6 +9,7 @@ import '../../../../core/services/local_cache_service.dart';
 import '../../../../core/services/spark_quota_service.dart';
 import '../../domain/entities/device.dart';
 import '../../domain/repositories/devices_repository.dart';
+import '../../domain/usecases/devices_usecases.dart';
 import 'devices_state.dart';
 
 /// Single Source of Truth for all simulated smart devices in Nestora.
@@ -29,6 +30,16 @@ class DevicesCubit extends Cubit<DevicesState> {
   final SparkQuotaService? quotaService;
   final LocalCacheService? localCacheService;
 
+  // Domain Use Cases
+  final GetDevicesUseCase getDevicesUseCase;
+  final WatchDevicesUseCase watchDevicesUseCase;
+  final ToggleDevicePowerUseCase toggleDevicePowerUseCase;
+  final UpdateDeviceStateUseCase updateDeviceStateUseCase;
+  final CreateDeviceUseCase createDeviceUseCase;
+  final UpdateDeviceUseCase updateDeviceUseCase;
+  final DeleteDeviceUseCase deleteDeviceUseCase;
+  final MoveDevicesToRoomUseCase moveDevicesToRoomUseCase;
+
   StreamSubscription<List<Device>>? _devicesSubscription;
   String? _currentUserId;
   final Map<String, Timer> _debounceTimers = {};
@@ -41,7 +52,23 @@ class DevicesCubit extends Cubit<DevicesState> {
     this.crashlyticsService,
     this.quotaService,
     this.localCacheService,
-  }) : super(DevicesLoaded(
+    GetDevicesUseCase? getDevicesUseCase,
+    WatchDevicesUseCase? watchDevicesUseCase,
+    ToggleDevicePowerUseCase? toggleDevicePowerUseCase,
+    UpdateDeviceStateUseCase? updateDeviceStateUseCase,
+    CreateDeviceUseCase? createDeviceUseCase,
+    UpdateDeviceUseCase? updateDeviceUseCase,
+    DeleteDeviceUseCase? deleteDeviceUseCase,
+    MoveDevicesToRoomUseCase? moveDevicesToRoomUseCase,
+  })  : getDevicesUseCase = getDevicesUseCase ?? GetDevicesUseCase(devicesRepository),
+        watchDevicesUseCase = watchDevicesUseCase ?? WatchDevicesUseCase(devicesRepository),
+        toggleDevicePowerUseCase = toggleDevicePowerUseCase ?? ToggleDevicePowerUseCase(devicesRepository),
+        updateDeviceStateUseCase = updateDeviceStateUseCase ?? UpdateDeviceStateUseCase(devicesRepository),
+        createDeviceUseCase = createDeviceUseCase ?? CreateDeviceUseCase(devicesRepository),
+        updateDeviceUseCase = updateDeviceUseCase ?? UpdateDeviceUseCase(devicesRepository),
+        deleteDeviceUseCase = deleteDeviceUseCase ?? DeleteDeviceUseCase(devicesRepository),
+        moveDevicesToRoomUseCase = moveDevicesToRoomUseCase ?? MoveDevicesToRoomUseCase(devicesRepository),
+        super(DevicesLoaded(
           devices: localCacheService?.loadDevices() ?? SeedData.defaultDevices,
         ));
 
@@ -88,7 +115,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     quotaService?.registerListener('DevicesCubit_$cleanUid');
 
     try {
-      _devicesSubscription = devicesRepository.watchDevices(cleanUid).listen(
+      _devicesSubscription = watchDevicesUseCase(cleanUid).listen(
         (devices) {
           final effectiveDevices = (devices.isEmpty && cleanUid == SeedData.defaultProfile.uid)
               ? (localCacheService?.loadDevices(userId: cleanUid) ?? SeedData.defaultDevices)
@@ -262,14 +289,16 @@ class DevicesCubit extends Cubit<DevicesState> {
     _pendingUpdates.remove(deviceId);
 
     try {
-      await devicesRepository.updateDeviceState(
-        userId,
-        deviceId,
-        {
-          'isOn': newPowerState,
-          'isPoweredOn': newPowerState,
-          'currentPowerWatts': updatedDevice.currentPowerWatts,
-        },
+      await updateDeviceStateUseCase(
+        UpdateDeviceStateParams(
+          userId: userId,
+          deviceId: deviceId,
+          stateUpdates: {
+            'isOn': newPowerState,
+            'isPoweredOn': newPowerState,
+            'currentPowerWatts': updatedDevice.currentPowerWatts,
+          },
+        ),
       );
     } catch (e) {
       debugPrint('togglePower notice: $e');
@@ -518,7 +547,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     analyticsService?.logDeviceCreated(deviceType: newDevice.type.name);
 
     try {
-      await devicesRepository.createDevice(userId, newDevice);
+      await createDeviceUseCase(CreateDeviceParams(userId: userId, device: newDevice));
     } catch (e) {
       debugPrint('createDevice notice: $e');
     }
@@ -570,7 +599,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     localCacheService?.saveDevices(updatedList, userId: userId);
 
     try {
-      await devicesRepository.deleteDevice(userId, deviceId);
+      await deleteDeviceUseCase(DeleteDeviceParams(userId: userId, deviceId: deviceId));
     } catch (e) {
       debugPrint('deleteDevice notice: $e');
     }

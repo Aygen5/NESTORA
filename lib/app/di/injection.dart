@@ -6,6 +6,7 @@ import 'package:firebase_performance/firebase_performance.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/network/network_info.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/crashlytics_service.dart';
 import '../../core/services/local_cache_service.dart';
@@ -18,23 +19,28 @@ import '../../features/auth/data/datasources/demo_config_service.dart';
 import '../../features/auth/data/datasources/firestore_seed_service.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/domain/usecases/auth_usecases.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/devices/data/datasources/devices_remote_data_source.dart';
 import '../../features/devices/data/repositories/devices_repository_impl.dart';
 import '../../features/devices/domain/repositories/devices_repository.dart';
+import '../../features/devices/domain/usecases/devices_usecases.dart';
 import '../../features/devices/presentation/cubit/devices_cubit.dart';
 import '../../features/notifications/data/datasources/notifications_remote_data_source.dart';
 import '../../features/notifications/data/repositories/notifications_repository_impl.dart';
 import '../../features/notifications/domain/repositories/notifications_repository.dart';
+import '../../features/notifications/domain/usecases/notifications_usecases.dart';
 import '../../features/notifications/presentation/cubit/notifications_cubit.dart';
 import '../../features/profile/data/datasources/profile_photo_service.dart';
 import '../../features/profile/data/datasources/profile_remote_data_source.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/domain/usecases/profile_usecases.dart';
 import '../../features/profile/presentation/cubit/profile_cubit.dart';
 import '../../features/rooms/data/datasources/rooms_remote_data_source.dart';
 import '../../features/rooms/data/repositories/rooms_repository_impl.dart';
 import '../../features/rooms/domain/repositories/rooms_repository.dart';
+import '../../features/rooms/domain/usecases/rooms_usecases.dart';
 import '../../features/rooms/presentation/cubit/rooms_cubit.dart';
 import '../router/auth_guard.dart';
 import '../theme/theme_cubit.dart';
@@ -172,6 +178,11 @@ Future<void> initDependencies({
         prefs: sl.isRegistered<SharedPreferences>() ? sl<SharedPreferences>() : null,
       ),
     );
+  }
+
+  // 1.2 Network Info (Connectivity & Reachability Guard)
+  if (!sl.isRegistered<NetworkInfo>()) {
+    sl.registerSingleton<NetworkInfo>(const NetworkInfoImpl());
   }
 
   // 2. Firebase Services (Registered safely with optional test overrides)
@@ -475,6 +486,107 @@ Future<void> initDependencies({
         remoteDataSource: sl<ProfileRemoteDataSource>(),
       ),
     );
+  }
+
+  // 8.1 Domain Use Cases
+  // Auth Use Cases
+  if (!sl.isRegistered<SignInWithEmailUseCase>()) {
+    sl.registerLazySingleton<SignInWithEmailUseCase>(() => SignInWithEmailUseCase(sl<AuthRepository>()));
+  }
+  if (!sl.isRegistered<SignUpWithEmailUseCase>()) {
+    sl.registerLazySingleton<SignUpWithEmailUseCase>(() => SignUpWithEmailUseCase(sl<AuthRepository>()));
+  }
+  if (!sl.isRegistered<SignInDemoUseCase>()) {
+    sl.registerLazySingleton<SignInDemoUseCase>(() => SignInDemoUseCase(sl<AuthRepository>()));
+  }
+  if (!sl.isRegistered<SignOutUseCase>()) {
+    sl.registerLazySingleton<SignOutUseCase>(() => SignOutUseCase(sl<AuthRepository>()));
+  }
+  if (!sl.isRegistered<SendPasswordResetUseCase>()) {
+    sl.registerLazySingleton<SendPasswordResetUseCase>(() => SendPasswordResetUseCase(sl<AuthRepository>()));
+  }
+  if (!sl.isRegistered<GetCurrentUserUseCase>()) {
+    sl.registerLazySingleton<GetCurrentUserUseCase>(() => GetCurrentUserUseCase(sl<AuthRepository>()));
+  }
+  if (!sl.isRegistered<WatchAuthStateUseCase>()) {
+    sl.registerLazySingleton<WatchAuthStateUseCase>(() => WatchAuthStateUseCase(sl<AuthRepository>()));
+  }
+
+  // Devices Use Cases
+  if (!sl.isRegistered<GetDevicesUseCase>()) {
+    sl.registerLazySingleton<GetDevicesUseCase>(() => GetDevicesUseCase(sl<DevicesRepository>()));
+  }
+  if (!sl.isRegistered<WatchDevicesUseCase>()) {
+    sl.registerLazySingleton<WatchDevicesUseCase>(() => WatchDevicesUseCase(sl<DevicesRepository>()));
+  }
+  if (!sl.isRegistered<ToggleDevicePowerUseCase>()) {
+    sl.registerLazySingleton<ToggleDevicePowerUseCase>(() => ToggleDevicePowerUseCase(sl<DevicesRepository>()));
+  }
+  if (!sl.isRegistered<UpdateDeviceStateUseCase>()) {
+    sl.registerLazySingleton<UpdateDeviceStateUseCase>(() => UpdateDeviceStateUseCase(sl<DevicesRepository>()));
+  }
+  if (!sl.isRegistered<CreateDeviceUseCase>()) {
+    sl.registerLazySingleton<CreateDeviceUseCase>(() => CreateDeviceUseCase(sl<DevicesRepository>()));
+  }
+  if (!sl.isRegistered<UpdateDeviceUseCase>()) {
+    sl.registerLazySingleton<UpdateDeviceUseCase>(() => UpdateDeviceUseCase(sl<DevicesRepository>()));
+  }
+  if (!sl.isRegistered<DeleteDeviceUseCase>()) {
+    sl.registerLazySingleton<DeleteDeviceUseCase>(() => DeleteDeviceUseCase(sl<DevicesRepository>()));
+  }
+  if (!sl.isRegistered<MoveDevicesToRoomUseCase>()) {
+    sl.registerLazySingleton<MoveDevicesToRoomUseCase>(() => MoveDevicesToRoomUseCase(sl<DevicesRepository>()));
+  }
+
+  // Rooms Use Cases
+  if (!sl.isRegistered<GetRoomsUseCase>()) {
+    sl.registerLazySingleton<GetRoomsUseCase>(() => GetRoomsUseCase(sl<RoomsRepository>()));
+  }
+  if (!sl.isRegistered<WatchRoomsUseCase>()) {
+    sl.registerLazySingleton<WatchRoomsUseCase>(() => WatchRoomsUseCase(sl<RoomsRepository>()));
+  }
+  if (!sl.isRegistered<CreateRoomUseCase>()) {
+    sl.registerLazySingleton<CreateRoomUseCase>(() => CreateRoomUseCase(sl<RoomsRepository>()));
+  }
+  if (!sl.isRegistered<UpdateRoomUseCase>()) {
+    sl.registerLazySingleton<UpdateRoomUseCase>(() => UpdateRoomUseCase(sl<RoomsRepository>()));
+  }
+  if (!sl.isRegistered<DeleteRoomUseCase>()) {
+    sl.registerLazySingleton<DeleteRoomUseCase>(() => DeleteRoomUseCase(sl<RoomsRepository>()));
+  }
+
+  // Notifications Use Cases
+  if (!sl.isRegistered<GetNotificationsUseCase>()) {
+    sl.registerLazySingleton<GetNotificationsUseCase>(() => GetNotificationsUseCase(sl<NotificationsRepository>()));
+  }
+  if (!sl.isRegistered<WatchNotificationsUseCase>()) {
+    sl.registerLazySingleton<WatchNotificationsUseCase>(() => WatchNotificationsUseCase(sl<NotificationsRepository>()));
+  }
+  if (!sl.isRegistered<MarkNotificationReadUseCase>()) {
+    sl.registerLazySingleton<MarkNotificationReadUseCase>(() => MarkNotificationReadUseCase(sl<NotificationsRepository>()));
+  }
+  if (!sl.isRegistered<MarkAllNotificationsReadUseCase>()) {
+    sl.registerLazySingleton<MarkAllNotificationsReadUseCase>(() => MarkAllNotificationsReadUseCase(sl<NotificationsRepository>()));
+  }
+  if (!sl.isRegistered<DeleteNotificationUseCase>()) {
+    sl.registerLazySingleton<DeleteNotificationUseCase>(() => DeleteNotificationUseCase(sl<NotificationsRepository>()));
+  }
+  if (!sl.isRegistered<CreateNotificationUseCase>()) {
+    sl.registerLazySingleton<CreateNotificationUseCase>(() => CreateNotificationUseCase(sl<NotificationsRepository>()));
+  }
+
+  // Profile Use Cases
+  if (!sl.isRegistered<GetUserProfileUseCase>()) {
+    sl.registerLazySingleton<GetUserProfileUseCase>(() => GetUserProfileUseCase(sl<ProfileRepository>()));
+  }
+  if (!sl.isRegistered<WatchUserProfileUseCase>()) {
+    sl.registerLazySingleton<WatchUserProfileUseCase>(() => WatchUserProfileUseCase(sl<ProfileRepository>()));
+  }
+  if (!sl.isRegistered<UpdateUserProfileUseCase>()) {
+    sl.registerLazySingleton<UpdateUserProfileUseCase>(() => UpdateUserProfileUseCase(sl<ProfileRepository>()));
+  }
+  if (!sl.isRegistered<UpdatePhotoPathUseCase>()) {
+    sl.registerLazySingleton<UpdatePhotoPathUseCase>(() => UpdatePhotoPathUseCase(sl<ProfileRepository>()));
   }
 
   // 9. Profile Photo Service, Secure Image Service & Profile Cubit

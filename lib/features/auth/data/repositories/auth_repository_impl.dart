@@ -12,6 +12,7 @@ import '../../../../core/utils/result.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
+import '../models/auth_user_model.dart';
 
 /// Implementation of [AuthRepository] mediating between remote data sources and domain layer.
 /// Features a zero-failure offline-first simulated fallback for Demo logins.
@@ -243,16 +244,10 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 
-  /// Helper converting Firebase SDK [User] to pure domain [AuthUser].
+  /// Helper converting Firebase SDK [User] to pure domain [AuthUser] via [AuthUserModel] DTO.
   AuthUser? _mapFirebaseUserToAuthUser(User? user) {
     if (user == null) return null;
-    return AuthUser(
-      id: user.uid,
-      email: user.email ?? '',
-      displayName: user.displayName,
-      photoUrl: user.photoURL,
-      isAnonymous: user.isAnonymous,
-    );
+    return AuthUserModel.fromFirebaseUser(user);
   }
 
   Future<void> _saveLastUserEmail(String email) async {

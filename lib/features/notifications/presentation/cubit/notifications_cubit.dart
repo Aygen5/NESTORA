@@ -5,6 +5,7 @@ import '../../../../core/services/local_cache_service.dart';
 import '../../../../core/services/spark_quota_service.dart';
 import '../../domain/entities/app_notification.dart';
 import '../../domain/repositories/notifications_repository.dart';
+import '../../domain/usecases/notifications_usecases.dart';
 import 'notifications_state.dart';
 
 /// Cubit managing in-app smart home notifications, real-time unread badges,
@@ -14,6 +15,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   final SparkQuotaService? quotaService;
   final LocalCacheService? localCacheService;
 
+  // Domain Use Cases
+  final GetNotificationsUseCase getNotificationsUseCase;
+  final WatchNotificationsUseCase watchNotificationsUseCase;
+  final MarkNotificationReadUseCase markNotificationReadUseCase;
+  final MarkAllNotificationsReadUseCase markAllNotificationsReadUseCase;
+  final DeleteNotificationUseCase deleteNotificationUseCase;
+  final CreateNotificationUseCase createNotificationUseCase;
+
   StreamSubscription<List<AppNotification>>? _subscription;
   String? _currentUserId;
 
@@ -21,7 +30,19 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     required this.notificationsRepository,
     this.quotaService,
     this.localCacheService,
-  }) : super(
+    GetNotificationsUseCase? getNotificationsUseCase,
+    WatchNotificationsUseCase? watchNotificationsUseCase,
+    MarkNotificationReadUseCase? markNotificationReadUseCase,
+    MarkAllNotificationsReadUseCase? markAllNotificationsReadUseCase,
+    DeleteNotificationUseCase? deleteNotificationUseCase,
+    CreateNotificationUseCase? createNotificationUseCase,
+  })  : getNotificationsUseCase = getNotificationsUseCase ?? GetNotificationsUseCase(notificationsRepository),
+        watchNotificationsUseCase = watchNotificationsUseCase ?? WatchNotificationsUseCase(notificationsRepository),
+        markNotificationReadUseCase = markNotificationReadUseCase ?? MarkNotificationReadUseCase(notificationsRepository),
+        markAllNotificationsReadUseCase = markAllNotificationsReadUseCase ?? MarkAllNotificationsReadUseCase(notificationsRepository),
+        deleteNotificationUseCase = deleteNotificationUseCase ?? DeleteNotificationUseCase(notificationsRepository),
+        createNotificationUseCase = createNotificationUseCase ?? CreateNotificationUseCase(notificationsRepository),
+        super(
           NotificationsLoaded(
             notifications: localCacheService?.loadNotifications() ??
                 List<AppNotification>.from(SeedData.defaultNotifications),
@@ -58,7 +79,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     _subscription?.cancel();
     quotaService?.registerListener('NotificationsCubit_$cleanUid');
 
-    _subscription = notificationsRepository.watchNotifications(cleanUid).listen(
+    _subscription = watchNotificationsUseCase(cleanUid).listen(
       (notifications) {
         final effective = (notifications.isEmpty && cleanUid == SeedData.defaultProfile.uid)
             ? (localCacheService?.loadNotifications(userId: cleanUid) ??
@@ -107,9 +128,11 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     emit(current.copyWith(notifications: updatedList));
 
     try {
-      final result = await notificationsRepository.markAsRead(
-        userId.trim(),
-        cleanNotifId,
+      final result = await markNotificationReadUseCase(
+        MarkNotificationReadParams(
+          userId: userId.trim(),
+          notificationId: cleanNotifId,
+        ),
       );
       if (result.isFailure) {
         final msg = result.failureOrNull?.message ?? 'Güncellenemedi';
@@ -150,7 +173,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       feedbackMessage: 'Tüm bildirimler okundu olarak işaretlendi.',
     ));
 
-    await notificationsRepository.markAllAsRead(userId.trim());
+    await markAllNotificationsReadUseCase(userId.trim());
   }
 
   /// Deletes a specific notification with optimistic UI removal.
@@ -174,9 +197,11 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       feedbackMessage: 'Bildirim silindi.',
     ));
 
-    await notificationsRepository.deleteNotification(
-      userId.trim(),
-      cleanNotifId,
+    await deleteNotificationUseCase(
+      DeleteNotificationParams(
+        userId: userId.trim(),
+        notificationId: cleanNotifId,
+      ),
     );
   }
 
@@ -227,9 +252,11 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
 
     try {
-      await notificationsRepository.createNotification(
-        userId.trim(),
-        newNotif,
+      await createNotificationUseCase(
+        CreateNotificationParams(
+          userId: userId.trim(),
+          notification: newNotif,
+        ),
       );
     } catch (_) {}
   }

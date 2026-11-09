@@ -9,6 +9,7 @@ import '../../../../core/services/spark_quota_service.dart';
 import '../../data/datasources/profile_photo_service.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../../domain/usecases/profile_usecases.dart';
 import 'profile_state.dart';
 
 /// Cubit managing the User Profile, local preferences, and avatar storage in Nestora.
@@ -19,6 +20,12 @@ class ProfileCubit extends Cubit<ProfileState> {
   final SparkQuotaService? quotaService;
   final LocalCacheService? localCacheService;
 
+  // Domain Use Cases
+  final GetUserProfileUseCase getUserProfileUseCase;
+  final WatchUserProfileUseCase watchUserProfileUseCase;
+  final UpdateUserProfileUseCase updateUserProfileUseCase;
+  final UpdatePhotoPathUseCase updatePhotoPathUseCase;
+
   StreamSubscription<UserProfile?>? _profileSubscription;
   String? _currentUserId;
 
@@ -28,7 +35,15 @@ class ProfileCubit extends Cubit<ProfileState> {
     this.sharedPreferences,
     this.quotaService,
     this.localCacheService,
-  }) : super(
+    GetUserProfileUseCase? getUserProfileUseCase,
+    WatchUserProfileUseCase? watchUserProfileUseCase,
+    UpdateUserProfileUseCase? updateUserProfileUseCase,
+    UpdatePhotoPathUseCase? updatePhotoPathUseCase,
+  })  : getUserProfileUseCase = getUserProfileUseCase ?? GetUserProfileUseCase(profileRepository),
+        watchUserProfileUseCase = watchUserProfileUseCase ?? WatchUserProfileUseCase(profileRepository),
+        updateUserProfileUseCase = updateUserProfileUseCase ?? UpdateUserProfileUseCase(profileRepository),
+        updatePhotoPathUseCase = updatePhotoPathUseCase ?? UpdatePhotoPathUseCase(profileRepository),
+        super(
           ProfileLoaded(
             profile: _resolveInitialProfile(localCacheService, sharedPreferences),
           ),
@@ -95,7 +110,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     _profileSubscription?.cancel();
     quotaService?.registerListener('ProfileCubit_$cleanUid');
 
-    _profileSubscription = profileRepository.watchProfile(cleanUid).listen(
+    _profileSubscription = watchUserProfileUseCase(cleanUid).listen(
       (profile) {
         final cachedPhoto = sharedPreferences?.getString(_photoPrefKey(cleanUid));
 

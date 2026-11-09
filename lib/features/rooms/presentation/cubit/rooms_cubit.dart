@@ -10,6 +10,7 @@ import '../../../../core/services/spark_quota_service.dart';
 import '../../../devices/domain/repositories/devices_repository.dart';
 import '../../domain/entities/room.dart';
 import '../../domain/repositories/rooms_repository.dart';
+import '../../domain/usecases/rooms_usecases.dart';
 import 'rooms_state.dart';
 
 /// Cubit managing smart home rooms, real-time room streams, search filtering,
@@ -24,6 +25,13 @@ class RoomsCubit extends Cubit<RoomsState> {
   final SparkQuotaService? quotaService;
   final LocalCacheService? localCacheService;
 
+  // Domain Use Cases
+  final GetRoomsUseCase getRoomsUseCase;
+  final WatchRoomsUseCase watchRoomsUseCase;
+  final CreateRoomUseCase createRoomUseCase;
+  final UpdateRoomUseCase updateRoomUseCase;
+  final DeleteRoomUseCase deleteRoomUseCase;
+
   StreamSubscription<List<Room>>? _roomsSubscription;
   String? _currentUserId;
 
@@ -34,7 +42,17 @@ class RoomsCubit extends Cubit<RoomsState> {
     this.crashlyticsService,
     this.quotaService,
     this.localCacheService,
-  }) : super(RoomsLoaded(
+    GetRoomsUseCase? getRoomsUseCase,
+    WatchRoomsUseCase? watchRoomsUseCase,
+    CreateRoomUseCase? createRoomUseCase,
+    UpdateRoomUseCase? updateRoomUseCase,
+    DeleteRoomUseCase? deleteRoomUseCase,
+  })  : getRoomsUseCase = getRoomsUseCase ?? GetRoomsUseCase(roomsRepository),
+        watchRoomsUseCase = watchRoomsUseCase ?? WatchRoomsUseCase(roomsRepository),
+        createRoomUseCase = createRoomUseCase ?? CreateRoomUseCase(roomsRepository),
+        updateRoomUseCase = updateRoomUseCase ?? UpdateRoomUseCase(roomsRepository),
+        deleteRoomUseCase = deleteRoomUseCase ?? DeleteRoomUseCase(roomsRepository),
+        super(RoomsLoaded(
           rooms: localCacheService?.loadRooms() ?? SeedData.defaultRooms,
         ));
 
@@ -76,7 +94,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     quotaService?.registerListener('RoomsCubit_$cleanUid');
 
     try {
-      _roomsSubscription = roomsRepository.watchRooms(cleanUid).listen(
+      _roomsSubscription = watchRoomsUseCase(cleanUid).listen(
         (rooms) {
           final effectiveRooms = (rooms.isEmpty && cleanUid == SeedData.defaultProfile.uid)
               ? (localCacheService?.loadRooms(userId: cleanUid) ?? SeedData.defaultRooms)
@@ -140,7 +158,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     );
 
     final cleanUid = userId.trim().isEmpty ? 'demo-user' : userId.trim();
-    final res = await roomsRepository.createRoom(cleanUid, room);
+    final res = await createRoomUseCase(CreateRoomParams(userId: cleanUid, room: room));
     if (res.isFailure) {
       _emitErrorMessage(res.failure.message);
       return;
@@ -169,7 +187,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     );
 
     final cleanUid = userId.trim().isEmpty ? 'demo-user' : userId.trim();
-    final res = await roomsRepository.updateRoom(cleanUid, updatedRoom);
+    final res = await updateRoomUseCase(UpdateRoomParams(userId: cleanUid, room: updatedRoom));
     if (res.isFailure) {
       _emitErrorMessage(res.failure.message);
       return;
@@ -218,7 +236,7 @@ class RoomsCubit extends Cubit<RoomsState> {
       }
     }
 
-    final deleteRoomRes = await roomsRepository.deleteRoom(cleanUid, cleanRoomId);
+    final deleteRoomRes = await deleteRoomUseCase(DeleteRoomParams(userId: cleanUid, roomId: cleanRoomId));
     if (deleteRoomRes.isFailure) {
       _emitErrorMessage(deleteRoomRes.failure.message);
       return;
