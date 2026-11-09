@@ -380,10 +380,10 @@ void main() {
       await tester.tap(actionBtn);
       await tester.pumpAndSettle();
 
-      // Verify bottom modal content
+      // Verify bottom modal content (Camera option removed as per requirements)
       expect(find.text('Salon Görseli'), findsOneWidget);
       expect(find.text('Galeriden Seç'), findsOneWidget);
-      expect(find.text('Kamera ile Çek'), findsOneWidget);
+      expect(find.text('Kamera ile Çek'), findsNothing);
       expect(find.text('Mimari Hazır Görseller'), findsOneWidget);
       expect(find.text('Resmi Kaldır'), findsOneWidget);
     });

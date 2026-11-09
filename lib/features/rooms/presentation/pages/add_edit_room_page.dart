@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +12,7 @@ import '../../../../core/utils/temperature_formatter.dart';
 import '../../../../core/widgets/glowing_toast.dart';
 import '../../../../core/widgets/nestora_button.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
+import '../../../../core/widgets/nestora_image_helper.dart';
 import '../../../../core/widgets/nestora_input.dart';
 import '../../../devices/presentation/cubit/devices_cubit.dart';
 import '../../../devices/presentation/cubit/devices_state.dart';
@@ -196,32 +196,10 @@ class _AddEditRoomPageState extends State<AddEditRoomPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      subtitle: const Text('Cihazınızdaki fotoğraflardan seçin'),
+                      subtitle: const Text('Bilgisayarınızdan veya cihazınızdan görsel seçin'),
                       onTap: () {
                         Navigator.pop(modalCtx);
                         _pickRoomImage(ImageSource.gallery);
-                      },
-                    ),
-                    ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.camera_alt_rounded, color: AppColors.primaryContainer),
-                      ),
-                      title: Text(
-                        'Kamera ile Çek',
-                        style: AppTypography.labelLarge.copyWith(
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: const Text('Yeni bir fotoğraf çekerek belirleyin'),
-                      onTap: () {
-                        Navigator.pop(modalCtx);
-                        _pickRoomImage(ImageSource.camera);
                       },
                     ),
                     ListTile(
@@ -1220,7 +1198,7 @@ class _AddEditRoomPageState extends State<AddEditRoomPage> {
               ),
               const SizedBox(height: 2),
               Text(
-                'Galeriden, kameradan veya mimari hazır tasarımlardan seçin',
+                'Bilgisayarınızdan, galeriden veya mimari hazır tasarımlardan seçin',
                 style: AppTypography.caption.copyWith(color: AppColors.secondary, fontSize: 11),
               ),
             ],
@@ -1244,17 +1222,11 @@ class _AddEditRoomPageState extends State<AddEditRoomPage> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            isAsset
-                ? Image.asset(
-                    _selectedImagePath!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, err, stack) => _buildImageError(isDark),
-                  )
-                : Image.file(
-                    File(_selectedImagePath!),
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, err, stack) => _buildImageError(isDark),
-                  ),
+            buildNestoraImage(
+              _selectedImagePath!,
+              fit: BoxFit.cover,
+              errorWidget: _buildImageError(isDark),
+            ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

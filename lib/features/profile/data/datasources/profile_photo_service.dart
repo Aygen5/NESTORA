@@ -44,7 +44,13 @@ class ProfilePhotoServiceImpl implements ProfilePhotoService {
 
   @override
   Future<void> deleteLocalImage(String? path) async {
-    if (path == null || path.isEmpty) return;
+    if (path == null ||
+        path.isEmpty ||
+        kIsWeb ||
+        path.startsWith('data:image') ||
+        path.startsWith('assets/')) {
+      return;
+    }
     try {
       final file = File(path);
       if (await file.exists()) {

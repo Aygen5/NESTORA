@@ -30,9 +30,21 @@ class ProfileCubit extends Cubit<ProfileState> {
     this.localCacheService,
   }) : super(
           ProfileLoaded(
-            profile: localCacheService?.loadProfile() ?? SeedData.defaultProfile,
+            profile: _resolveInitialProfile(localCacheService, sharedPreferences),
           ),
         );
+
+  static UserProfile _resolveInitialProfile(
+    LocalCacheService? localCacheService,
+    SharedPreferences? sharedPreferences,
+  ) {
+    final cached = localCacheService?.loadProfile() ?? SeedData.defaultProfile;
+    final prefPhoto = sharedPreferences?.getString(AppConstants.prefProfilePhotoPath);
+    if (prefPhoto != null && prefPhoto.trim().isNotEmpty) {
+      return cached.copyWith(photoPath: prefPhoto.trim());
+    }
+    return cached;
+  }
 
   String _photoPrefKey(String userId) =>
       '${AppConstants.prefProfilePhotoPath}_$userId';

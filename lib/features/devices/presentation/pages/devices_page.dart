@@ -12,6 +12,9 @@ import '../../../../core/widgets/pulsing_glow_dot.dart';
 import '../../../notifications/presentation/cubit/notifications_cubit.dart';
 import '../../../notifications/presentation/cubit/notifications_state.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
+import '../../../profile/presentation/cubit/profile_cubit.dart';
+import '../../../profile/presentation/cubit/profile_state.dart';
+import '../../../../core/widgets/nestora_image_helper.dart';
 import '../../../rooms/presentation/cubit/rooms_cubit.dart';
 import '../../../rooms/presentation/cubit/rooms_state.dart';
 import '../../domain/device_model.dart';
@@ -309,6 +312,31 @@ class _DevicesPageState extends State<DevicesPage> {
     }
   }
 
+  Widget _buildAvatar(String? photoPath, String displayName) {
+    return buildNestoraImage(
+      photoPath,
+      fit: BoxFit.cover,
+      placeholder: _buildFallbackAvatar(displayName),
+      errorWidget: _buildFallbackAvatar(displayName),
+    );
+  }
+
+  Widget _buildFallbackAvatar(String displayName) {
+    final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A';
+    return Container(
+      color: AppColors.secondaryContainer,
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: AppColors.primaryContainer,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -317,6 +345,16 @@ class _DevicesPageState extends State<DevicesPage> {
       final notificationsState = context.watch<NotificationsCubit>().state;
       if (notificationsState is NotificationsLoaded) {
         unreadCount = notificationsState.unreadCount;
+      }
+    } catch (_) {}
+
+    String? photoPath;
+    String displayName = 'Aygen';
+    try {
+      final profileState = context.watch<ProfileCubit>().state;
+      if (profileState is ProfileLoaded) {
+        photoPath = profileState.profile.photoPath;
+        displayName = profileState.profile.displayName;
       }
     } catch (_) {}
 
@@ -549,14 +587,13 @@ class _DevicesPageState extends State<DevicesPage> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.secondaryContainer,
+                                color: isDark ? const Color(0xFF4C7554) : AppColors.secondaryContainer,
                                 width: 2,
                               ),
-                              image: const DecorationImage(
-                                image: AssetImage('assets/screens/nestora_profil_ve_ayarlar.png'),
-                                fit: BoxFit.cover,
-                              ),
+                              color: isDark ? const Color(0xFF28342B) : AppColors.secondaryContainer,
                             ),
+                            clipBehavior: Clip.antiAlias,
+                            child: _buildAvatar(photoPath, displayName),
                           ),
                         ),
                       ),

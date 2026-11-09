@@ -57,7 +57,7 @@ class _ComponentsPreviewPageState extends State<ComponentsPreviewPage> {
                   width: 2,
                 ),
                 image: const DecorationImage(
-                  image: AssetImage('assets/screens/nestora_profil_ve_ayarlar.png'),
+                  image: AssetImage('assets/profile/user_avatar.jpg'),
                   fit: BoxFit.cover,
                 ),
               ),

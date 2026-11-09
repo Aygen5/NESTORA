@@ -7,7 +7,10 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
+import '../../../../core/widgets/nestora_image_helper.dart';
 import '../../../../core/widgets/nestora_snackbar.dart';
+import '../../../profile/presentation/cubit/profile_cubit.dart';
+import '../../../profile/presentation/cubit/profile_state.dart';
 import '../../domain/notification_model.dart';
 import '../cubit/notifications_cubit.dart';
 import '../cubit/notifications_state.dart';
@@ -94,6 +97,16 @@ class NotificationsPage extends StatelessWidget {
         ? notificationsState.unreadCount
         : notifications.where((n) => n.isUnread).length;
 
+    String? photoPath;
+    String displayName = 'Aygen';
+    try {
+      final profileState = context.watch<ProfileCubit>().state;
+      if (profileState is ProfileLoaded) {
+        photoPath = profileState.profile.photoPath;
+        displayName = profileState.profile.displayName;
+      }
+    } catch (_) {}
+
     // Date Grouping: Bugün, Dün, Geçen Hafta
     final todayNotifications = notifications.where((n) => _dateDiffInDays(n.createdAt) == 0).toList();
     final yesterdayNotifications = notifications.where((n) => _dateDiffInDays(n.createdAt) == 1).toList();
@@ -124,20 +137,37 @@ class NotificationsPage extends StatelessWidget {
             ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: GestureDetector(
-              onTap: () => context.go(AppRoutePaths.profile),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.secondaryContainer,
-                    width: 2,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => context.go(AppRoutePaths.profile),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF4C7554) : AppColors.secondaryContainer,
+                      width: 2,
+                    ),
+                    color: isDark ? const Color(0xFF28342B) : AppColors.secondaryContainer,
                   ),
-                  image: const DecorationImage(
-                    image: AssetImage('assets/screens/nestora_profil_ve_ayarlar.png'),
+                  clipBehavior: Clip.antiAlias,
+                  child: buildNestoraImage(
+                    photoPath,
                     fit: BoxFit.cover,
+                    placeholder: Container(
+                      color: AppColors.secondaryContainer,
+                      alignment: Alignment.center,
+                      child: Text(
+                        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A',
+                        style: const TextStyle(
+                          color: AppColors.primaryContainer,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

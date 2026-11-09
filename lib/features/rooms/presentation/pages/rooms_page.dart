@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,6 +5,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/seed_data.dart';
+import '../../../../core/widgets/nestora_image_helper.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 import '../../../devices/domain/device_model.dart';
 import '../../../devices/presentation/cubit/devices_cubit.dart';
@@ -165,25 +165,12 @@ class _RoomsPageState extends State<RoomsPage> {
   }
 
   Widget _buildAvatar(String? photoPath, String displayName) {
-    if (photoPath != null && photoPath.trim().isNotEmpty) {
-      final trimmed = photoPath.trim();
-      if (trimmed.startsWith('assets/')) {
-        return Image.asset(
-          trimmed,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildFallbackAvatar(displayName),
-        );
-      }
-      final file = File(trimmed);
-      if (file.existsSync()) {
-        return Image.file(
-          file,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildFallbackAvatar(displayName),
-        );
-      }
-    }
-    return _buildFallbackAvatar(displayName);
+    return buildNestoraImage(
+      photoPath,
+      fit: BoxFit.cover,
+      placeholder: _buildFallbackAvatar(displayName),
+      errorWidget: _buildFallbackAvatar(displayName),
+    );
   }
 
   Widget _buildFallbackAvatar(String displayName) {
@@ -615,10 +602,10 @@ class _RoomsPageState extends State<RoomsPage> {
                                           fit: StackFit.expand,
                                           children: [
                                             if (imageAsset != null && imageAsset.isNotEmpty)
-                                              Image.asset(
+                                              buildNestoraImage(
                                                 imageAsset,
                                                 fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) => Container(
+                                                errorWidget: Container(
                                                   color: AppColors.secondaryContainer,
                                                   alignment: Alignment.center,
                                                   child: Icon(room.icon, size: 24, color: AppColors.primaryContainer),

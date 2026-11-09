@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -11,6 +10,7 @@ import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/utils/temperature_formatter.dart';
 import '../../../../core/widgets/glowing_toast.dart';
 import '../../../../core/widgets/nestora_announcement_banner.dart';
+import '../../../../core/widgets/nestora_image_helper.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 import '../../../../core/widgets/nestora_switch.dart';
 import '../../../../core/widgets/pulsing_glow_dot.dart';
@@ -489,25 +489,12 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildHeaderAvatar(String? photoPath, String displayName) {
-    if (photoPath != null && photoPath.trim().isNotEmpty) {
-      final trimmed = photoPath.trim();
-      if (trimmed.startsWith('assets/')) {
-        return Image.asset(
-          trimmed,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildFallbackAvatar(displayName),
-        );
-      }
-      final file = File(trimmed);
-      if (file.existsSync()) {
-        return Image.file(
-          file,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildFallbackAvatar(displayName),
-        );
-      }
-    }
-    return _buildFallbackAvatar(displayName);
+    return buildNestoraImage(
+      photoPath,
+      fit: BoxFit.cover,
+      placeholder: _buildFallbackAvatar(displayName),
+      errorWidget: _buildFallbackAvatar(displayName),
+    );
   }
 
   Widget _buildHeaderButton({

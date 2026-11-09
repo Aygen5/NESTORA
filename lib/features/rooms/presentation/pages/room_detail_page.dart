@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +12,7 @@ import '../../../../core/utils/temperature_formatter.dart';
 import '../../../../core/widgets/glowing_toast.dart';
 import '../../../../core/widgets/nestora_button.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
+import '../../../../core/widgets/nestora_image_helper.dart';
 import '../../../../core/widgets/nestora_switch.dart';
 import '../../../../core/widgets/pulsing_glow_dot.dart';
 import '../../../devices/domain/device_model.dart';
@@ -242,31 +242,6 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                       onTap: () {
                         Navigator.pop(modalCtx);
                         _pickRoomImage(context, currentRoom, ImageSource.gallery);
-                      },
-                    ),
-                    ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF283B2C) : AppColors.primaryContainer.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.camera_alt_rounded,
-                          color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
-                        ),
-                      ),
-                      title: Text(
-                        'Kamera ile Çek',
-                        style: AppTypography.labelLarge.copyWith(
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: const Text('Yeni bir fotoğraf çekerek belirleyin'),
-                      onTap: () {
-                        Navigator.pop(modalCtx);
-                        _pickRoomImage(context, currentRoom, ImageSource.camera);
                       },
                     ),
                     ListTile(
@@ -1299,17 +1274,10 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
   }
 
   Widget _buildRoomImage(String path) {
-    if (path.startsWith('assets/')) {
-      return Image.asset(
-        path,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholderBackground(false),
-      );
-    }
-    return Image.file(
-      File(path),
+    return buildNestoraImage(
+      path,
       fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => _buildPlaceholderBackground(false),
+      errorWidget: _buildPlaceholderBackground(false),
     );
   }
 

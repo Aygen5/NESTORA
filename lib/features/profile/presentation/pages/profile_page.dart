@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +11,7 @@ import '../../../../core/constants/seed_data.dart';
 import '../../../../core/widgets/glowing_toast.dart';
 import '../../../../core/widgets/nestora_button.dart';
 import '../../../../core/widgets/nestora_dialog.dart';
+import '../../../../core/widgets/nestora_image_helper.dart';
 import '../../../../core/widgets/nestora_input.dart';
 import '../../../../core/widgets/nestora_logo.dart';
 import '../../../../core/widgets/nestora_snackbar.dart';
@@ -45,17 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _weeklyReportNotif = false;
 
   ImageProvider? _resolveAvatarImage(String? photoPath) {
-    if (photoPath != null && photoPath.trim().isNotEmpty) {
-      final trimmed = photoPath.trim();
-      if (trimmed.startsWith('assets/')) {
-        return AssetImage(trimmed);
-      }
-      final file = File(trimmed);
-      if (file.existsSync()) {
-        return FileImage(file);
-      }
-    }
-    return null;
+    return resolveImageProvider(photoPath);
   }
 
   void _showPhotoOptionsModal(BuildContext context, String? currentPhotoPath) {

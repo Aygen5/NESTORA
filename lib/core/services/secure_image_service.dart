@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -48,6 +49,29 @@ class SecureImageService {
       if (pickedFile == null) {
         // User canceled selection
         return const SecureImageResult.failure(null);
+      }
+
+      final checkName = (pickedFile.name.isNotEmpty ? pickedFile.name : pickedFile.path).toLowerCase();
+      final bool hasValidExtension = allowedExtensions.any((ext) => checkName.endsWith(ext));
+
+      if (!hasValidExtension) {
+        return const SecureImageResult.failure(
+          'Güvenlik Uyarısı: Yalnızca JPG veya PNG formatında görsel seçebilirsiniz.',
+        );
+      }
+
+      final bytes = await pickedFile.readAsBytes();
+      if (bytes.length > maxFileSizeBytes) {
+        return const SecureImageResult.failure(
+          'Dosya boyutu çok büyük: Lütfen 5MB\'dan küçük bir görsel seçin.',
+        );
+      }
+
+      // On Web, convert to a self-contained base64 data URL so it works seamlessly and persistently
+      if (kIsWeb) {
+        final mime = checkName.endsWith('.png') ? 'image/png' : 'image/jpeg';
+        final base64String = 'data:$mime;base64,${base64Encode(bytes)}';
+        return SecureImageResult.success(base64String);
       }
 
       return await validateAndSaveFile(
