@@ -326,22 +326,25 @@ class _RoomsPageState extends State<RoomsPage> {
                       ),
                       const SizedBox(width: 6),
                       // Profile Avatar
-                      GestureDetector(
-                        key: const Key('rooms_profile_avatar'),
-                        onTap: _navigateToProfile,
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.secondaryContainer,
-                            border: Border.all(
-                              color: AppColors.primaryContainer.withValues(alpha: 0.35),
-                              width: 1.8,
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          key: const Key('rooms_profile_avatar'),
+                          onTap: _navigateToProfile,
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.secondaryContainer,
+                              border: Border.all(
+                                color: AppColors.primaryContainer.withValues(alpha: 0.35),
+                                width: 1.8,
+                              ),
                             ),
-                          ),
-                          child: ClipOval(
-                            child: _buildAvatar(photoPath, displayName),
+                            child: ClipOval(
+                              child: _buildAvatar(photoPath, displayName),
+                            ),
                           ),
                         ),
                       ),

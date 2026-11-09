@@ -457,22 +457,25 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(width: 8),
                   // Profile Avatar (local photo, asset portrait or user initial)
-                  GestureDetector(
-                    key: const Key('dashboard_profile_avatar'),
-                    onTap: _navigateToProfile,
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.secondaryContainer,
-                        border: Border.all(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.35),
-                          width: 1.8,
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      key: const Key('dashboard_profile_avatar'),
+                      onTap: _navigateToProfile,
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.secondaryContainer,
+                          border: Border.all(
+                            color: AppColors.primaryContainer.withValues(alpha: 0.35),
+                            width: 1.8,
+                          ),
                         ),
-                      ),
-                      child: ClipOval(
-                        child: _buildHeaderAvatar(photoPath, displayName),
+                        child: ClipOval(
+                          child: _buildHeaderAvatar(photoPath, displayName),
+                        ),
                       ),
                     ),
                   ),
@@ -1028,7 +1031,7 @@ class _DashboardPageState extends State<DashboardPage> {
       children: [
         // 1. Toplam Cihaz
         Expanded(
-          child: _buildSummaryStatCard(
+          child: _SummaryStatCard(
             key: const Key('stat_card_devices'),
             isDark: isDark,
             icon: Icons.devices_other_rounded,
@@ -1040,7 +1043,7 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(width: 10),
         // 2. Açık Cihaz
         Expanded(
-          child: _buildSummaryStatCard(
+          child: _SummaryStatCard(
             key: const Key('stat_card_active'),
             isDark: isDark,
             icon: Icons.power_rounded,
@@ -1053,7 +1056,7 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(width: 10),
         // 3. Oda Sayısı
         Expanded(
-          child: _buildSummaryStatCard(
+          child: _SummaryStatCard(
             key: const Key('stat_card_rooms'),
             isDark: isDark,
             icon: Icons.door_sliding_outlined,
@@ -1063,93 +1066,6 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSummaryStatCard({
-    Key? key,
-    required bool isDark,
-    required IconData icon,
-    required String value,
-    required String label,
-    required bool hasDot,
-    Color? dotColor,
-  }) {
-    return Container(
-      key: key,
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-          width: 1,
-        ),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Circular Icon Container
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkCardSecondary
-                  : AppColors.secondaryContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              size: 19,
-              color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Value (with optional warm dot)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                value,
-                style: AppTypography.headlineSmall.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.lightTextPrimary,
-                ),
-              ),
-              if (hasDot) ...[
-                const SizedBox(width: 4),
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: dotColor ?? const Color(0xFFC5A880),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 2),
-          // Label
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.secondary,
-              fontWeight: FontWeight.w500,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -2032,6 +1948,173 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SummaryStatCard extends StatefulWidget {
+  final bool isDark;
+  final IconData icon;
+  final String value;
+  final String label;
+  final bool hasDot;
+  final Color? dotColor;
+
+  const _SummaryStatCard({
+    super.key,
+    required this.isDark,
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.hasDot,
+    this.dotColor,
+  });
+
+  @override
+  State<_SummaryStatCard> createState() => _SummaryStatCardState();
+}
+
+class _SummaryStatCardState extends State<_SummaryStatCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+
+    final Color bgColor = isDark
+        ? (_isHovered ? const Color(0xFF222923) : AppColors.darkCard)
+        : (_isHovered ? const Color(0xFFFBF8F4) : AppColors.lightCard);
+
+    final Color borderColor = isDark
+        ? (_isHovered ? const Color(0xFF4C7554) : AppColors.darkBorder)
+        : (_isHovered
+            ? AppColors.primaryContainer.withValues(alpha: 0.35)
+            : AppColors.lightBorder);
+
+    final Color iconBgColor = isDark
+        ? (_isHovered ? const Color(0xFF2B372E) : AppColors.darkCardSecondary)
+        : (_isHovered ? const Color(0xFFE2DDD4) : AppColors.secondaryContainer);
+
+    final Color iconColor = isDark
+        ? (_isHovered ? const Color(0xFFA5E6B4) : const Color(0xFF8FD8A0))
+        : (_isHovered ? AppColors.primary : AppColors.primaryContainer);
+
+    final List<BoxShadow> shadows = _isHovered
+        ? (isDark
+            ? const [
+                BoxShadow(
+                  color: Color(0x40000000),
+                  blurRadius: 18,
+                  offset: Offset(0, 8),
+                  spreadRadius: -2,
+                ),
+                BoxShadow(
+                  color: Color(0x1E8FD8A0),
+                  blurRadius: 10,
+                  offset: Offset(0, 2),
+                  spreadRadius: -3,
+                ),
+              ]
+            : const [
+                BoxShadow(
+                  color: Color(0x181E3023),
+                  blurRadius: 16,
+                  offset: Offset(0, 8),
+                  spreadRadius: -2,
+                ),
+                BoxShadow(
+                  color: Color(0x0C1E3023),
+                  blurRadius: 6,
+                  offset: Offset(0, 3),
+                ),
+              ])
+        : AppColors.cardShadow;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.translationValues(0, _isHovered ? -5.0 : 0.0, 0.0),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: borderColor,
+            width: _isHovered ? 1.4 : 1.0,
+          ),
+          boxShadow: shadows,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Circular Icon Container
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                widget.icon,
+                size: 19,
+                color: iconColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Value (with optional warm dot)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  widget.value,
+                  style: AppTypography.headlineSmall.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                  ),
+                ),
+                if (widget.hasDot) ...[
+                  const SizedBox(width: 4),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: widget.dotColor ?? const Color(0xFFC5A880),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 2),
+            // Label
+            Text(
+              widget.label,
+              style: AppTypography.caption.copyWith(
+                color: isDark
+                    ? (_isHovered
+                        ? AppColors.darkTextPrimary
+                        : AppColors.darkTextSecondary)
+                    : (_isHovered
+                        ? AppColors.lightTextPrimary
+                        : AppColors.secondary),
+                fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 12,
+              ),
             ),
           ],
         ),

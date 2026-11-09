@@ -529,12 +529,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Column(
                     children: [
                       // Avatar with Gallery Photo Picker Trigger
-                      GestureDetector(
-                        key: const Key('profile_avatar_picker'),
-                        onTap: () => _showPhotoOptionsModal(context, photoPath),
-                        child: Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          key: const Key('profile_avatar_picker'),
+                          onTap: () => _showPhotoOptionsModal(context, photoPath),
+                          child: Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
                             Container(
                               width: 84,
                               height: 84,
@@ -583,7 +585,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 12),
+                    ),
+                    const SizedBox(height: 12),
 
                       // User Display Name
                       Text(

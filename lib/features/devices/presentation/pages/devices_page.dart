@@ -538,20 +538,24 @@ class _DevicesPageState extends State<DevicesPage> {
                       ),
                       const SizedBox(width: 8),
                       // Profile Avatar
-                      GestureDetector(
-                        onTap: () => _navigateToProfile(context),
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.secondaryContainer,
-                              width: 2,
-                            ),
-                            image: const DecorationImage(
-                              image: AssetImage('assets/screens/nestora_profil_ve_ayarlar.png'),
-                              fit: BoxFit.cover,
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          key: const Key('devices_profile_avatar'),
+                          onTap: () => _navigateToProfile(context),
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.secondaryContainer,
+                                width: 2,
+                              ),
+                              image: const DecorationImage(
+                                image: AssetImage('assets/screens/nestora_profil_ve_ayarlar.png'),
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ),
