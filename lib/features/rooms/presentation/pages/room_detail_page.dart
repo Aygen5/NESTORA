@@ -223,10 +223,13 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                          color: isDark ? const Color(0xFF283B2C) : AppColors.primaryContainer.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.photo_library_rounded, color: AppColors.primaryContainer),
+                        child: Icon(
+                          Icons.photo_library_rounded,
+                          color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                        ),
                       ),
                       title: Text(
                         'Galeriden Seç',
@@ -245,10 +248,13 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                          color: isDark ? const Color(0xFF283B2C) : AppColors.primaryContainer.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.camera_alt_rounded, color: AppColors.primaryContainer),
+                        child: Icon(
+                          Icons.camera_alt_rounded,
+                          color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                        ),
                       ),
                       title: Text(
                         'Kamera ile Çek',
@@ -651,7 +657,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                                 Text(
                                   '$activeCount Aktif Cihaz',
                                   style: AppTypography.labelSmall.copyWith(
-                                    color: AppColors.primaryContainer,
+                                    color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -814,8 +820,9 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                                         height: 44,
                                         decoration: BoxDecoration(
                                           color: device.isPoweredOn
-                                              ? AppColors.warmAmber
-                                                  .withValues(alpha: 0.25)
+                                              ? (isDark
+                                                  ? const Color(0xFF283B2C)
+                                                  : AppColors.warmAmber.withValues(alpha: 0.25))
                                               : (isDark
                                                   ? AppColors.darkCardSecondary
                                                   : AppColors.lightCardSecondary),
@@ -825,8 +832,8 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                                           device.icon,
                                           size: 22,
                                           color: device.isPoweredOn
-                                              ? AppColors.primaryContainer
-                                              : AppColors.secondary,
+                                              ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                                              : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                                         ),
                                       ),
                                       const SizedBox(width: 14),
@@ -858,7 +865,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                                                   decoration: BoxDecoration(
                                                     shape: BoxShape.circle,
                                                     color: device.isPoweredOn
-                                                        ? AppColors.primaryContainer
+                                                        ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
                                                         : AppColors.secondary,
                                                   ),
                                                 ),

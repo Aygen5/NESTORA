@@ -386,24 +386,8 @@ class _DevicesPageState extends State<DevicesPage> {
                       Text(
                         'Nestora',
                         style: AppTypography.cardTitle(
-                          color: AppColors.primaryContainer,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.primaryContainer,
                         ).copyWith(fontWeight: FontWeight.w800, fontSize: 20),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondaryContainer,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          'Cihazlar',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.primaryContainer,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -600,7 +584,7 @@ class _DevicesPageState extends State<DevicesPage> {
                           Text(
                             'Cihazlarım',
                             style: AppTypography.headlineLarge.copyWith(
-                              color: AppColors.primaryContainer,
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.primaryContainer,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -608,7 +592,7 @@ class _DevicesPageState extends State<DevicesPage> {
                           Text(
                             'Evindeki tüm akıllı cihazları tek merkezden yönet.',
                             style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.secondary,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -620,13 +604,13 @@ class _DevicesPageState extends State<DevicesPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.secondaryContainer,
+                        color: isDark ? const Color(0xFF223828) : AppColors.secondaryContainer,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
                         children: [
-                          const PulsingGlowDot(
-                            color: AppColors.primaryContainer,
+                          PulsingGlowDot(
+                            color: isDark ? const Color(0xFF6BD88A) : AppColors.primaryContainer,
                             size: 8,
                             glowRadius: 6,
                           ),
@@ -634,7 +618,7 @@ class _DevicesPageState extends State<DevicesPage> {
                           Text(
                             'Canlı Senkron',
                             style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.primaryContainer,
+                              color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -668,10 +652,10 @@ class _DevicesPageState extends State<DevicesPage> {
                                 color: isDark ? AppColors.darkCard : Colors.white,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.tune_rounded,
                                 size: 22,
-                                color: AppColors.primaryContainer,
+                                color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -690,7 +674,7 @@ class _DevicesPageState extends State<DevicesPage> {
                                   Text(
                                     '$totalCount cihaz • $activeCount açık • $inactiveCount kapalı',
                                     style: AppTypography.caption.copyWith(
-                                      color: AppColors.secondary,
+                                      color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -715,13 +699,17 @@ class _DevicesPageState extends State<DevicesPage> {
                               ? Icons.power_settings_new_rounded
                               : Icons.power_settings_new_outlined,
                           size: 16,
-                          color: activeCount == totalCount ? AppColors.error : AppColors.primaryContainer,
+                          color: activeCount == totalCount
+                              ? AppColors.error
+                              : (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer),
                         ),
                         label: Text(
                           activeCount == totalCount ? 'Tümünü Kapat' : 'Tümünü Aç',
                           style: AppTypography.labelSmall.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: activeCount == totalCount ? AppColors.error : AppColors.primaryContainer,
+                            color: activeCount == totalCount
+                                ? AppColors.error
+                                : (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer),
                           ),
                         ),
                         style: TextButton.styleFrom(
@@ -756,7 +744,7 @@ class _DevicesPageState extends State<DevicesPage> {
                             Text(
                               _formatPower(totalPowerWatts),
                               style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.primaryContainer,
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.primaryContainer,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -784,10 +772,10 @@ class _DevicesPageState extends State<DevicesPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.search_rounded,
                               size: 20,
-                              color: AppColors.secondary,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -798,7 +786,9 @@ class _DevicesPageState extends State<DevicesPage> {
                                 },
                                 decoration: InputDecoration(
                                   hintText: 'Cihaz veya oda ara...',
-                                  hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.secondary),
+                                  hintStyle: AppTypography.bodyMedium.copyWith(
+                                    color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+                                  ),
                                   border: InputBorder.none,
                                   isDense: true,
                                 ),
@@ -813,10 +803,10 @@ class _DevicesPageState extends State<DevicesPage> {
                                   _searchController.clear();
                                   setState(() => _searchQuery = '');
                                 },
-                                child: const Icon(
+                                child: Icon(
                                   Icons.cancel_rounded,
                                   size: 18,
-                                  color: AppColors.secondary,
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
                                 ),
                               ),
                           ],
@@ -829,7 +819,7 @@ class _DevicesPageState extends State<DevicesPage> {
                       icon: const Icon(Icons.add_rounded, size: 18),
                       label: const Text('Cihaz Ekle'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryContainer,
+                        backgroundColor: const Color(0xFF26392D),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -928,20 +918,22 @@ class _DevicesPageState extends State<DevicesPage> {
                               ? Icon(
                                   Icons.star_rounded,
                                   size: 14,
-                                  color: isSelected ? AppColors.primaryContainer : AppColors.warmAmber,
+                                  color: isSelected
+                                      ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                                      : AppColors.warmAmber,
                                 )
                               : null,
                           labelStyle: AppTypography.caption.copyWith(
                             color: isSelected
-                                ? (isDark ? Colors.white : AppColors.primaryContainer)
-                                : AppColors.secondary,
+                                ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                                : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           ),
-                          selectedColor: AppColors.secondaryContainer,
+                          selectedColor: isDark ? const Color(0xFF223828) : AppColors.secondaryContainer,
                           backgroundColor: isDark ? AppColors.darkCard : Colors.white,
                           side: BorderSide(
                             color: isSelected
-                                ? AppColors.primaryContainer
+                                ? (isDark ? const Color(0xFF4C7554) : AppColors.primaryContainer)
                                 : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
                           ),
                           visualDensity: VisualDensity.compact,
@@ -1070,7 +1062,7 @@ class _DevicesPageState extends State<DevicesPage> {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: device.isPoweredOn
-                ? AppColors.primaryContainer.withValues(alpha: 0.35)
+                ? (isDark ? const Color(0xFF4C7554) : AppColors.primaryContainer.withValues(alpha: 0.35))
                 : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
             width: device.isPoweredOn ? 1.5 : 1.0,
           ),
@@ -1089,14 +1081,16 @@ class _DevicesPageState extends State<DevicesPage> {
                   height: 40,
                   decoration: BoxDecoration(
                     color: device.isPoweredOn
-                        ? AppColors.warmAmber.withValues(alpha: 0.28)
+                        ? (isDark ? const Color(0xFF283B2C) : AppColors.warmAmber.withValues(alpha: 0.28))
                         : (isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     device.icon,
                     size: 20,
-                    color: device.isPoweredOn ? AppColors.primaryContainer : AppColors.secondary,
+                    color: device.isPoweredOn
+                        ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                        : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                   ),
                 ),
                 Row(
@@ -1182,7 +1176,9 @@ class _DevicesPageState extends State<DevicesPage> {
                         height: 6,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: device.isPoweredOn ? AppColors.primaryContainer : AppColors.secondary,
+                          color: device.isPoweredOn
+                              ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                              : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                         ),
                       ),
                       const SizedBox(width: 5),
@@ -1196,7 +1192,9 @@ class _DevicesPageState extends State<DevicesPage> {
                                       : 'Açık'))
                               : 'Kapalı',
                           style: AppTypography.caption.copyWith(
-                            color: device.isPoweredOn ? AppColors.primaryContainer : AppColors.secondary,
+                            color: device.isPoweredOn
+                                ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                                : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                             fontWeight: FontWeight.bold,
                             fontSize: 11,
                           ),
@@ -1210,7 +1208,9 @@ class _DevicesPageState extends State<DevicesPage> {
                 Text(
                   deviceWatts,
                   style: AppTypography.caption.copyWith(
-                    color: device.isPoweredOn ? AppColors.primaryContainer : AppColors.secondary,
+                    color: device.isPoweredOn
+                        ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                        : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                     fontWeight: device.isPoweredOn ? FontWeight.bold : FontWeight.normal,
                     fontSize: 11,
                   ),

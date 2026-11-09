@@ -224,11 +224,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: AppColors.secondaryContainer,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF283B2C) : AppColors.secondaryContainer,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.manage_accounts_rounded, color: AppColors.primaryContainer, size: 20),
+                    child: Icon(
+                      Icons.manage_accounts_rounded,
+                      color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -432,9 +436,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       const NestoraLogo(size: 34, enableNavigation: true),
                       const SizedBox(width: 10),
                       Text(
-                        'Profil',
+                        'Nestora',
                         style: AppTypography.cardTitle(
-                          color: AppColors.primaryContainer,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.primaryContainer,
                         ).copyWith(fontWeight: FontWeight.w800, fontSize: 20),
                       ),
                     ],
@@ -604,19 +608,25 @@ class _ProfilePageState extends State<ProfilePage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                          color: isDark ? const Color(0xFF223828) : AppColors.primaryContainer.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF4C7554) : AppColors.primaryContainer.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.verified_rounded, size: 14, color: AppColors.primaryContainer),
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 14,
+                              color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               userRole.isNotEmpty ? userRole : 'Ev Sahibi',
                               style: AppTypography.caption.copyWith(
-                                color: AppColors.primaryContainer,
+                                color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -635,28 +645,32 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.cottage_rounded, size: 16, color: AppColors.primaryContainer),
+                            Icon(
+                              Icons.cottage_rounded,
+                              size: 16,
+                              color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               homeName,
                               style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.primaryContainer,
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.primaryContainer,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 11)),
+                            Text('•', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.secondary, fontSize: 11)),
                             const SizedBox(width: 6),
                             Text(
                               '$roomsCount Oda',
-                              style: AppTypography.caption.copyWith(color: AppColors.secondary),
+                              style: AppTypography.caption.copyWith(color: isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                             ),
                             const SizedBox(width: 6),
-                            const Text('•', style: TextStyle(color: AppColors.secondary, fontSize: 11)),
+                            Text('•', style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.secondary, fontSize: 11)),
                             const SizedBox(width: 6),
                             Text(
                               '$devicesCount Cihaz',
-                              style: AppTypography.caption.copyWith(color: AppColors.secondary),
+                              style: AppTypography.caption.copyWith(color: isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                             ),
                           ],
                         ),
@@ -676,8 +690,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         icon: const Icon(Icons.edit_outlined, size: 16),
                         label: const Text('Profili Düzenle'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primaryContainer,
-                          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                          foregroundColor: isDark ? Colors.white : AppColors.primaryContainer,
+                          backgroundColor: isDark ? const Color(0xFF223828) : null,
+                          side: BorderSide(color: isDark ? const Color(0xFF4C7554) : AppColors.lightBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         ),
@@ -720,7 +735,11 @@ class _ProfilePageState extends State<ProfilePage> {
                             style: AppTypography.caption.copyWith(color: AppColors.secondary),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.check_circle_outline_rounded, size: 16, color: AppColors.primaryContainer),
+                          Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 16,
+                            color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                          ),
                         ],
                       ),
                       onTap: () => _showEditProfileDialog(
@@ -739,13 +758,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       trailing: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.secondaryContainer,
+                          color: isDark ? const Color(0xFF223828) : AppColors.secondaryContainer,
                           borderRadius: BorderRadius.circular(8),
+                          border: isDark ? Border.all(color: const Color(0xFF4C7554)) : null,
                         ),
                         child: Text(
                           userRole.isNotEmpty ? '$userRole (Yönetici)' : 'Ev Sahibi (Yönetici)',
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.primaryContainer,
+                            color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -778,7 +798,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.palette_rounded, size: 18, color: AppColors.primaryContainer),
+                              Icon(
+                                Icons.palette_rounded,
+                                size: 18,
+                                color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 'Görünüm Modu',
@@ -802,6 +826,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   label: 'Açık',
                                   mode: ThemeMode.light,
                                   current: currentThemeMode,
+                                  isDark: isDark,
                                   onTap: () {
                                     themeCubit.setTheme(ThemeMode.light);
                                     showGlowingToast(
@@ -815,6 +840,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   label: 'Koyu',
                                   mode: ThemeMode.dark,
                                   current: currentThemeMode,
+                                  isDark: isDark,
                                   onTap: () {
                                     themeCubit.setTheme(ThemeMode.dark);
                                     showGlowingToast(
@@ -828,6 +854,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   label: 'Sistem',
                                   mode: ThemeMode.system,
                                   current: currentThemeMode,
+                                  isDark: isDark,
                                   onTap: () {
                                     themeCubit.setTheme(ThemeMode.system);
                                     showGlowingToast(
@@ -853,7 +880,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.notifications_active_rounded, size: 18, color: AppColors.primaryContainer),
+                              Icon(
+                                Icons.notifications_active_rounded,
+                                size: 18,
+                                color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 'Bildirim Tercihleri',
@@ -974,7 +1005,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.thermostat_rounded, size: 18, color: AppColors.primaryContainer),
+                              Icon(
+                                Icons.thermostat_rounded,
+                                size: 18,
+                                color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 'Sıcaklık Birimi',
@@ -1005,13 +1040,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: currentUnit == 'C' ? AppColors.primaryContainer : Colors.transparent,
+                                      color: currentUnit == 'C'
+                                          ? (isDark ? const Color(0xFF26392D) : AppColors.primaryContainer)
+                                          : Colors.transparent,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
                                       '°C',
                                       style: TextStyle(
-                                        color: currentUnit == 'C' ? Colors.white : AppColors.secondary,
+                                        color: currentUnit == 'C'
+                                            ? Colors.white
+                                            : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -1029,13 +1068,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: currentUnit == 'F' ? AppColors.primaryContainer : Colors.transparent,
+                                      color: currentUnit == 'F'
+                                          ? (isDark ? const Color(0xFF26392D) : AppColors.primaryContainer)
+                                          : Colors.transparent,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
                                       '°F',
                                       style: TextStyle(
-                                        color: currentUnit == 'F' ? Colors.white : AppColors.secondary,
+                                        color: currentUnit == 'F'
+                                            ? Colors.white
+                                            : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -1058,7 +1101,11 @@ class _ProfilePageState extends State<ProfilePage> {
                           Expanded(
                             child: Row(
                               children: [
-                                const Icon(Icons.energy_savings_leaf_rounded, size: 18, color: AppColors.primaryContainer),
+                                Icon(
+                                  Icons.energy_savings_leaf_rounded,
+                                  size: 18,
+                                  color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
@@ -1123,13 +1170,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       trailing: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.secondaryContainer,
+                          color: isDark ? const Color(0xFF223828) : AppColors.secondaryContainer,
                           borderRadius: BorderRadius.circular(12),
+                          border: isDark ? Border.all(color: const Color(0xFF4C7554)) : null,
                         ),
                         child: Text(
                           'v2.4.0 (Build 2026.1)',
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.primaryContainer,
+                            color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -1195,10 +1243,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: AppTypography.caption.copyWith(
                     letterSpacing: 1.1,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.secondary,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
                   ),
                 ),
-                Icon(icon, size: 16, color: AppColors.secondary),
+                Icon(icon, size: 16, color: isDark ? AppColors.darkTextSecondary : AppColors.secondary),
               ],
             ),
           ),
@@ -1231,10 +1279,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCardSecondary : AppColors.lightCardSecondary,
+                      color: isDark ? const Color(0xFF283B2C) : AppColors.lightCardSecondary,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, size: 18, color: AppColors.primaryContainer),
+                    child: Icon(
+                      icon,
+                      size: 18,
+                      color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1278,6 +1330,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required ThemeMode mode,
     required ThemeMode current,
     required VoidCallback onTap,
+    required bool isDark,
   }) {
     final isSelected = mode == current;
     return Expanded(
@@ -1286,8 +1339,11 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryContainer : Colors.transparent,
+            color: isSelected
+                ? (isDark ? const Color(0xFF26392D) : AppColors.primaryContainer)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
+            border: isSelected && isDark ? Border.all(color: const Color(0xFF4C7554)) : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1299,7 +1355,7 @@ class _ProfilePageState extends State<ProfilePage> {
               Text(
                 label,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isSelected ? Colors.white : AppColors.secondary,
+                  color: isSelected ? Colors.white : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -1328,8 +1384,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 Container(
                   width: 64,
                   height: 64,
-                  decoration: const BoxDecoration(
-                    color: AppColors.secondaryContainer,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF283B2C) : AppColors.secondaryContainer,
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
@@ -1347,7 +1403,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Text(
                   'Sürdürülebilir Akıllı Yaşam Platformu',
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.primaryContainer,
+                    color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1370,7 +1426,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.touch_app_rounded, size: 16, color: AppColors.primaryContainer),
+                          Icon(
+                            Icons.touch_app_rounded,
+                            size: 16,
+                            color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -1386,7 +1446,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.insights_rounded, size: 16, color: AppColors.primaryContainer),
+                          Icon(
+                            Icons.insights_rounded,
+                            size: 16,
+                            color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -1402,7 +1466,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.shield_outlined, size: 16, color: AppColors.primaryContainer),
+                          Icon(
+                            Icons.shield_outlined,
+                            size: 16,
+                            color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -1428,7 +1496,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.verified_rounded, size: 16, color: AppColors.primaryContainer),
+                      Icon(
+                        Icons.verified_rounded,
+                        size: 16,
+                        color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(

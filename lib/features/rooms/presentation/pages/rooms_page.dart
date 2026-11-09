@@ -271,10 +271,10 @@ class _RoomsPageState extends State<RoomsPage> {
                       const NestoraLogo(size: 34, enableNavigation: true),
                       const SizedBox(width: 10),
                       Text(
-                        'Nestora Cihazlar',
+                        'Nestora',
                         style: AppTypography.cardTitle(
-                          color: AppColors.primaryContainer,
-                        ).copyWith(fontWeight: FontWeight.w800, fontSize: 18),
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.primaryContainer,
+                        ).copyWith(fontWeight: FontWeight.w800, fontSize: 20),
                       ),
                     ],
                   ),
@@ -424,12 +424,12 @@ class _RoomsPageState extends State<RoomsPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.darkCardSecondary
+                          ? const Color(0xFF223828)
                           : const Color(0xFFE8EFE9), // Soft green tint
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isDark
-                            ? AppColors.darkBorder
+                            ? const Color(0xFF4C7554)
                             : AppColors.primaryContainer.withValues(alpha: 0.15),
                       ),
                     ),
@@ -449,7 +449,7 @@ class _RoomsPageState extends State<RoomsPage> {
                           '$totalRooms Oda • $totalDevices Cihaz • $activeDevices Aktif',
                           style: AppTypography.labelMedium.copyWith(
                             color: isDark
-                                ? AppColors.darkTextPrimary
+                                ? const Color(0xFF8FD8A0)
                                 : AppColors.primaryContainer,
                             fontWeight: FontWeight.w700,
                             fontSize: 12,
@@ -684,14 +684,14 @@ class _RoomsPageState extends State<RoomsPage> {
                                   height: 36,
                                   decoration: BoxDecoration(
                                     color: isDark
-                                        ? AppColors.darkCardSecondary
+                                        ? const Color(0xFF28342B)
                                         : const Color(0xFFF1EFEA),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.chevron_right_rounded,
                                     size: 22,
-                                    color: AppColors.primaryContainer,
+                                    color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                                   ),
                                 ),
                               ],
@@ -718,14 +718,12 @@ class _RoomsPageState extends State<RoomsPage> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: isDeviceOn
-                                              ? const Color(0xFFE8EFE9)
-                                              : (isDark
-                                                  ? AppColors.darkCardSecondary
-                                                  : const Color(0xFFF1EFEA)),
+                                              ? (isDark ? const Color(0xFF223828) : const Color(0xFFE8EFE9))
+                                              : (isDark ? const Color(0xFF1E2420) : const Color(0xFFF1EFEA)),
                                           borderRadius: BorderRadius.circular(16),
                                           border: Border.all(
                                             color: isDeviceOn
-                                                ? AppColors.primaryContainer.withValues(alpha: 0.25)
+                                                ? (isDark ? const Color(0xFF4C7554) : AppColors.primaryContainer.withValues(alpha: 0.25))
                                                 : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
                                             width: 1,
                                           ),
@@ -737,16 +735,16 @@ class _RoomsPageState extends State<RoomsPage> {
                                               dev.icon,
                                               size: 14,
                                               color: isDeviceOn
-                                                  ? AppColors.primaryContainer
-                                                  : AppColors.secondary,
+                                                  ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                                                  : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                                             ),
                                             const SizedBox(width: 6),
                                             Text(
                                               dev.name,
                                               style: AppTypography.labelSmall.copyWith(
-                                                color: isDark
-                                                    ? AppColors.darkTextPrimary
-                                                    : AppColors.lightTextPrimary,
+                                                color: isDeviceOn
+                                                    ? (isDark ? Colors.white : AppColors.lightTextPrimary)
+                                                    : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                                                 fontWeight: isDeviceOn
                                                     ? FontWeight.bold
                                                     : FontWeight.normal,
@@ -757,8 +755,8 @@ class _RoomsPageState extends State<RoomsPage> {
                                               isDeviceOn ? '• Açık' : '• Kapalı',
                                               style: AppTypography.caption.copyWith(
                                                 color: isDeviceOn
-                                                    ? AppColors.primaryContainer
-                                                    : AppColors.secondary,
+                                                    ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                                                    : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
                                                 fontWeight: isDeviceOn
                                                     ? FontWeight.bold
                                                     : FontWeight.normal,
@@ -792,12 +790,12 @@ class _RoomsPageState extends State<RoomsPage> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.darkCardSecondary
+                          ? const Color(0xFF1E2821)
                           : const Color(0xFFEDF2EC), // Soft green tint from Image 4
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: isDark
-                            ? AppColors.darkBorder
+                            ? const Color(0xFF38523E)
                             : AppColors.primaryContainer.withValues(alpha: 0.15),
                       ),
                     ),
@@ -807,13 +805,17 @@ class _RoomsPageState extends State<RoomsPage> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                            color: isDark
+                                ? const Color(0xFF283B2C)
+                                : AppColors.primaryContainer.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.add_home_outlined,
                             size: 20,
-                            color: AppColors.primaryContainer,
+                            color: isDark
+                                ? const Color(0xFF8FD8A0)
+                                : AppColors.primaryContainer,
                           ),
                         ),
                         const SizedBox(width: 12),

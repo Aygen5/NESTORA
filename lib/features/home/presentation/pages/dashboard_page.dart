@@ -420,7 +420,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   Text(
                     'Nestora',
                     style: AppTypography.cardTitle(
-                      color: AppColors.primaryContainer,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.primaryContainer,
                     ).copyWith(fontWeight: FontWeight.w800, fontSize: 20),
                   ),
                 ],
@@ -1103,7 +1103,7 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Icon(
               icon,
               size: 19,
-              color: AppColors.primaryContainer,
+              color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
             ),
           ),
           const SizedBox(height: 8),
@@ -1391,13 +1391,13 @@ class _DashboardPageState extends State<DashboardPage> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: AppColors.secondaryContainer,
+                      color: isDark ? const Color(0xFF28342B) : AppColors.secondaryContainer,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.bolt_rounded,
                       size: 18,
-                      color: AppColors.primaryContainer,
+                      color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1427,13 +1427,13 @@ class _DashboardPageState extends State<DashboardPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryContainer,
+                  color: isDark ? const Color(0xFF28342B) : AppColors.secondaryContainer,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   'Hedef %68',
                   style: AppTypography.badge(
-                    color: AppColors.primaryContainer,
+                    color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                   ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -1448,8 +1448,8 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundColor: isDark
                   ? AppColors.darkCardSecondary
                   : AppColors.lightCardSecondary,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.primaryContainer,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isDark ? const Color(0xFF6BD88A) : AppColors.primaryContainer,
               ),
             ),
           ),
@@ -1629,25 +1629,29 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                      color: isDark
+                          ? const Color(0xFF283B2C)
+                          : AppColors.primaryContainer.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColors.primaryContainer.withValues(alpha: 0.25),
+                        color: isDark
+                            ? const Color(0xFF4C7554)
+                            : AppColors.primaryContainer.withValues(alpha: 0.25),
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.add_rounded,
                           size: 15,
-                          color: AppColors.primaryContainer,
+                          color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'Oda Ekle',
                           style: AppTypography.buttonText(
-                            color: AppColors.primaryContainer,
+                            color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                           ).copyWith(fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -1663,7 +1667,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Text(
                       'Tümünü Gör',
                       style: AppTypography.buttonText(
-                        color: AppColors.primaryContainer,
+                        color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                       ).copyWith(fontSize: 13, fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -1754,14 +1758,14 @@ class _DashboardPageState extends State<DashboardPage> {
                     height: 36,
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.darkCardSecondary
+                          ? const Color(0xFF28342B)
                           : AppColors.secondaryContainer,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       room.icon,
                       size: 19,
-                      color: AppColors.primaryContainer,
+                      color: isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer,
                     ),
                   ),
                   Container(
@@ -1769,14 +1773,18 @@ class _DashboardPageState extends State<DashboardPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: hasActive
-                          ? AppColors.primaryContainer.withValues(alpha: 0.12)
+                          ? (isDark
+                              ? const Color(0xFF223828)
+                              : AppColors.primaryContainer.withValues(alpha: 0.12))
                           : (isDark
                               ? AppColors.darkCardSecondary
                               : AppColors.lightCardSecondary),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: hasActive
-                            ? AppColors.primaryContainer.withValues(alpha: 0.25)
+                            ? (isDark
+                                ? const Color(0xFF4C7554)
+                                : AppColors.primaryContainer.withValues(alpha: 0.25))
                             : (isDark
                                 ? AppColors.darkBorder
                                 : AppColors.lightBorder),
@@ -1787,7 +1795,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       '$roomActiveCount Açık',
                       style: AppTypography.badge(
                         color: hasActive
-                            ? AppColors.primaryContainer
+                            ? (isDark
+                                ? const Color(0xFF8FD8A0)
+                                : AppColors.primaryContainer)
                             : (isDark
                                 ? AppColors.darkTextSecondary
                                 : AppColors.secondary),
@@ -1943,8 +1953,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   device.icon,
                   size: 24,
                   color: device.isPoweredOn
-                      ? AppColors.primaryContainer
-                      : (isDark ? AppColors.darkTextSecondary : AppColors.secondary),
+                      ? (isDark ? const Color(0xFF8FD8A0) : AppColors.primaryContainer)
+                      : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.5) : AppColors.secondary),
                 ),
                 Row(
                   children: [
@@ -1995,7 +2005,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Text(
               device.name,
               style: AppTypography.description(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.secondary,
               ).copyWith(fontWeight: FontWeight.w500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -2017,7 +2027,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 Text(
                   valueLabel,
-                  style: AppTypography.badge(color: AppColors.secondary),
+                  style: AppTypography.badge(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+                  ),
                 ),
               ],
             ),
