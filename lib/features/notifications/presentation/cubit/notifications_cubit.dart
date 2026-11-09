@@ -28,6 +28,16 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           ),
         );
 
+  /// Resets active notifications state and terminates stream subscription on logout.
+  void reset() {
+    _subscription?.cancel();
+    _currentUserId = null;
+    emit(NotificationsLoaded(
+      notifications: localCacheService?.loadNotifications(userId: 'usr-1') ??
+          List<AppNotification>.from(SeedData.defaultNotifications),
+    ));
+  }
+
   /// Loads and listens to real-time notification updates for [userId].
   void loadNotifications(String userId) {
     final cleanUid = userId.trim();
@@ -37,33 +47,41 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
     _currentUserId = cleanUid;
 
-    final cached = localCacheService?.loadNotifications();
-    if (cached != null && cached.isNotEmpty) {
-      emit(NotificationsLoaded(notifications: cached));
-    } else if (state is! NotificationsLoaded) {
-      emit(const NotificationsLoading());
-    }
+    final cached = localCacheService?.loadNotifications(userId: cleanUid);
+    final initialNotifs = (cached != null && cached.isNotEmpty)
+        ? cached
+        : (cleanUid == SeedData.defaultProfile.uid
+            ? List<AppNotification>.from(SeedData.defaultNotifications)
+            : <AppNotification>[]);
+    emit(NotificationsLoaded(notifications: initialNotifs));
 
     _subscription?.cancel();
     quotaService?.registerListener('NotificationsCubit_$cleanUid');
 
     _subscription = notificationsRepository.watchNotifications(cleanUid).listen(
       (notifications) {
-        localCacheService?.saveNotifications(notifications);
+        final effective = (notifications.isEmpty && cleanUid == SeedData.defaultProfile.uid)
+            ? (localCacheService?.loadNotifications(userId: cleanUid) ??
+                List<AppNotification>.from(SeedData.defaultNotifications))
+            : notifications;
+
+        localCacheService?.saveNotifications(effective, userId: cleanUid);
         if (state is NotificationsLoaded) {
           final current = state as NotificationsLoaded;
           emit(current.copyWith(
-            notifications: notifications,
+            notifications: effective,
             isProcessing: false,
           ));
         } else {
-          emit(NotificationsLoaded(notifications: notifications));
+          emit(NotificationsLoaded(notifications: effective));
         }
       },
       onError: (error) {
         if (state is! NotificationsLoaded) {
-          final fallback = localCacheService?.loadNotifications() ??
-              List<AppNotification>.from(SeedData.defaultNotifications);
+          final fallback = localCacheService?.loadNotifications(userId: cleanUid) ??
+              (cleanUid == SeedData.defaultProfile.uid
+                  ? List<AppNotification>.from(SeedData.defaultNotifications)
+                  : <AppNotification>[]);
           emit(NotificationsLoaded(notifications: fallback));
         }
       },

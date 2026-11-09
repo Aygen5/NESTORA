@@ -49,10 +49,25 @@ class DevicesCubit extends Cubit<DevicesState> {
     if (state is DevicesLoaded) {
       return state as DevicesLoaded;
     }
-    final defaultList = localCacheService?.loadDevices() ?? SeedData.defaultDevices;
+    final defaultList = localCacheService?.loadDevices(userId: _currentUserId) ??
+        (_currentUserId == SeedData.defaultProfile.uid ? SeedData.defaultDevices : <Device>[]);
     final loaded = DevicesLoaded(devices: defaultList);
     emit(loaded);
     return loaded;
+  }
+
+  /// Resets active devices state, cancels subscriptions and pending debouncers on logout.
+  void reset() {
+    _devicesSubscription?.cancel();
+    for (final timer in _debounceTimers.values) {
+      timer.cancel();
+    }
+    _debounceTimers.clear();
+    _pendingUpdates.clear();
+    _currentUserId = null;
+    emit(DevicesLoaded(
+      devices: localCacheService?.loadDevices(userId: 'usr-1') ?? SeedData.defaultDevices,
+    ));
   }
 
   /// Loads and listens to real-time updates for all devices belonging to [userId].
@@ -63,7 +78,11 @@ class DevicesCubit extends Cubit<DevicesState> {
     }
     _currentUserId = cleanUid;
 
-    _ensureLoaded();
+    final initialDevices = localCacheService?.loadDevices(userId: cleanUid);
+    final effectiveInitial = (initialDevices != null && initialDevices.isNotEmpty)
+        ? initialDevices
+        : (cleanUid == SeedData.defaultProfile.uid ? SeedData.defaultDevices : <Device>[]);
+    emit(DevicesLoaded(devices: effectiveInitial));
 
     _devicesSubscription?.cancel();
     quotaService?.registerListener('DevicesCubit_$cleanUid');
@@ -71,36 +90,39 @@ class DevicesCubit extends Cubit<DevicesState> {
     try {
       _devicesSubscription = devicesRepository.watchDevices(cleanUid).listen(
         (devices) {
-          if (devices.isEmpty) return;
-          localCacheService?.saveDevices(devices);
+          final effectiveDevices = (devices.isEmpty && cleanUid == SeedData.defaultProfile.uid)
+              ? (localCacheService?.loadDevices(userId: cleanUid) ?? SeedData.defaultDevices)
+              : devices;
+
+          // Merge local in-flight debounced updates if any exist
+          final mergedDevices = effectiveDevices.map((incoming) {
+            final pending = _pendingUpdates[incoming.id];
+            if (pending != null && pending.isNotEmpty) {
+              return incoming.copyWith(
+                brightness: pending['brightness'] as int? ?? incoming.brightness,
+                targetTemp:
+                    (pending['targetTemp'] as num?)?.toDouble() ?? incoming.targetTemp,
+                colorHex: pending['colorHex'] as String? ?? incoming.colorHex,
+                colorName: pending['colorName'] as String? ?? incoming.colorName,
+                isPoweredOn: pending['isPoweredOn'] as bool? ?? incoming.isPoweredOn,
+                acMode: pending['acMode'] != null
+                    ? AcMode.fromString(pending['acMode'] as String)
+                    : incoming.acMode,
+                fanSpeed: pending['fanSpeed'] != null
+                    ? FanSpeed.fromString(pending['fanSpeed'] as String)
+                    : incoming.fanSpeed,
+              );
+            }
+            return incoming;
+          }).toList();
+
+          localCacheService?.saveDevices(mergedDevices, userId: cleanUid);
+
           if (state is DevicesLoaded) {
             final current = state as DevicesLoaded;
-
-            // Merge local in-flight debounced updates if any exist
-            final mergedDevices = devices.map((incoming) {
-              final pending = _pendingUpdates[incoming.id];
-              if (pending != null && pending.isNotEmpty) {
-                return incoming.copyWith(
-                  brightness: pending['brightness'] as int? ?? incoming.brightness,
-                  targetTemp:
-                      (pending['targetTemp'] as num?)?.toDouble() ?? incoming.targetTemp,
-                  colorHex: pending['colorHex'] as String? ?? incoming.colorHex,
-                  colorName: pending['colorName'] as String? ?? incoming.colorName,
-                  isPoweredOn: pending['isPoweredOn'] as bool? ?? incoming.isPoweredOn,
-                  acMode: pending['acMode'] != null
-                      ? AcMode.fromString(pending['acMode'] as String)
-                      : incoming.acMode,
-                  fanSpeed: pending['fanSpeed'] != null
-                      ? FanSpeed.fromString(pending['fanSpeed'] as String)
-                      : incoming.fanSpeed,
-                );
-              }
-              return incoming;
-            }).toList();
-
             emit(current.copyWith(devices: mergedDevices, isSaving: false));
           } else {
-            emit(DevicesLoaded(devices: devices));
+            emit(DevicesLoaded(devices: mergedDevices));
           }
         },
         onError: (error, stack) {
@@ -411,7 +433,7 @@ class DevicesCubit extends Cubit<DevicesState> {
       devices: updatedDevices,
       feedbackMessage: '$sceneDisplayName senaryosu uygulandı.',
     ));
-    localCacheService?.saveDevices(updatedDevices);
+    localCacheService?.saveDevices(updatedDevices, userId: userId);
 
     // Persist changes to Firestore safely in background
     for (final dev in updatedDevices) {
@@ -491,7 +513,7 @@ class DevicesCubit extends Cubit<DevicesState> {
 
     final updated = [...current.devices, newDevice];
     emit(current.copyWith(devices: updated, isSaving: false, feedbackMessage: 'Cihaz başarıyla eklendi.'));
-    localCacheService?.saveDevices(updated);
+    localCacheService?.saveDevices(updated, userId: userId);
     analyticsService?.logDeviceCreated(deviceType: newDevice.type.name);
 
     try {
@@ -522,7 +544,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     final current = _ensureLoaded();
     final updatedList = current.devices.map((d) => d.id == device.id ? updated : d).toList();
     emit(current.copyWith(devices: updatedList, isSaving: false, feedbackMessage: 'Cihaz başarıyla güncellendi.'));
-    localCacheService?.saveDevices(updatedList);
+    localCacheService?.saveDevices(updatedList, userId: userId);
 
     try {
       await devicesRepository.updateDevice(userId, updated);
@@ -544,7 +566,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     final current = _ensureLoaded();
     final updatedList = current.devices.where((d) => d.id != deviceId).toList();
     emit(current.copyWith(devices: updatedList, isSaving: false, feedbackMessage: 'Cihaz başarıyla silindi.'));
-    localCacheService?.saveDevices(updatedList);
+    localCacheService?.saveDevices(updatedList, userId: userId);
 
     try {
       await devicesRepository.deleteDevice(userId, deviceId);
@@ -611,7 +633,7 @@ class DevicesCubit extends Cubit<DevicesState> {
     }).toList();
 
     emit(current.copyWith(devices: updatedList));
-    localCacheService?.saveDevices(updatedList);
+    localCacheService?.saveDevices(updatedList, userId: _currentUserId);
   }
 
   void _debounceWrite({
@@ -768,7 +790,7 @@ class DevicesCubit extends Cubit<DevicesState> {
           ? 'Odadaki tüm cihazlar açıldı.'
           : 'Odadaki tüm cihazlar kapatıldı.',
     ));
-    localCacheService?.saveDevices(updatedDevices);
+    localCacheService?.saveDevices(updatedDevices, userId: userId ?? _currentUserId);
 
     for (final dev in updatedDevices) {
       try {
@@ -810,7 +832,7 @@ class DevicesCubit extends Cubit<DevicesState> {
           ? 'Tüm cihazlar açıldı.'
           : 'Tüm cihazlar kapatıldı.',
     ));
-    localCacheService?.saveDevices(updatedDevices);
+    localCacheService?.saveDevices(updatedDevices, userId: userId ?? _currentUserId);
 
     for (final dev in updatedDevices) {
       try {

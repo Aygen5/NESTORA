@@ -38,16 +38,25 @@ class ProfileCubit extends Cubit<ProfileState> {
     LocalCacheService? localCacheService,
     SharedPreferences? sharedPreferences,
   ) {
-    final cached = localCacheService?.loadProfile() ?? SeedData.defaultProfile;
-    final prefPhoto = sharedPreferences?.getString(AppConstants.prefProfilePhotoPath);
-    if (prefPhoto != null && prefPhoto.trim().isNotEmpty) {
-      return cached.copyWith(photoPath: prefPhoto.trim());
+    // Purge legacy global key if present to prevent cross-account pollution
+    if (sharedPreferences != null &&
+        sharedPreferences.containsKey(AppConstants.prefProfilePhotoPath)) {
+      sharedPreferences.remove(AppConstants.prefProfilePhotoPath);
     }
-    return cached;
+    return localCacheService?.loadProfile(userId: 'usr-1') ?? SeedData.defaultProfile;
   }
 
   String _photoPrefKey(String userId) =>
       '${AppConstants.prefProfilePhotoPath}_$userId';
+
+  /// Resets active profile state and terminates stream subscriptions on logout.
+  void reset() {
+    _profileSubscription?.cancel();
+    _currentUserId = null;
+    emit(ProfileLoaded(
+      profile: localCacheService?.loadProfile(userId: 'usr-1') ?? SeedData.defaultProfile,
+    ));
+  }
 
   /// Loads and listens to real-time updates for the user profile of [userId].
   void loadProfile(String userId) {
@@ -58,43 +67,59 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
     _currentUserId = cleanUid;
 
-    final cached = localCacheService?.loadProfile();
-    if (cached != null) {
-      emit(ProfileLoaded(profile: cached));
-    } else if (state is! ProfileLoaded) {
-      emit(const ProfileLoading());
+    final cached = localCacheService?.loadProfile(userId: cleanUid);
+    final userScopedPhoto = sharedPreferences?.getString(_photoPrefKey(cleanUid));
+
+    UserProfile initialProfile;
+    if (cached != null && cached.uid == cleanUid) {
+      initialProfile = cached;
+    } else if (cleanUid == SeedData.defaultProfile.uid) {
+      initialProfile = SeedData.defaultProfile;
+    } else {
+      initialProfile = UserProfile(
+        uid: cleanUid,
+        email: '',
+        displayName: 'Nestora Kullanıcısı',
+        roleTitle: 'Ev Sahibi',
+        homeName: AppConstants.defaultHomeName,
+        preferences: const UserPreferences(),
+      );
     }
+
+    if (userScopedPhoto != null && userScopedPhoto.trim().isNotEmpty) {
+      initialProfile = initialProfile.copyWith(photoPath: userScopedPhoto.trim());
+    }
+
+    emit(ProfileLoaded(profile: initialProfile));
 
     _profileSubscription?.cancel();
     quotaService?.registerListener('ProfileCubit_$cleanUid');
 
     _profileSubscription = profileRepository.watchProfile(cleanUid).listen(
       (profile) {
-        final cachedPhoto = sharedPreferences?.getString(_photoPrefKey(cleanUid)) ??
-            sharedPreferences?.getString(AppConstants.prefProfilePhotoPath);
+        final cachedPhoto = sharedPreferences?.getString(_photoPrefKey(cleanUid));
 
         if (profile == null) {
-          final fallback = localCacheService?.loadProfile() ??
-              UserProfile(
-                uid: cleanUid,
-                email: '',
-                displayName: 'Nestora Kullanıcısı',
-                roleTitle: 'Ev Sahibi',
-                homeName: AppConstants.defaultHomeName,
-                photoPath: cachedPhoto,
-                preferences: const UserPreferences(),
-              );
-          localCacheService?.saveProfile(fallback);
+          final defaultPhoto = (cleanUid == SeedData.defaultProfile.uid)
+              ? SeedData.defaultProfile.photoPath
+              : null;
+          final fallback = initialProfile.copyWith(
+            photoPath: cachedPhoto ?? defaultPhoto,
+          );
+          localCacheService?.saveProfile(fallback, userId: cleanUid);
           emit(ProfileLoaded(profile: fallback));
           return;
         }
 
-        final finalPhoto = profile.photoPath ?? cachedPhoto;
+        final defaultPhoto = (cleanUid == SeedData.defaultProfile.uid)
+            ? SeedData.defaultProfile.photoPath
+            : null;
+        final finalPhoto = profile.photoPath ?? cachedPhoto ?? defaultPhoto;
         final finalProfile = finalPhoto != profile.photoPath
             ? profile.copyWith(photoPath: finalPhoto)
             : profile;
 
-        localCacheService?.saveProfile(finalProfile);
+        localCacheService?.saveProfile(finalProfile, userId: cleanUid);
 
         if (state is ProfileLoaded) {
           final current = state as ProfileLoaded;
@@ -105,7 +130,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       },
       onError: (error) {
         if (state is! ProfileLoaded) {
-          final fallback = localCacheService?.loadProfile() ?? SeedData.defaultProfile;
+          final fallback = localCacheService?.loadProfile(userId: cleanUid) ??
+              (cleanUid == SeedData.defaultProfile.uid ? SeedData.defaultProfile : initialProfile);
           emit(ProfileLoaded(profile: fallback));
         }
       },
@@ -336,11 +362,11 @@ class ProfileCubit extends Cubit<ProfileState> {
       return;
     }
 
+    // Persist strictly to user-scoped key
     await sharedPreferences?.setString(_photoPrefKey(current.profile.uid), path);
-    await sharedPreferences?.setString(AppConstants.prefProfilePhotoPath, path);
 
     final updatedProfile = current.profile.copyWith(photoPath: path);
-    await localCacheService?.saveProfile(updatedProfile);
+    await localCacheService?.saveProfile(updatedProfile, userId: current.profile.uid);
 
     emit(current.copyWith(
       profile: updatedProfile,
@@ -366,11 +392,11 @@ class ProfileCubit extends Cubit<ProfileState> {
       return;
     }
 
+    // Persist strictly to user-scoped key
     await sharedPreferences?.setString(_photoPrefKey(current.profile.uid), path);
-    await sharedPreferences?.setString(AppConstants.prefProfilePhotoPath, path);
 
     final updatedProfile = current.profile.copyWith(photoPath: path);
-    await localCacheService?.saveProfile(updatedProfile);
+    await localCacheService?.saveProfile(updatedProfile, userId: current.profile.uid);
 
     emit(current.copyWith(
       profile: updatedProfile,
@@ -395,10 +421,9 @@ class ProfileCubit extends Cubit<ProfileState> {
     await photoService?.deleteLocalImage(oldPath);
 
     await sharedPreferences?.remove(_photoPrefKey(current.profile.uid));
-    await sharedPreferences?.remove(AppConstants.prefProfilePhotoPath);
 
     final updatedProfile = current.profile.copyWith(clearPhotoPath: true);
-    await localCacheService?.saveProfile(updatedProfile);
+    await localCacheService?.saveProfile(updatedProfile, userId: current.profile.uid);
 
     emit(current.copyWith(
       profile: updatedProfile,

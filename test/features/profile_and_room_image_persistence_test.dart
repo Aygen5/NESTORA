@@ -266,13 +266,18 @@ void main() {
       final loaded = profileCubit.state as ProfileLoaded;
       expect(loaded.profile.photoPath, equals(customPhoto));
 
-      expect(prefs.getString(AppConstants.prefProfilePhotoPath), equals(customPhoto));
+      expect(
+        prefs.getString('${AppConstants.prefProfilePhotoPath}_${SeedData.defaultProfile.uid}'),
+        equals(customPhoto),
+      );
 
       final reloadedCubit = ProfileCubit(
         profileRepository: profileRepo,
         sharedPreferences: prefs,
         localCacheService: localCacheService,
       );
+      reloadedCubit.loadProfile(SeedData.defaultProfile.uid);
+      await tester.pump();
       final reloadedState = reloadedCubit.state as ProfileLoaded;
       expect(reloadedState.profile.photoPath, equals(customPhoto));
     });

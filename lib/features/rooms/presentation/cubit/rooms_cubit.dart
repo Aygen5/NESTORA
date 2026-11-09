@@ -42,10 +42,20 @@ class RoomsCubit extends Cubit<RoomsState> {
     if (state is RoomsLoaded) {
       return state as RoomsLoaded;
     }
-    final defaultList = localCacheService?.loadRooms() ?? SeedData.defaultRooms;
+    final defaultList = localCacheService?.loadRooms(userId: _currentUserId) ??
+        (_currentUserId == SeedData.defaultProfile.uid ? SeedData.defaultRooms : <Room>[]);
     final loaded = RoomsLoaded(rooms: defaultList);
     emit(loaded);
     return loaded;
+  }
+
+  /// Resets active rooms state, cancels stream subscription, and purges in-memory list on logout.
+  void reset() {
+    _roomsSubscription?.cancel();
+    _currentUserId = null;
+    emit(RoomsLoaded(
+      rooms: localCacheService?.loadRooms(userId: 'usr-1') ?? SeedData.defaultRooms,
+    ));
   }
 
   /// Loads and listens to real-time updates for all rooms belonging to [userId].
@@ -56,7 +66,11 @@ class RoomsCubit extends Cubit<RoomsState> {
     }
     _currentUserId = cleanUid;
 
-    _ensureLoaded();
+    final initialRooms = localCacheService?.loadRooms(userId: cleanUid);
+    final effectiveInitial = (initialRooms != null && initialRooms.isNotEmpty)
+        ? initialRooms
+        : (cleanUid == SeedData.defaultProfile.uid ? SeedData.defaultRooms : <Room>[]);
+    emit(RoomsLoaded(rooms: effectiveInitial));
 
     _roomsSubscription?.cancel();
     quotaService?.registerListener('RoomsCubit_$cleanUid');
@@ -64,13 +78,16 @@ class RoomsCubit extends Cubit<RoomsState> {
     try {
       _roomsSubscription = roomsRepository.watchRooms(cleanUid).listen(
         (rooms) {
-          if (rooms.isEmpty) return;
-          localCacheService?.saveRooms(rooms);
+          final effectiveRooms = (rooms.isEmpty && cleanUid == SeedData.defaultProfile.uid)
+              ? (localCacheService?.loadRooms(userId: cleanUid) ?? SeedData.defaultRooms)
+              : rooms;
+
+          localCacheService?.saveRooms(effectiveRooms, userId: cleanUid);
           if (state is RoomsLoaded) {
             final current = state as RoomsLoaded;
-            emit(current.copyWith(rooms: rooms, isSaving: false));
+            emit(current.copyWith(rooms: effectiveRooms, isSaving: false));
           } else {
-            emit(RoomsLoaded(rooms: rooms));
+            emit(RoomsLoaded(rooms: effectiveRooms));
           }
         },
         onError: (error, stack) {
@@ -131,7 +148,7 @@ class RoomsCubit extends Cubit<RoomsState> {
 
     final updated = [...current.rooms, room];
     emit(current.copyWith(rooms: updated, isSaving: false, feedbackMessage: 'Oda başarıyla eklendi.'));
-    localCacheService?.saveRooms(updated);
+    localCacheService?.saveRooms(updated, userId: cleanUid);
     analyticsService?.logRoomCreated(roomType: room.iconName);
   }
 
@@ -161,7 +178,7 @@ class RoomsCubit extends Cubit<RoomsState> {
     final current = _ensureLoaded();
     final updated = current.rooms.map((r) => r.id == room.id ? updatedRoom : r).toList();
     emit(current.copyWith(rooms: updated, isSaving: false, feedbackMessage: 'Oda başarıyla güncellendi.'));
-    localCacheService?.saveRooms(updated);
+    localCacheService?.saveRooms(updated, userId: cleanUid);
   }
 
   /// Deletes a room.
@@ -216,7 +233,7 @@ class RoomsCubit extends Cubit<RoomsState> {
           ? 'Oda silindi ve cihazlar başarıyla aktarıldı.'
           : 'Oda ve ilişkili cihazlar başarıyla silindi.',
     ));
-    localCacheService?.saveRooms(updated);
+    localCacheService?.saveRooms(updated, userId: cleanUid);
     analyticsService?.logRoomDeleted(roomId: cleanRoomId);
   }
 

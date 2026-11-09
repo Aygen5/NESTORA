@@ -121,22 +121,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           }
         }
 
-        // Initialize user document in Cloud Firestore if available
+        // Initialize user document and starter home in Cloud Firestore if available
         if (firestore != null) {
           try {
             final name = (displayName != null && displayName.trim().isNotEmpty)
                 ? displayName.trim()
                 : 'Nestora Kullanıcısı';
 
-            await firestore!.collection('users').doc(user.uid).set({
-              'email': email.trim(),
-              'displayName': name,
-              'homeName': "$name'in Evi",
-              'createdAt': FieldValue.serverTimestamp(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+            final seedService = FirestoreSeedService(firestore: firestore);
+            await seedService.seedDemoUserDataIfEmpty(
+              user.uid,
+              displayName: name,
+              homeName: "$name'in Evi",
+              email: email.trim(),
+            );
           } catch (e) {
-            debugPrint('AuthRemoteDataSource: Firestore user doc creation notice ($e)');
+            debugPrint('AuthRemoteDataSource: Firestore user initialization notice ($e)');
           }
         }
       }

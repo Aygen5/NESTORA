@@ -177,6 +177,11 @@ class _NestoraAppState extends State<NestoraApp> {
             _roomsCubit.loadRooms(uid);
             _devicesCubit.loadDevices(uid);
             _notificationsCubit.loadNotifications(uid);
+          } else if (authState is Unauthenticated) {
+            _profileCubit.reset();
+            _roomsCubit.reset();
+            _devicesCubit.reset();
+            _notificationsCubit.reset();
           }
         },
         child: BlocBuilder<ThemeCubit, ThemeMode>(
